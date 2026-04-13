@@ -1,0 +1,1465 @@
+diff --git a/node_modules/react-native-turboxml/android/build/.transforms/0a0c035a6026e9529abbdbc078c22b30/results.bin b/node_modules/react-native-turboxml/android/build/.transforms/0a0c035a6026e9529abbdbc078c22b30/results.bin
+new file mode 100644
+index 0000000..0d259dd
+--- /dev/null
++++ b/node_modules/react-native-turboxml/android/build/.transforms/0a0c035a6026e9529abbdbc078c22b30/results.bin
+@@ -0,0 +1 @@
++o/classes
+diff --git a/node_modules/react-native-turboxml/android/build/.transforms/0a0c035a6026e9529abbdbc078c22b30/transformed/classes/classes_dex/classes.dex b/node_modules/react-native-turboxml/android/build/.transforms/0a0c035a6026e9529abbdbc078c22b30/transformed/classes/classes_dex/classes.dex
+new file mode 100644
+index 0000000..2f0b2cb
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/.transforms/0a0c035a6026e9529abbdbc078c22b30/transformed/classes/classes_dex/classes.dex differ
+diff --git a/node_modules/react-native-turboxml/android/build/.transforms/445870bc5df841989ce2ef049ef64761/results.bin b/node_modules/react-native-turboxml/android/build/.transforms/445870bc5df841989ce2ef049ef64761/results.bin
+new file mode 100644
+index 0000000..0d259dd
+--- /dev/null
++++ b/node_modules/react-native-turboxml/android/build/.transforms/445870bc5df841989ce2ef049ef64761/results.bin
+@@ -0,0 +1 @@
++o/classes
+diff --git a/node_modules/react-native-turboxml/android/build/.transforms/445870bc5df841989ce2ef049ef64761/transformed/classes/classes_dex/classes.dex b/node_modules/react-native-turboxml/android/build/.transforms/445870bc5df841989ce2ef049ef64761/transformed/classes/classes_dex/classes.dex
+new file mode 100644
+index 0000000..22645da
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/.transforms/445870bc5df841989ce2ef049ef64761/transformed/classes/classes_dex/classes.dex differ
+diff --git a/node_modules/react-native-turboxml/android/build/.transforms/76f489c44c5684a2816319704935f334/results.bin b/node_modules/react-native-turboxml/android/build/.transforms/76f489c44c5684a2816319704935f334/results.bin
+new file mode 100644
+index 0000000..0d259dd
+--- /dev/null
++++ b/node_modules/react-native-turboxml/android/build/.transforms/76f489c44c5684a2816319704935f334/results.bin
+@@ -0,0 +1 @@
++o/classes
+diff --git a/node_modules/react-native-turboxml/android/build/.transforms/76f489c44c5684a2816319704935f334/transformed/classes/classes_dex/classes.dex b/node_modules/react-native-turboxml/android/build/.transforms/76f489c44c5684a2816319704935f334/transformed/classes/classes_dex/classes.dex
+new file mode 100644
+index 0000000..6fe5ab3
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/.transforms/76f489c44c5684a2816319704935f334/transformed/classes/classes_dex/classes.dex differ
+diff --git a/node_modules/react-native-turboxml/android/build/.transforms/9222beaa1b85b9d6e3b9aaf6725b3fee/results.bin b/node_modules/react-native-turboxml/android/build/.transforms/9222beaa1b85b9d6e3b9aaf6725b3fee/results.bin
+new file mode 100644
+index 0000000..0d259dd
+--- /dev/null
++++ b/node_modules/react-native-turboxml/android/build/.transforms/9222beaa1b85b9d6e3b9aaf6725b3fee/results.bin
+@@ -0,0 +1 @@
++o/classes
+diff --git a/node_modules/react-native-turboxml/android/build/.transforms/9222beaa1b85b9d6e3b9aaf6725b3fee/transformed/classes/classes_dex/classes.dex b/node_modules/react-native-turboxml/android/build/.transforms/9222beaa1b85b9d6e3b9aaf6725b3fee/transformed/classes/classes_dex/classes.dex
+new file mode 100644
+index 0000000..dc77156
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/.transforms/9222beaa1b85b9d6e3b9aaf6725b3fee/transformed/classes/classes_dex/classes.dex differ
+diff --git a/node_modules/react-native-turboxml/android/build/generated/source/buildConfig/debug/com/turboxml/BuildConfig.java b/node_modules/react-native-turboxml/android/build/generated/source/buildConfig/debug/com/turboxml/BuildConfig.java
+new file mode 100644
+index 0000000..147f2c0
+--- /dev/null
++++ b/node_modules/react-native-turboxml/android/build/generated/source/buildConfig/debug/com/turboxml/BuildConfig.java
+@@ -0,0 +1,10 @@
++/**
++ * Automatically generated file. DO NOT MODIFY
++ */
++package com.turboxml;
++
++public final class BuildConfig {
++  public static final boolean DEBUG = Boolean.parseBoolean("true");
++  public static final String LIBRARY_PACKAGE_NAME = "com.turboxml";
++  public static final String BUILD_TYPE = "debug";
++}
+diff --git a/node_modules/react-native-turboxml/android/build/generated/source/codegen/java/com/turboxml/NativeTurboxmlSpec.java b/node_modules/react-native-turboxml/android/build/generated/source/codegen/java/com/turboxml/NativeTurboxmlSpec.java
+new file mode 100644
+index 0000000..ab4c992
+--- /dev/null
++++ b/node_modules/react-native-turboxml/android/build/generated/source/codegen/java/com/turboxml/NativeTurboxmlSpec.java
+@@ -0,0 +1,38 @@
++
++/**
++ * This code was generated by [react-native-codegen](https://www.npmjs.com/package/react-native-codegen).
++ *
++ * Do not edit this file as changes may cause incorrect behavior and will be lost
++ * once the code is regenerated.
++ *
++ * @generated by codegen project: GenerateModuleJavaSpec.js
++ *
++ * @nolint
++ */
++
++package com.turboxml;
++
++import com.facebook.proguard.annotations.DoNotStrip;
++import com.facebook.react.bridge.Promise;
++import com.facebook.react.bridge.ReactApplicationContext;
++import com.facebook.react.bridge.ReactContextBaseJavaModule;
++import com.facebook.react.bridge.ReactMethod;
++import com.facebook.react.turbomodule.core.interfaces.TurboModule;
++import javax.annotation.Nonnull;
++
++public abstract class NativeTurboxmlSpec extends ReactContextBaseJavaModule implements TurboModule {
++  public static final String NAME = "Turboxml";
++
++  public NativeTurboxmlSpec(ReactApplicationContext reactContext) {
++    super(reactContext);
++  }
++
++  @Override
++  public @Nonnull String getName() {
++    return NAME;
++  }
++
++  @ReactMethod
++  @DoNotStrip
++  public abstract void parseXml(String xml, Promise promise);
++}
+diff --git a/node_modules/react-native-turboxml/android/build/generated/source/codegen/jni/CMakeLists.txt b/node_modules/react-native-turboxml/android/build/generated/source/codegen/jni/CMakeLists.txt
+new file mode 100644
+index 0000000..56e6ee8
+--- /dev/null
++++ b/node_modules/react-native-turboxml/android/build/generated/source/codegen/jni/CMakeLists.txt
+@@ -0,0 +1,28 @@
++# Copyright (c) Meta Platforms, Inc. and affiliates.
++#
++# This source code is licensed under the MIT license found in the
++# LICENSE file in the root directory of this source tree.
++
++cmake_minimum_required(VERSION 3.13)
++set(CMAKE_VERBOSE_MAKEFILE on)
++
++file(GLOB react_codegen_SRCS CONFIGURE_DEPENDS *.cpp react/renderer/components/TurboxmlSpec/*.cpp)
++
++add_library(
++  react_codegen_TurboxmlSpec
++  OBJECT
++  ${react_codegen_SRCS}
++)
++
++target_include_directories(react_codegen_TurboxmlSpec PUBLIC . react/renderer/components/TurboxmlSpec)
++
++target_link_libraries(
++  react_codegen_TurboxmlSpec
++  fbjni
++  jsi
++  # We need to link different libraries based on whether we are building rncore or not, that's necessary
++  # because we want to break a circular dependency between react_codegen_rncore and reactnative
++  reactnative
++)
++
++target_compile_reactnative_options(react_codegen_TurboxmlSpec PRIVATE)
+diff --git a/node_modules/react-native-turboxml/android/build/generated/source/codegen/jni/TurboxmlSpec-generated.cpp b/node_modules/react-native-turboxml/android/build/generated/source/codegen/jni/TurboxmlSpec-generated.cpp
+new file mode 100644
+index 0000000..ef773cd
+--- /dev/null
++++ b/node_modules/react-native-turboxml/android/build/generated/source/codegen/jni/TurboxmlSpec-generated.cpp
+@@ -0,0 +1,32 @@
++
++/**
++ * This code was generated by [react-native-codegen](https://www.npmjs.com/package/react-native-codegen).
++ *
++ * Do not edit this file as changes may cause incorrect behavior and will be lost
++ * once the code is regenerated.
++ *
++ * @generated by codegen project: GenerateModuleJniCpp.js
++ */
++
++#include "TurboxmlSpec.h"
++
++namespace facebook::react {
++
++static facebook::jsi::Value __hostFunction_NativeTurboxmlSpecJSI_parseXml(facebook::jsi::Runtime& rt, TurboModule &turboModule, const facebook::jsi::Value* args, size_t count) {
++  static jmethodID cachedMethodId = nullptr;
++  return static_cast<JavaTurboModule &>(turboModule).invokeJavaMethod(rt, PromiseKind, "parseXml", "(Ljava/lang/String;Lcom/facebook/react/bridge/Promise;)V", args, count, cachedMethodId);
++}
++
++NativeTurboxmlSpecJSI::NativeTurboxmlSpecJSI(const JavaTurboModule::InitParams &params)
++  : JavaTurboModule(params) {
++  methodMap_["parseXml"] = MethodMetadata {1, __hostFunction_NativeTurboxmlSpecJSI_parseXml};
++}
++
++std::shared_ptr<TurboModule> TurboxmlSpec_ModuleProvider(const std::string &moduleName, const JavaTurboModule::InitParams &params) {
++  if (moduleName == "Turboxml") {
++    return std::make_shared<NativeTurboxmlSpecJSI>(params);
++  }
++  return nullptr;
++}
++
++} // namespace facebook::react
+diff --git a/node_modules/react-native-turboxml/android/build/generated/source/codegen/jni/TurboxmlSpec.h b/node_modules/react-native-turboxml/android/build/generated/source/codegen/jni/TurboxmlSpec.h
+new file mode 100644
+index 0000000..63b5238
+--- /dev/null
++++ b/node_modules/react-native-turboxml/android/build/generated/source/codegen/jni/TurboxmlSpec.h
+@@ -0,0 +1,31 @@
++
++/**
++ * This code was generated by [react-native-codegen](https://www.npmjs.com/package/react-native-codegen).
++ *
++ * Do not edit this file as changes may cause incorrect behavior and will be lost
++ * once the code is regenerated.
++ *
++ * @generated by codegen project: GenerateModuleJniH.js
++ */
++
++#pragma once
++
++#include <ReactCommon/JavaTurboModule.h>
++#include <ReactCommon/TurboModule.h>
++#include <jsi/jsi.h>
++
++namespace facebook::react {
++
++/**
++ * JNI C++ class for module 'NativeTurboxml'
++ */
++class JSI_EXPORT NativeTurboxmlSpecJSI : public JavaTurboModule {
++public:
++  NativeTurboxmlSpecJSI(const JavaTurboModule::InitParams &params);
++};
++
++
++JSI_EXPORT
++std::shared_ptr<TurboModule> TurboxmlSpec_ModuleProvider(const std::string &moduleName, const JavaTurboModule::InitParams &params);
++
++} // namespace facebook::react
+diff --git a/node_modules/react-native-turboxml/android/build/generated/source/codegen/jni/react/renderer/components/TurboxmlSpec/ComponentDescriptors.cpp b/node_modules/react-native-turboxml/android/build/generated/source/codegen/jni/react/renderer/components/TurboxmlSpec/ComponentDescriptors.cpp
+new file mode 100644
+index 0000000..41e605f
+--- /dev/null
++++ b/node_modules/react-native-turboxml/android/build/generated/source/codegen/jni/react/renderer/components/TurboxmlSpec/ComponentDescriptors.cpp
+@@ -0,0 +1,22 @@
++
++/**
++ * This code was generated by [react-native-codegen](https://www.npmjs.com/package/react-native-codegen).
++ *
++ * Do not edit this file as changes may cause incorrect behavior and will be lost
++ * once the code is regenerated.
++ *
++ * @generated by codegen project: GenerateComponentDescriptorCpp.js
++ */
++
++#include <react/renderer/components/TurboxmlSpec/ComponentDescriptors.h>
++#include <react/renderer/core/ConcreteComponentDescriptor.h>
++#include <react/renderer/componentregistry/ComponentDescriptorProviderRegistry.h>
++
++namespace facebook::react {
++
++void TurboxmlSpec_registerComponentDescriptorsFromCodegen(
++  std::shared_ptr<const ComponentDescriptorProviderRegistry> registry) {
++
++}
++
++} // namespace facebook::react
+diff --git a/node_modules/react-native-turboxml/android/build/generated/source/codegen/jni/react/renderer/components/TurboxmlSpec/ComponentDescriptors.h b/node_modules/react-native-turboxml/android/build/generated/source/codegen/jni/react/renderer/components/TurboxmlSpec/ComponentDescriptors.h
+new file mode 100644
+index 0000000..c21e355
+--- /dev/null
++++ b/node_modules/react-native-turboxml/android/build/generated/source/codegen/jni/react/renderer/components/TurboxmlSpec/ComponentDescriptors.h
+@@ -0,0 +1,24 @@
++
++/**
++ * This code was generated by [react-native-codegen](https://www.npmjs.com/package/react-native-codegen).
++ *
++ * Do not edit this file as changes may cause incorrect behavior and will be lost
++ * once the code is regenerated.
++ *
++ * @generated by codegen project: GenerateComponentDescriptorH.js
++ */
++
++#pragma once
++
++#include <react/renderer/components/TurboxmlSpec/ShadowNodes.h>
++#include <react/renderer/core/ConcreteComponentDescriptor.h>
++#include <react/renderer/componentregistry/ComponentDescriptorProviderRegistry.h>
++
++namespace facebook::react {
++
++
++
++void TurboxmlSpec_registerComponentDescriptorsFromCodegen(
++  std::shared_ptr<const ComponentDescriptorProviderRegistry> registry);
++
++} // namespace facebook::react
+diff --git a/node_modules/react-native-turboxml/android/build/generated/source/codegen/jni/react/renderer/components/TurboxmlSpec/EventEmitters.cpp b/node_modules/react-native-turboxml/android/build/generated/source/codegen/jni/react/renderer/components/TurboxmlSpec/EventEmitters.cpp
+new file mode 100644
+index 0000000..3ca2689
+--- /dev/null
++++ b/node_modules/react-native-turboxml/android/build/generated/source/codegen/jni/react/renderer/components/TurboxmlSpec/EventEmitters.cpp
+@@ -0,0 +1,16 @@
++
++/**
++ * This code was generated by [react-native-codegen](https://www.npmjs.com/package/react-native-codegen).
++ *
++ * Do not edit this file as changes may cause incorrect behavior and will be lost
++ * once the code is regenerated.
++ *
++ * @generated by codegen project: GenerateEventEmitterCpp.js
++ */
++
++#include <react/renderer/components/TurboxmlSpec/EventEmitters.h>
++
++
++namespace facebook::react {
++
++} // namespace facebook::react
+diff --git a/node_modules/react-native-turboxml/android/build/generated/source/codegen/jni/react/renderer/components/TurboxmlSpec/EventEmitters.h b/node_modules/react-native-turboxml/android/build/generated/source/codegen/jni/react/renderer/components/TurboxmlSpec/EventEmitters.h
+new file mode 100644
+index 0000000..2845a63
+--- /dev/null
++++ b/node_modules/react-native-turboxml/android/build/generated/source/codegen/jni/react/renderer/components/TurboxmlSpec/EventEmitters.h
+@@ -0,0 +1,17 @@
++
++/**
++ * This code was generated by [react-native-codegen](https://www.npmjs.com/package/react-native-codegen).
++ *
++ * Do not edit this file as changes may cause incorrect behavior and will be lost
++ * once the code is regenerated.
++ *
++ * @generated by codegen project: GenerateEventEmitterH.js
++ */
++#pragma once
++
++#include <react/renderer/components/view/ViewEventEmitter.h>
++
++
++namespace facebook::react {
++
++} // namespace facebook::react
+diff --git a/node_modules/react-native-turboxml/android/build/generated/source/codegen/jni/react/renderer/components/TurboxmlSpec/Props.cpp b/node_modules/react-native-turboxml/android/build/generated/source/codegen/jni/react/renderer/components/TurboxmlSpec/Props.cpp
+new file mode 100644
+index 0000000..3455285
+--- /dev/null
++++ b/node_modules/react-native-turboxml/android/build/generated/source/codegen/jni/react/renderer/components/TurboxmlSpec/Props.cpp
+@@ -0,0 +1,19 @@
++
++/**
++ * This code was generated by [react-native-codegen](https://www.npmjs.com/package/react-native-codegen).
++ *
++ * Do not edit this file as changes may cause incorrect behavior and will be lost
++ * once the code is regenerated.
++ *
++ * @generated by codegen project: GeneratePropsCpp.js
++ */
++
++#include <react/renderer/components/TurboxmlSpec/Props.h>
++#include <react/renderer/core/PropsParserContext.h>
++#include <react/renderer/core/propsConversions.h>
++
++namespace facebook::react {
++
++
++
++} // namespace facebook::react
+diff --git a/node_modules/react-native-turboxml/android/build/generated/source/codegen/jni/react/renderer/components/TurboxmlSpec/Props.h b/node_modules/react-native-turboxml/android/build/generated/source/codegen/jni/react/renderer/components/TurboxmlSpec/Props.h
+new file mode 100644
+index 0000000..870864b
+--- /dev/null
++++ b/node_modules/react-native-turboxml/android/build/generated/source/codegen/jni/react/renderer/components/TurboxmlSpec/Props.h
+@@ -0,0 +1,18 @@
++
++/**
++ * This code was generated by [react-native-codegen](https://www.npmjs.com/package/react-native-codegen).
++ *
++ * Do not edit this file as changes may cause incorrect behavior and will be lost
++ * once the code is regenerated.
++ *
++ * @generated by codegen project: GeneratePropsH.js
++ */
++#pragma once
++
++
++
++namespace facebook::react {
++
++
++
++} // namespace facebook::react
+diff --git a/node_modules/react-native-turboxml/android/build/generated/source/codegen/jni/react/renderer/components/TurboxmlSpec/ShadowNodes.cpp b/node_modules/react-native-turboxml/android/build/generated/source/codegen/jni/react/renderer/components/TurboxmlSpec/ShadowNodes.cpp
+new file mode 100644
+index 0000000..4ae63b7
+--- /dev/null
++++ b/node_modules/react-native-turboxml/android/build/generated/source/codegen/jni/react/renderer/components/TurboxmlSpec/ShadowNodes.cpp
+@@ -0,0 +1,17 @@
++
++/**
++ * This code was generated by [react-native-codegen](https://www.npmjs.com/package/react-native-codegen).
++ *
++ * Do not edit this file as changes may cause incorrect behavior and will be lost
++ * once the code is regenerated.
++ *
++ * @generated by codegen project: GenerateShadowNodeCpp.js
++ */
++
++#include <react/renderer/components/TurboxmlSpec/ShadowNodes.h>
++
++namespace facebook::react {
++
++
++
++} // namespace facebook::react
+diff --git a/node_modules/react-native-turboxml/android/build/generated/source/codegen/jni/react/renderer/components/TurboxmlSpec/ShadowNodes.h b/node_modules/react-native-turboxml/android/build/generated/source/codegen/jni/react/renderer/components/TurboxmlSpec/ShadowNodes.h
+new file mode 100644
+index 0000000..1330b3a
+--- /dev/null
++++ b/node_modules/react-native-turboxml/android/build/generated/source/codegen/jni/react/renderer/components/TurboxmlSpec/ShadowNodes.h
+@@ -0,0 +1,23 @@
++
++/**
++ * This code was generated by [react-native-codegen](https://www.npmjs.com/package/react-native-codegen).
++ *
++ * Do not edit this file as changes may cause incorrect behavior and will be lost
++ * once the code is regenerated.
++ *
++ * @generated by codegen project: GenerateShadowNodeH.js
++ */
++
++#pragma once
++
++#include <react/renderer/components/TurboxmlSpec/EventEmitters.h>
++#include <react/renderer/components/TurboxmlSpec/Props.h>
++#include <react/renderer/components/TurboxmlSpec/States.h>
++#include <react/renderer/components/view/ConcreteViewShadowNode.h>
++#include <jsi/jsi.h>
++
++namespace facebook::react {
++
++
++
++} // namespace facebook::react
+diff --git a/node_modules/react-native-turboxml/android/build/generated/source/codegen/jni/react/renderer/components/TurboxmlSpec/States.cpp b/node_modules/react-native-turboxml/android/build/generated/source/codegen/jni/react/renderer/components/TurboxmlSpec/States.cpp
+new file mode 100644
+index 0000000..321b8cd
+--- /dev/null
++++ b/node_modules/react-native-turboxml/android/build/generated/source/codegen/jni/react/renderer/components/TurboxmlSpec/States.cpp
+@@ -0,0 +1,16 @@
++
++/**
++ * This code was generated by [react-native-codegen](https://www.npmjs.com/package/react-native-codegen).
++ *
++ * Do not edit this file as changes may cause incorrect behavior and will be lost
++ * once the code is regenerated.
++ *
++ * @generated by codegen project: GenerateStateCpp.js
++ */
++#include <react/renderer/components/TurboxmlSpec/States.h>
++
++namespace facebook::react {
++
++
++
++} // namespace facebook::react
+diff --git a/node_modules/react-native-turboxml/android/build/generated/source/codegen/jni/react/renderer/components/TurboxmlSpec/States.h b/node_modules/react-native-turboxml/android/build/generated/source/codegen/jni/react/renderer/components/TurboxmlSpec/States.h
+new file mode 100644
+index 0000000..2e55bce
+--- /dev/null
++++ b/node_modules/react-native-turboxml/android/build/generated/source/codegen/jni/react/renderer/components/TurboxmlSpec/States.h
+@@ -0,0 +1,20 @@
++/**
++ * This code was generated by [react-native-codegen](https://www.npmjs.com/package/react-native-codegen).
++ *
++ * Do not edit this file as changes may cause incorrect behavior and will be lost
++ * once the code is regenerated.
++ *
++ * @generated by codegen project: GenerateStateH.js
++ */
++#pragma once
++
++#include <react/renderer/core/StateData.h>
++#ifdef RN_SERIALIZABLE_STATE
++#include <folly/dynamic.h>
++#endif
++
++namespace facebook::react {
++
++
++
++} // namespace facebook::react
+\ No newline at end of file
+diff --git a/node_modules/react-native-turboxml/android/build/generated/source/codegen/jni/react/renderer/components/TurboxmlSpec/TurboxmlSpecJSI-generated.cpp b/node_modules/react-native-turboxml/android/build/generated/source/codegen/jni/react/renderer/components/TurboxmlSpec/TurboxmlSpecJSI-generated.cpp
+new file mode 100644
+index 0000000..230cfef
+--- /dev/null
++++ b/node_modules/react-native-turboxml/android/build/generated/source/codegen/jni/react/renderer/components/TurboxmlSpec/TurboxmlSpecJSI-generated.cpp
+@@ -0,0 +1,27 @@
++/**
++ * This code was generated by [react-native-codegen](https://www.npmjs.com/package/react-native-codegen).
++ *
++ * Do not edit this file as changes may cause incorrect behavior and will be lost
++ * once the code is regenerated.
++ *
++ * @generated by codegen project: GenerateModuleCpp.js
++ */
++
++#include "TurboxmlSpecJSI.h"
++
++namespace facebook::react {
++
++static jsi::Value __hostFunction_NativeTurboxmlCxxSpecJSI_parseXml(jsi::Runtime &rt, TurboModule &turboModule, const jsi::Value* args, size_t count) {
++  return static_cast<NativeTurboxmlCxxSpecJSI *>(&turboModule)->parseXml(
++    rt,
++    count <= 0 ? throw jsi::JSError(rt, "Expected argument in position 0 to be passed") : args[0].asString(rt)
++  );
++}
++
++NativeTurboxmlCxxSpecJSI::NativeTurboxmlCxxSpecJSI(std::shared_ptr<CallInvoker> jsInvoker)
++  : TurboModule("Turboxml", jsInvoker) {
++  methodMap_["parseXml"] = MethodMetadata {1, __hostFunction_NativeTurboxmlCxxSpecJSI_parseXml};
++}
++
++
++} // namespace facebook::react
+diff --git a/node_modules/react-native-turboxml/android/build/generated/source/codegen/jni/react/renderer/components/TurboxmlSpec/TurboxmlSpecJSI.h b/node_modules/react-native-turboxml/android/build/generated/source/codegen/jni/react/renderer/components/TurboxmlSpec/TurboxmlSpecJSI.h
+new file mode 100644
+index 0000000..3b09bf7
+--- /dev/null
++++ b/node_modules/react-native-turboxml/android/build/generated/source/codegen/jni/react/renderer/components/TurboxmlSpec/TurboxmlSpecJSI.h
+@@ -0,0 +1,71 @@
++/**
++ * This code was generated by [react-native-codegen](https://www.npmjs.com/package/react-native-codegen).
++ *
++ * Do not edit this file as changes may cause incorrect behavior and will be lost
++ * once the code is regenerated.
++ *
++ * @generated by codegen project: GenerateModuleH.js
++ */
++
++#pragma once
++
++#include <ReactCommon/TurboModule.h>
++#include <react/bridging/Bridging.h>
++
++namespace facebook::react {
++
++
++  class JSI_EXPORT NativeTurboxmlCxxSpecJSI : public TurboModule {
++protected:
++  NativeTurboxmlCxxSpecJSI(std::shared_ptr<CallInvoker> jsInvoker);
++
++public:
++  virtual jsi::Value parseXml(jsi::Runtime &rt, jsi::String xml) = 0;
++
++};
++
++template <typename T>
++class JSI_EXPORT NativeTurboxmlCxxSpec : public TurboModule {
++public:
++  jsi::Value create(jsi::Runtime &rt, const jsi::PropNameID &propName) override {
++    return delegate_.create(rt, propName);
++  }
++
++  std::vector<jsi::PropNameID> getPropertyNames(jsi::Runtime& runtime) override {
++    return delegate_.getPropertyNames(runtime);
++  }
++
++  static constexpr std::string_view kModuleName = "Turboxml";
++
++protected:
++  NativeTurboxmlCxxSpec(std::shared_ptr<CallInvoker> jsInvoker)
++    : TurboModule(std::string{NativeTurboxmlCxxSpec::kModuleName}, jsInvoker),
++      delegate_(reinterpret_cast<T*>(this), jsInvoker) {}
++
++
++private:
++  class Delegate : public NativeTurboxmlCxxSpecJSI {
++  public:
++    Delegate(T *instance, std::shared_ptr<CallInvoker> jsInvoker) :
++      NativeTurboxmlCxxSpecJSI(std::move(jsInvoker)), instance_(instance) {
++
++    }
++
++    jsi::Value parseXml(jsi::Runtime &rt, jsi::String xml) override {
++      static_assert(
++          bridging::getParameterCount(&T::parseXml) == 2,
++          "Expected parseXml(...) to have 2 parameters");
++
++      return bridging::callFromJs<jsi::Value>(
++          rt, &T::parseXml, jsInvoker_, instance_, std::move(xml));
++    }
++
++  private:
++    friend class NativeTurboxmlCxxSpec;
++    T *instance_;
++  };
++
++  Delegate delegate_;
++};
++
++} // namespace facebook::react
+diff --git a/node_modules/react-native-turboxml/android/build/generated/source/codegen/schema.json b/node_modules/react-native-turboxml/android/build/generated/source/codegen/schema.json
+new file mode 100644
+index 0000000..5c7319d
+--- /dev/null
++++ b/node_modules/react-native-turboxml/android/build/generated/source/codegen/schema.json
+@@ -0,0 +1 @@
++{"libraryName":"","modules":{"NativeTurboxml":{"type":"NativeModule","aliasMap":{},"enumMap":{},"spec":{"eventEmitters":[],"methods":[{"name":"parseXml","optional":false,"typeAnnotation":{"type":"FunctionTypeAnnotation","returnTypeAnnotation":{"type":"PromiseTypeAnnotation","elementType":{"type":"VoidTypeAnnotation"}},"params":[{"name":"xml","optional":false,"typeAnnotation":{"type":"StringTypeAnnotation"}}]}}]},"moduleName":"Turboxml"}}}
+\ No newline at end of file
+diff --git a/node_modules/react-native-turboxml/android/build/intermediates/aapt_friendly_merged_manifests/debug/processDebugManifest/aapt/AndroidManifest.xml b/node_modules/react-native-turboxml/android/build/intermediates/aapt_friendly_merged_manifests/debug/processDebugManifest/aapt/AndroidManifest.xml
+new file mode 100644
+index 0000000..643f610
+--- /dev/null
++++ b/node_modules/react-native-turboxml/android/build/intermediates/aapt_friendly_merged_manifests/debug/processDebugManifest/aapt/AndroidManifest.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<manifest xmlns:android="http://schemas.android.com/apk/res/android"
++    package="com.turboxml" >
++
++    <uses-sdk android:minSdkVersion="24" />
++
++</manifest>
+\ No newline at end of file
+diff --git a/node_modules/react-native-turboxml/android/build/intermediates/aapt_friendly_merged_manifests/debug/processDebugManifest/aapt/output-metadata.json b/node_modules/react-native-turboxml/android/build/intermediates/aapt_friendly_merged_manifests/debug/processDebugManifest/aapt/output-metadata.json
+new file mode 100644
+index 0000000..1c52165
+--- /dev/null
++++ b/node_modules/react-native-turboxml/android/build/intermediates/aapt_friendly_merged_manifests/debug/processDebugManifest/aapt/output-metadata.json
+@@ -0,0 +1,18 @@
++{
++  "version": 3,
++  "artifactType": {
++    "type": "AAPT_FRIENDLY_MERGED_MANIFESTS",
++    "kind": "Directory"
++  },
++  "applicationId": "com.turboxml",
++  "variantName": "debug",
++  "elements": [
++    {
++      "type": "SINGLE",
++      "filters": [],
++      "attributes": [],
++      "outputFile": "AndroidManifest.xml"
++    }
++  ],
++  "elementType": "File"
++}
+\ No newline at end of file
+diff --git a/node_modules/react-native-turboxml/android/build/intermediates/aar_metadata/debug/writeDebugAarMetadata/aar-metadata.properties b/node_modules/react-native-turboxml/android/build/intermediates/aar_metadata/debug/writeDebugAarMetadata/aar-metadata.properties
+new file mode 100644
+index 0000000..1211b1e
+--- /dev/null
++++ b/node_modules/react-native-turboxml/android/build/intermediates/aar_metadata/debug/writeDebugAarMetadata/aar-metadata.properties
+@@ -0,0 +1,6 @@
++aarFormatVersion=1.0
++aarMetadataVersion=1.0
++minCompileSdk=1
++minCompileSdkExtension=0
++minAndroidGradlePluginVersion=1.0.0
++coreLibraryDesugaringEnabled=false
+diff --git a/node_modules/react-native-turboxml/android/build/intermediates/annotation_processor_list/debug/javaPreCompileDebug/annotationProcessors.json b/node_modules/react-native-turboxml/android/build/intermediates/annotation_processor_list/debug/javaPreCompileDebug/annotationProcessors.json
+new file mode 100644
+index 0000000..9e26dfe
+--- /dev/null
++++ b/node_modules/react-native-turboxml/android/build/intermediates/annotation_processor_list/debug/javaPreCompileDebug/annotationProcessors.json
+@@ -0,0 +1 @@
++{}
+\ No newline at end of file
+diff --git a/node_modules/react-native-turboxml/android/build/intermediates/compile_library_classes_jar/debug/bundleLibCompileToJarDebug/classes.jar b/node_modules/react-native-turboxml/android/build/intermediates/compile_library_classes_jar/debug/bundleLibCompileToJarDebug/classes.jar
+new file mode 100644
+index 0000000..fad23c0
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/intermediates/compile_library_classes_jar/debug/bundleLibCompileToJarDebug/classes.jar differ
+diff --git a/node_modules/react-native-turboxml/android/build/intermediates/compile_r_class_jar/debug/generateDebugRFile/R.jar b/node_modules/react-native-turboxml/android/build/intermediates/compile_r_class_jar/debug/generateDebugRFile/R.jar
+new file mode 100644
+index 0000000..8b2550c
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/intermediates/compile_r_class_jar/debug/generateDebugRFile/R.jar differ
+diff --git a/node_modules/react-native-turboxml/android/build/intermediates/compile_symbol_list/debug/generateDebugRFile/R.txt b/node_modules/react-native-turboxml/android/build/intermediates/compile_symbol_list/debug/generateDebugRFile/R.txt
+new file mode 100644
+index 0000000..e69de29
+diff --git a/node_modules/react-native-turboxml/android/build/intermediates/incremental/debug/packageDebugResources/compile-file-map.properties b/node_modules/react-native-turboxml/android/build/intermediates/incremental/debug/packageDebugResources/compile-file-map.properties
+new file mode 100644
+index 0000000..938cabf
+--- /dev/null
++++ b/node_modules/react-native-turboxml/android/build/intermediates/incremental/debug/packageDebugResources/compile-file-map.properties
+@@ -0,0 +1 @@
++#Sun Apr 05 19:23:47 AEST 2026
+diff --git a/node_modules/react-native-turboxml/android/build/intermediates/incremental/debug/packageDebugResources/merger.xml b/node_modules/react-native-turboxml/android/build/intermediates/incremental/debug/packageDebugResources/merger.xml
+new file mode 100644
+index 0000000..3105e3e
+--- /dev/null
++++ b/node_modules/react-native-turboxml/android/build/intermediates/incremental/debug/packageDebugResources/merger.xml
+@@ -0,0 +1,2 @@
++<?xml version="1.0" encoding="utf-8"?>
++<merger version="3"><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="main$Generated" generated="true" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="D:\Repos\EdGo\node_modules\react-native-turboxml\android\src\main\res"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="main" generated-set="main$Generated" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="D:\Repos\EdGo\node_modules\react-native-turboxml\android\src\main\res"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="debug$Generated" generated="true" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="D:\Repos\EdGo\node_modules\react-native-turboxml\android\src\debug\res"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="debug" generated-set="debug$Generated" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="D:\Repos\EdGo\node_modules\react-native-turboxml\android\src\debug\res"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="generated$Generated" generated="true" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="D:\Repos\EdGo\node_modules\react-native-turboxml\android\build\generated\res\resValues\debug"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="generated" generated-set="generated$Generated" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="D:\Repos\EdGo\node_modules\react-native-turboxml\android\build\generated\res\resValues\debug"/></dataSet><mergedItems/></merger>
+\ No newline at end of file
+diff --git a/node_modules/react-native-turboxml/android/build/intermediates/incremental/mergeDebugAssets/merger.xml b/node_modules/react-native-turboxml/android/build/intermediates/incremental/mergeDebugAssets/merger.xml
+new file mode 100644
+index 0000000..a4688b0
+--- /dev/null
++++ b/node_modules/react-native-turboxml/android/build/intermediates/incremental/mergeDebugAssets/merger.xml
+@@ -0,0 +1,2 @@
++<?xml version="1.0" encoding="utf-8"?>
++<merger version="3"><dataSet config="main" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="D:\Repos\EdGo\node_modules\react-native-turboxml\android\src\main\assets"/></dataSet><dataSet config="debug" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="D:\Repos\EdGo\node_modules\react-native-turboxml\android\src\debug\assets"/></dataSet><dataSet config="generated" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="D:\Repos\EdGo\node_modules\react-native-turboxml\android\build\intermediates\shader_assets\debug\compileDebugShaders\out"/></dataSet></merger>
+\ No newline at end of file
+diff --git a/node_modules/react-native-turboxml/android/build/intermediates/incremental/mergeDebugJniLibFolders/merger.xml b/node_modules/react-native-turboxml/android/build/intermediates/incremental/mergeDebugJniLibFolders/merger.xml
+new file mode 100644
+index 0000000..baca34e
+--- /dev/null
++++ b/node_modules/react-native-turboxml/android/build/intermediates/incremental/mergeDebugJniLibFolders/merger.xml
+@@ -0,0 +1,2 @@
++<?xml version="1.0" encoding="utf-8"?>
++<merger version="3"><dataSet config="main" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="D:\Repos\EdGo\node_modules\react-native-turboxml\android\src\main\jniLibs"/></dataSet><dataSet config="debug" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="D:\Repos\EdGo\node_modules\react-native-turboxml\android\src\debug\jniLibs"/></dataSet></merger>
+\ No newline at end of file
+diff --git a/node_modules/react-native-turboxml/android/build/intermediates/incremental/mergeDebugShaders/merger.xml b/node_modules/react-native-turboxml/android/build/intermediates/incremental/mergeDebugShaders/merger.xml
+new file mode 100644
+index 0000000..9cbf35f
+--- /dev/null
++++ b/node_modules/react-native-turboxml/android/build/intermediates/incremental/mergeDebugShaders/merger.xml
+@@ -0,0 +1,2 @@
++<?xml version="1.0" encoding="utf-8"?>
++<merger version="3"><dataSet config="main" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="D:\Repos\EdGo\node_modules\react-native-turboxml\android\src\main\shaders"/></dataSet><dataSet config="debug" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="D:\Repos\EdGo\node_modules\react-native-turboxml\android\src\debug\shaders"/></dataSet></merger>
+\ No newline at end of file
+diff --git a/node_modules/react-native-turboxml/android/build/intermediates/java_res/debug/processDebugJavaRes/out/META-INF/react-native-turboxml_debug.kotlin_module b/node_modules/react-native-turboxml/android/build/intermediates/java_res/debug/processDebugJavaRes/out/META-INF/react-native-turboxml_debug.kotlin_module
+new file mode 100644
+index 0000000..9dbc290
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/intermediates/java_res/debug/processDebugJavaRes/out/META-INF/react-native-turboxml_debug.kotlin_module differ
+diff --git a/node_modules/react-native-turboxml/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/turboxml/BuildConfig.class b/node_modules/react-native-turboxml/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/turboxml/BuildConfig.class
+new file mode 100644
+index 0000000..e0dc089
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/turboxml/BuildConfig.class differ
+diff --git a/node_modules/react-native-turboxml/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/turboxml/NativeTurboxmlSpec.class b/node_modules/react-native-turboxml/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/turboxml/NativeTurboxmlSpec.class
+new file mode 100644
+index 0000000..2d8cd1c
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/turboxml/NativeTurboxmlSpec.class differ
+diff --git a/node_modules/react-native-turboxml/android/build/intermediates/local_only_symbol_list/debug/parseDebugLocalResources/R-def.txt b/node_modules/react-native-turboxml/android/build/intermediates/local_only_symbol_list/debug/parseDebugLocalResources/R-def.txt
+new file mode 100644
+index 0000000..78ac5b8
+--- /dev/null
++++ b/node_modules/react-native-turboxml/android/build/intermediates/local_only_symbol_list/debug/parseDebugLocalResources/R-def.txt
+@@ -0,0 +1,2 @@
++R_DEF: Internal format may change without notice
++local
+diff --git a/node_modules/react-native-turboxml/android/build/intermediates/manifest_merge_blame_file/debug/processDebugManifest/manifest-merger-blame-debug-report.txt b/node_modules/react-native-turboxml/android/build/intermediates/manifest_merge_blame_file/debug/processDebugManifest/manifest-merger-blame-debug-report.txt
+new file mode 100644
+index 0000000..5c39640
+--- /dev/null
++++ b/node_modules/react-native-turboxml/android/build/intermediates/manifest_merge_blame_file/debug/processDebugManifest/manifest-merger-blame-debug-report.txt
+@@ -0,0 +1,7 @@
++1<?xml version="1.0" encoding="utf-8"?>
++2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
++3    package="com.turboxml" >
++4
++5    <uses-sdk android:minSdkVersion="24" />
++6
++7</manifest>
+diff --git a/node_modules/react-native-turboxml/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml b/node_modules/react-native-turboxml/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml
+new file mode 100644
+index 0000000..643f610
+--- /dev/null
++++ b/node_modules/react-native-turboxml/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<manifest xmlns:android="http://schemas.android.com/apk/res/android"
++    package="com.turboxml" >
++
++    <uses-sdk android:minSdkVersion="24" />
++
++</manifest>
+\ No newline at end of file
+diff --git a/node_modules/react-native-turboxml/android/build/intermediates/navigation_json/debug/extractDeepLinksDebug/navigation.json b/node_modules/react-native-turboxml/android/build/intermediates/navigation_json/debug/extractDeepLinksDebug/navigation.json
+new file mode 100644
+index 0000000..0637a08
+--- /dev/null
++++ b/node_modules/react-native-turboxml/android/build/intermediates/navigation_json/debug/extractDeepLinksDebug/navigation.json
+@@ -0,0 +1 @@
++[]
+\ No newline at end of file
+diff --git a/node_modules/react-native-turboxml/android/build/intermediates/nested_resources_validation_report/debug/generateDebugResources/nestedResourcesValidationReport.txt b/node_modules/react-native-turboxml/android/build/intermediates/nested_resources_validation_report/debug/generateDebugResources/nestedResourcesValidationReport.txt
+new file mode 100644
+index 0000000..08f4ebe
+--- /dev/null
++++ b/node_modules/react-native-turboxml/android/build/intermediates/nested_resources_validation_report/debug/generateDebugResources/nestedResourcesValidationReport.txt
+@@ -0,0 +1 @@
++0 Warning/Error
+\ No newline at end of file
+diff --git a/node_modules/react-native-turboxml/android/build/intermediates/runtime_library_classes_jar/debug/bundleLibRuntimeToJarDebug/classes.jar b/node_modules/react-native-turboxml/android/build/intermediates/runtime_library_classes_jar/debug/bundleLibRuntimeToJarDebug/classes.jar
+new file mode 100644
+index 0000000..b36b4dd
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/intermediates/runtime_library_classes_jar/debug/bundleLibRuntimeToJarDebug/classes.jar differ
+diff --git a/node_modules/react-native-turboxml/android/build/intermediates/symbol_list_with_package_name/debug/generateDebugRFile/package-aware-r.txt b/node_modules/react-native-turboxml/android/build/intermediates/symbol_list_with_package_name/debug/generateDebugRFile/package-aware-r.txt
+new file mode 100644
+index 0000000..0e7626c
+--- /dev/null
++++ b/node_modules/react-native-turboxml/android/build/intermediates/symbol_list_with_package_name/debug/generateDebugRFile/package-aware-r.txt
+@@ -0,0 +1 @@
++com.turboxml
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/inputs/source-to-output.tab b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/inputs/source-to-output.tab
+new file mode 100644
+index 0000000..06d6ecc
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/inputs/source-to-output.tab differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/inputs/source-to-output.tab.keystream b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/inputs/source-to-output.tab.keystream
+new file mode 100644
+index 0000000..bb1dfe6
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/inputs/source-to-output.tab.keystream differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/inputs/source-to-output.tab.keystream.len b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/inputs/source-to-output.tab.keystream.len
+new file mode 100644
+index 0000000..ad41f9d
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/inputs/source-to-output.tab.keystream.len differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/inputs/source-to-output.tab.len b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/inputs/source-to-output.tab.len
+new file mode 100644
+index 0000000..01bdaa1
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/inputs/source-to-output.tab.len differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/inputs/source-to-output.tab.values.at b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/inputs/source-to-output.tab.values.at
+new file mode 100644
+index 0000000..1d0cdda
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/inputs/source-to-output.tab.values.at differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/inputs/source-to-output.tab_i b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/inputs/source-to-output.tab_i
+new file mode 100644
+index 0000000..8866bca
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/inputs/source-to-output.tab_i differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/inputs/source-to-output.tab_i.len b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/inputs/source-to-output.tab_i.len
+new file mode 100644
+index 0000000..131e265
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/inputs/source-to-output.tab_i.len differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab
+new file mode 100644
+index 0000000..a8b7868
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab.keystream b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab.keystream
+new file mode 100644
+index 0000000..23dc0a5
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab.keystream differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab.keystream.len b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab.keystream.len
+new file mode 100644
+index 0000000..09407ef
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab.keystream.len differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab.len b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab.len
+new file mode 100644
+index 0000000..93a595b
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab.len differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab.values.at b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab.values.at
+new file mode 100644
+index 0000000..85c1eba
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab.values.at differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab_i b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab_i
+new file mode 100644
+index 0000000..c71ec2e
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab_i differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab_i.len b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab_i.len
+new file mode 100644
+index 0000000..131e265
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab_i.len differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-fq-name-to-source.tab b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-fq-name-to-source.tab
+new file mode 100644
+index 0000000..356666d
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-fq-name-to-source.tab differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-fq-name-to-source.tab.keystream b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-fq-name-to-source.tab.keystream
+new file mode 100644
+index 0000000..23dc0a5
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-fq-name-to-source.tab.keystream differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-fq-name-to-source.tab.keystream.len b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-fq-name-to-source.tab.keystream.len
+new file mode 100644
+index 0000000..09407ef
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-fq-name-to-source.tab.keystream.len differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-fq-name-to-source.tab.len b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-fq-name-to-source.tab.len
+new file mode 100644
+index 0000000..93a595b
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-fq-name-to-source.tab.len differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-fq-name-to-source.tab.values.at b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-fq-name-to-source.tab.values.at
+new file mode 100644
+index 0000000..2672da5
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-fq-name-to-source.tab.values.at differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-fq-name-to-source.tab_i b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-fq-name-to-source.tab_i
+new file mode 100644
+index 0000000..c71ec2e
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-fq-name-to-source.tab_i differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-fq-name-to-source.tab_i.len b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-fq-name-to-source.tab_i.len
+new file mode 100644
+index 0000000..131e265
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-fq-name-to-source.tab_i.len differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/constants.tab b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/constants.tab
+new file mode 100644
+index 0000000..861a7f2
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/constants.tab differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/constants.tab.keystream b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/constants.tab.keystream
+new file mode 100644
+index 0000000..caf4879
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/constants.tab.keystream differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/constants.tab.keystream.len b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/constants.tab.keystream.len
+new file mode 100644
+index 0000000..3f68fd9
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/constants.tab.keystream.len differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/constants.tab.len b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/constants.tab.len
+new file mode 100644
+index 0000000..2a17e6e
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/constants.tab.len differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/constants.tab.values.at b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/constants.tab.values.at
+new file mode 100644
+index 0000000..68f2782
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/constants.tab.values.at differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/constants.tab_i b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/constants.tab_i
+new file mode 100644
+index 0000000..22ef8ad
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/constants.tab_i differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/constants.tab_i.len b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/constants.tab_i.len
+new file mode 100644
+index 0000000..131e265
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/constants.tab_i.len differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/internal-name-to-source.tab b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/internal-name-to-source.tab
+new file mode 100644
+index 0000000..6ba0474
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/internal-name-to-source.tab differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/internal-name-to-source.tab.keystream b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/internal-name-to-source.tab.keystream
+new file mode 100644
+index 0000000..861e471
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/internal-name-to-source.tab.keystream differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/internal-name-to-source.tab.keystream.len b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/internal-name-to-source.tab.keystream.len
+new file mode 100644
+index 0000000..c0fe830
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/internal-name-to-source.tab.keystream.len differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/internal-name-to-source.tab.len b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/internal-name-to-source.tab.len
+new file mode 100644
+index 0000000..fa606b6
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/internal-name-to-source.tab.len differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/internal-name-to-source.tab.values.at b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/internal-name-to-source.tab.values.at
+new file mode 100644
+index 0000000..96f8bdc
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/internal-name-to-source.tab.values.at differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/internal-name-to-source.tab_i b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/internal-name-to-source.tab_i
+new file mode 100644
+index 0000000..b124662
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/internal-name-to-source.tab_i differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/internal-name-to-source.tab_i.len b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/internal-name-to-source.tab_i.len
+new file mode 100644
+index 0000000..131e265
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/internal-name-to-source.tab_i.len differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/proto.tab b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/proto.tab
+new file mode 100644
+index 0000000..d85897a
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/proto.tab differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/proto.tab.keystream b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/proto.tab.keystream
+new file mode 100644
+index 0000000..938a88b
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/proto.tab.keystream differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/proto.tab.keystream.len b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/proto.tab.keystream.len
+new file mode 100644
+index 0000000..b31f54b
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/proto.tab.keystream.len differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/proto.tab.len b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/proto.tab.len
+new file mode 100644
+index 0000000..ec8f944
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/proto.tab.len differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/proto.tab.values.at b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/proto.tab.values.at
+new file mode 100644
+index 0000000..e5aa2ce
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/proto.tab.values.at differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/proto.tab_i b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/proto.tab_i
+new file mode 100644
+index 0000000..4277e90
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/proto.tab_i differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/proto.tab_i.len b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/proto.tab_i.len
+new file mode 100644
+index 0000000..131e265
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/proto.tab_i.len differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/source-to-classes.tab b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/source-to-classes.tab
+new file mode 100644
+index 0000000..6f7f819
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/source-to-classes.tab differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/source-to-classes.tab.keystream b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/source-to-classes.tab.keystream
+new file mode 100644
+index 0000000..bb1dfe6
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/source-to-classes.tab.keystream differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/source-to-classes.tab.keystream.len b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/source-to-classes.tab.keystream.len
+new file mode 100644
+index 0000000..ad41f9d
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/source-to-classes.tab.keystream.len differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/source-to-classes.tab.len b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/source-to-classes.tab.len
+new file mode 100644
+index 0000000..01bdaa1
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/source-to-classes.tab.len differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/source-to-classes.tab.values.at b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/source-to-classes.tab.values.at
+new file mode 100644
+index 0000000..37de9bb
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/source-to-classes.tab.values.at differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/source-to-classes.tab_i b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/source-to-classes.tab_i
+new file mode 100644
+index 0000000..8866bca
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/source-to-classes.tab_i differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/source-to-classes.tab_i.len b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/source-to-classes.tab_i.len
+new file mode 100644
+index 0000000..131e265
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/source-to-classes.tab_i.len differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/subtypes.tab b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/subtypes.tab
+new file mode 100644
+index 0000000..e1108f3
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/subtypes.tab differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/subtypes.tab.keystream b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/subtypes.tab.keystream
+new file mode 100644
+index 0000000..057573a
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/subtypes.tab.keystream differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/subtypes.tab.keystream.len b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/subtypes.tab.keystream.len
+new file mode 100644
+index 0000000..70ec52b
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/subtypes.tab.keystream.len differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/subtypes.tab.len b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/subtypes.tab.len
+new file mode 100644
+index 0000000..01bdaa1
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/subtypes.tab.len differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/subtypes.tab.values.at b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/subtypes.tab.values.at
+new file mode 100644
+index 0000000..7364b7d
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/subtypes.tab.values.at differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/subtypes.tab_i b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/subtypes.tab_i
+new file mode 100644
+index 0000000..5994c1e
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/subtypes.tab_i differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/subtypes.tab_i.len b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/subtypes.tab_i.len
+new file mode 100644
+index 0000000..131e265
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/subtypes.tab_i.len differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/supertypes.tab b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/supertypes.tab
+new file mode 100644
+index 0000000..374f47a
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/supertypes.tab differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/supertypes.tab.keystream b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/supertypes.tab.keystream
+new file mode 100644
+index 0000000..5c0009a
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/supertypes.tab.keystream differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/supertypes.tab.keystream.len b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/supertypes.tab.keystream.len
+new file mode 100644
+index 0000000..00880dd
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/supertypes.tab.keystream.len differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/supertypes.tab.len b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/supertypes.tab.len
+new file mode 100644
+index 0000000..01bdaa1
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/supertypes.tab.len differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/supertypes.tab.values.at b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/supertypes.tab.values.at
+new file mode 100644
+index 0000000..6b5893e
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/supertypes.tab.values.at differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/supertypes.tab_i b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/supertypes.tab_i
+new file mode 100644
+index 0000000..7817b92
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/supertypes.tab_i differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/supertypes.tab_i.len b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/supertypes.tab_i.len
+new file mode 100644
+index 0000000..131e265
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/supertypes.tab_i.len differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/counters.tab b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/counters.tab
+new file mode 100644
+index 0000000..4a12dea
+--- /dev/null
++++ b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/counters.tab
+@@ -0,0 +1,2 @@
++5
++0
+\ No newline at end of file
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/file-to-id.tab b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/file-to-id.tab
+new file mode 100644
+index 0000000..861fc24
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/file-to-id.tab differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/file-to-id.tab.keystream b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/file-to-id.tab.keystream
+new file mode 100644
+index 0000000..bb1dfe6
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/file-to-id.tab.keystream differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/file-to-id.tab.keystream.len b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/file-to-id.tab.keystream.len
+new file mode 100644
+index 0000000..ad41f9d
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/file-to-id.tab.keystream.len differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/file-to-id.tab.len b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/file-to-id.tab.len
+new file mode 100644
+index 0000000..01bdaa1
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/file-to-id.tab.len differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/file-to-id.tab.values.at b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/file-to-id.tab.values.at
+new file mode 100644
+index 0000000..f6a4f17
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/file-to-id.tab.values.at differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/file-to-id.tab_i b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/file-to-id.tab_i
+new file mode 100644
+index 0000000..8866bca
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/file-to-id.tab_i differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/file-to-id.tab_i.len b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/file-to-id.tab_i.len
+new file mode 100644
+index 0000000..131e265
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/file-to-id.tab_i.len differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/id-to-file.tab b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/id-to-file.tab
+new file mode 100644
+index 0000000..d3d16af
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/id-to-file.tab differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/id-to-file.tab.keystream b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/id-to-file.tab.keystream
+new file mode 100644
+index 0000000..1dd772c
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/id-to-file.tab.keystream differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/id-to-file.tab.keystream.len b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/id-to-file.tab.keystream.len
+new file mode 100644
+index 0000000..62f3e6f
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/id-to-file.tab.keystream.len differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/id-to-file.tab.len b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/id-to-file.tab.len
+new file mode 100644
+index 0000000..ec8f944
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/id-to-file.tab.len differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/id-to-file.tab.values.at b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/id-to-file.tab.values.at
+new file mode 100644
+index 0000000..27cf349
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/id-to-file.tab.values.at differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/id-to-file.tab_i b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/id-to-file.tab_i
+new file mode 100644
+index 0000000..e6ff6ac
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/id-to-file.tab_i differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/id-to-file.tab_i.len b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/id-to-file.tab_i.len
+new file mode 100644
+index 0000000..131e265
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/id-to-file.tab_i.len differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/lookups.tab b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/lookups.tab
+new file mode 100644
+index 0000000..9964e77
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/lookups.tab differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/lookups.tab.keystream b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/lookups.tab.keystream
+new file mode 100644
+index 0000000..fa56329
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/lookups.tab.keystream differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/lookups.tab.keystream.len b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/lookups.tab.keystream.len
+new file mode 100644
+index 0000000..a06fde8
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/lookups.tab.keystream.len differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/lookups.tab.len b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/lookups.tab.len
+new file mode 100644
+index 0000000..0135285
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/lookups.tab.len differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/lookups.tab.values.at b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/lookups.tab.values.at
+new file mode 100644
+index 0000000..da4691e
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/lookups.tab.values.at differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/lookups.tab_i b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/lookups.tab_i
+new file mode 100644
+index 0000000..ad9d884
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/lookups.tab_i differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/lookups.tab_i.len b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/lookups.tab_i.len
+new file mode 100644
+index 0000000..131e265
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/lookups.tab_i.len differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/last-build.bin b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/last-build.bin
+new file mode 100644
+index 0000000..cd531ff
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/cacheable/last-build.bin differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/classpath-snapshot/shrunk-classpath-snapshot.bin b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/classpath-snapshot/shrunk-classpath-snapshot.bin
+new file mode 100644
+index 0000000..f7da89b
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/classpath-snapshot/shrunk-classpath-snapshot.bin differ
+diff --git a/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/local-state/build-history.bin b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/local-state/build-history.bin
+new file mode 100644
+index 0000000..50580e3
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/kotlin/compileDebugKotlin/local-state/build-history.bin differ
+diff --git a/node_modules/react-native-turboxml/android/build/outputs/logs/manifest-merger-debug-report.txt b/node_modules/react-native-turboxml/android/build/outputs/logs/manifest-merger-debug-report.txt
+new file mode 100644
+index 0000000..7c2c227
+--- /dev/null
++++ b/node_modules/react-native-turboxml/android/build/outputs/logs/manifest-merger-debug-report.txt
+@@ -0,0 +1,16 @@
++-- Merging decision tree log ---
++manifest
++ADDED from D:\Repos\EdGo\node_modules\react-native-turboxml\android\src\main\AndroidManifest.xml:1:1-2:12
++INJECTED from D:\Repos\EdGo\node_modules\react-native-turboxml\android\src\main\AndroidManifest.xml:1:1-2:12
++	package
++		INJECTED from D:\Repos\EdGo\node_modules\react-native-turboxml\android\src\main\AndroidManifest.xml
++	xmlns:android
++		ADDED from D:\Repos\EdGo\node_modules\react-native-turboxml\android\src\main\AndroidManifest.xml:1:11-69
++uses-sdk
++INJECTED from D:\Repos\EdGo\node_modules\react-native-turboxml\android\src\main\AndroidManifest.xml reason: use-sdk injection requested
++INJECTED from D:\Repos\EdGo\node_modules\react-native-turboxml\android\src\main\AndroidManifest.xml
++INJECTED from D:\Repos\EdGo\node_modules\react-native-turboxml\android\src\main\AndroidManifest.xml
++	android:targetSdkVersion
++		INJECTED from D:\Repos\EdGo\node_modules\react-native-turboxml\android\src\main\AndroidManifest.xml
++	android:minSdkVersion
++		INJECTED from D:\Repos\EdGo\node_modules\react-native-turboxml\android\src\main\AndroidManifest.xml
+diff --git a/node_modules/react-native-turboxml/android/build/tmp/compileDebugJavaWithJavac/previous-compilation-data.bin b/node_modules/react-native-turboxml/android/build/tmp/compileDebugJavaWithJavac/previous-compilation-data.bin
+new file mode 100644
+index 0000000..b11f364
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/tmp/compileDebugJavaWithJavac/previous-compilation-data.bin differ
+diff --git a/node_modules/react-native-turboxml/android/build/tmp/kotlin-classes/debug/META-INF/react-native-turboxml_debug.kotlin_module b/node_modules/react-native-turboxml/android/build/tmp/kotlin-classes/debug/META-INF/react-native-turboxml_debug.kotlin_module
+new file mode 100644
+index 0000000..9dbc290
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/tmp/kotlin-classes/debug/META-INF/react-native-turboxml_debug.kotlin_module differ
+diff --git a/node_modules/react-native-turboxml/android/build/tmp/kotlin-classes/debug/com/turboxml/TurboxmlModule$Companion.class b/node_modules/react-native-turboxml/android/build/tmp/kotlin-classes/debug/com/turboxml/TurboxmlModule$Companion.class
+new file mode 100644
+index 0000000..e4c66ed
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/tmp/kotlin-classes/debug/com/turboxml/TurboxmlModule$Companion.class differ
+diff --git a/node_modules/react-native-turboxml/android/build/tmp/kotlin-classes/debug/com/turboxml/TurboxmlModule$parseXml$1$1.class b/node_modules/react-native-turboxml/android/build/tmp/kotlin-classes/debug/com/turboxml/TurboxmlModule$parseXml$1$1.class
+new file mode 100644
+index 0000000..b0620f0
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/tmp/kotlin-classes/debug/com/turboxml/TurboxmlModule$parseXml$1$1.class differ
+diff --git a/node_modules/react-native-turboxml/android/build/tmp/kotlin-classes/debug/com/turboxml/TurboxmlModule$parseXml$1$2.class b/node_modules/react-native-turboxml/android/build/tmp/kotlin-classes/debug/com/turboxml/TurboxmlModule$parseXml$1$2.class
+new file mode 100644
+index 0000000..fe0c46e
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/tmp/kotlin-classes/debug/com/turboxml/TurboxmlModule$parseXml$1$2.class differ
+diff --git a/node_modules/react-native-turboxml/android/build/tmp/kotlin-classes/debug/com/turboxml/TurboxmlModule$parseXml$1.class b/node_modules/react-native-turboxml/android/build/tmp/kotlin-classes/debug/com/turboxml/TurboxmlModule$parseXml$1.class
+new file mode 100644
+index 0000000..169e837
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/tmp/kotlin-classes/debug/com/turboxml/TurboxmlModule$parseXml$1.class differ
+diff --git a/node_modules/react-native-turboxml/android/build/tmp/kotlin-classes/debug/com/turboxml/TurboxmlModule.class b/node_modules/react-native-turboxml/android/build/tmp/kotlin-classes/debug/com/turboxml/TurboxmlModule.class
+new file mode 100644
+index 0000000..e078df5
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/tmp/kotlin-classes/debug/com/turboxml/TurboxmlModule.class differ
+diff --git a/node_modules/react-native-turboxml/android/build/tmp/kotlin-classes/debug/com/turboxml/TurboxmlPackage.class b/node_modules/react-native-turboxml/android/build/tmp/kotlin-classes/debug/com/turboxml/TurboxmlPackage.class
+new file mode 100644
+index 0000000..59b93b3
+Binary files /dev/null and b/node_modules/react-native-turboxml/android/build/tmp/kotlin-classes/debug/com/turboxml/TurboxmlPackage.class differ
+diff --git a/node_modules/react-native-turboxml/android/src/main/java/com/turboxml/TurboxmlModule.kt b/node_modules/react-native-turboxml/android/src/main/java/com/turboxml/TurboxmlModule.kt
+index b1d0cc0..9e91672 100644
+--- a/node_modules/react-native-turboxml/android/src/main/java/com/turboxml/TurboxmlModule.kt
++++ b/node_modules/react-native-turboxml/android/src/main/java/com/turboxml/TurboxmlModule.kt
+@@ -1,28 +1,18 @@
+ package com.turboxml
+ 
+ import com.facebook.react.bridge.*
+-import com.fasterxml.jackson.dataformat.xml.XmlMapper
+-import com.fasterxml.jackson.module.kotlin.readValue
+-import com.fasterxml.jackson.module.kotlin.registerKotlinModule
+ import kotlinx.coroutines.*
++import org.xmlpull.v1.XmlPullParser
++import org.xmlpull.v1.XmlPullParserFactory
+ 
+ class TurboxmlModule(
+   reactContext: ReactApplicationContext
+ ) : NativeTurboxmlSpec(reactContext) {
+ 
+-  private val xmlMapper = XmlMapper().apply {
+-    registerKotlinModule()
+-  }
+-
+   override fun parseXml(xml: String, promise: Promise) {
+     CoroutineScope(Dispatchers.Default).launch {
+       try {
+-        val parsed: Map<String, Any?> = xmlMapper.readValue(xml)
+-        val cleaned = clean(parsed)
+-        val rootTag = extractRoot(xml)
+-        val wrapped = mapOf(rootTag to cleaned)
+-        val result = toWritableMap(wrapped)
+-
++        val result = parseXmlWithPullParser(xml)
+         withContext(Dispatchers.Main) {
+           promise.resolve(result)
+         }
+@@ -34,40 +24,97 @@ class TurboxmlModule(
+     }
+   }
+ 
+-  private fun extractRoot(xml: String): String {
+-    val regex = "<(\\w+)(\\s|>)".toRegex()
+-    return regex.find(xml)?.groupValues?.get(1) ?: "root"
+-  }
++  private fun parseXmlWithPullParser(xml: String): WritableMap {
++    val factory = XmlPullParserFactory.newInstance()
++    factory.isNamespaceAware = true
++    val parser = factory.newPullParser()
++    parser.setInput(xml.byteInputStream(), "UTF-8")
+ 
+-  private fun clean(map: Map<String, Any?>): Map<String, Any?> {
+-    return map.filterKeys { it.isNotBlank() }.mapValues { (_, value) ->
+-      when (value) {
+-        is Map<*, *> -> clean(value as Map<String, Any?>)
+-        is List<*> -> value.mapNotNull { item ->
+-          when (item) {
+-            is Map<*, *> -> clean(item as Map<String, Any?>)
+-            is String -> item.trim().takeIf { it.isNotEmpty() }
+-            else -> item
++    val stack = ArrayDeque<MutableMap<String, Any?>>()
++    var text = StringBuilder()
++
++    var eventType = parser.eventType
++    while (eventType != XmlPullParser.END_DOCUMENT) {
++      when (eventType) {
++        XmlPullParser.START_TAG -> {
++          val currentText = text.toString().trim()
++          if (stack.isNotEmpty() && currentText.isNotEmpty()) {
++            val parentChildren = stack.last()["children"] as MutableList<Any?>
++            parentChildren.add(mutableMapOf("type" to "text", "value" to currentText))
++          }
++          text.clear()
++
++          val attrs = mutableMapOf<String, String>()
++          for (i in 0 until parser.attributeCount) {
++            attrs[parser.getAttributeName(i)] = parser.getAttributeValue(i)
++          }
++
++          stack.addLast(mutableMapOf(
++            "tag" to parser.name,
++            "attrs" to attrs,
++            "children" to mutableListOf<Any?>()
++          ))
++        }
++        XmlPullParser.TEXT -> {
++          text.append(parser.text)
++        }
++        XmlPullParser.END_TAG -> {
++          val currentText = text.toString().trim()
++          val current = stack.removeLast()
++          val tagName = current["tag"] as String
++          val children = current["children"] as MutableList<Any?>
++
++          if (currentText.isNotEmpty()) {
++            children.add(mutableMapOf("type" to "text", "value" to currentText))
++          }
++
++          val element = mutableMapOf<String, Any?>(
++            "type" to "element",
++            "tag" to tagName,
++            "attrs" to current["attrs"]!!,
++            "children" to children
++          )
++          if (children.isEmpty()) {
++            element["selfClosing"] = true
++          }
++
++          if (stack.isNotEmpty()) {
++            val parentChildren = stack.last()["children"] as MutableList<Any?>
++            parentChildren.add(element)
++          } else {
++            stack.addLast(mutableMapOf(
++              "type" to "document",
++              "tag" to tagName,
++              "attrs" to current["attrs"]!!,
++              "children" to mutableListOf<Any?>(element)
++            ))
+           }
+-        }.takeIf { it.isNotEmpty() }
+-        is String -> value.trim().takeIf { it.isNotEmpty() }
+-        else -> value
++          text.clear()
++        }
+       }
++      eventType = parser.next()
++    }
++
++    return if (stack.isNotEmpty()) {
++      toWritableMap(stack.last())
++    } else {
++      Arguments.createMap()
+     }
+   }
+ 
+-  private fun toWritableMap(map: Map<String, Any?>): WritableMap {
++  private fun toWritableMap(map: Map<*, *>): WritableMap {
+     val output = Arguments.createMap()
+     map.forEach { (key, value) ->
++      val keyStr = key?.toString() ?: return@forEach
+       when (value) {
+-        is String -> output.putString(key, value)
+-        is Int -> output.putInt(key, value)
+-        is Double -> output.putDouble(key, value)
+-        is Boolean -> output.putBoolean(key, value)
+-        is Map<*, *> -> output.putMap(key, toWritableMap(value as Map<String, Any?>))
+-        is List<*> -> output.putArray(key, toWritableArray(value))
+-        is Number -> output.putDouble(key, value.toDouble())
+-        else -> output.putString(key, value?.toString() ?: "")
++        is String -> output.putString(keyStr, value)
++        is Boolean -> output.putBoolean(keyStr, value)
++        is Int -> output.putInt(keyStr, value)
++        is Double -> output.putDouble(keyStr, value)
++        is Map<*, *> -> output.putMap(keyStr, toWritableMap(value))
++        is List<*> -> output.putArray(keyStr, toWritableArray(value))
++        is Number -> output.putDouble(keyStr, value.toDouble())
++        else -> output.putString(keyStr, value?.toString() ?: "")
+       }
+     }
+     return output
+@@ -78,10 +125,10 @@ class TurboxmlModule(
+     list.forEach { item ->
+       when (item) {
+         is String -> output.pushString(item)
++        is Boolean -> output.pushBoolean(item)
+         is Int -> output.pushInt(item)
+         is Double -> output.pushDouble(item)
+-        is Boolean -> output.pushBoolean(item)
+-        is Map<*, *> -> output.pushMap(toWritableMap(item as Map<String, Any?>))
++        is Map<*, *> -> output.pushMap(toWritableMap(item))
+         is List<*> -> output.pushArray(toWritableArray(item))
+         is Number -> output.pushDouble(item.toDouble())
+         else -> output.pushString(item?.toString() ?: "")
+diff --git a/node_modules/react-native-turboxml/ios/XMLDictionaryParserDelegate.m b/node_modules/react-native-turboxml/ios/XMLDictionaryParserDelegate.m
+index 38ed5cf..cfa55ec 100644
+--- a/node_modules/react-native-turboxml/ios/XMLDictionaryParserDelegate.m
++++ b/node_modules/react-native-turboxml/ios/XMLDictionaryParserDelegate.m
+@@ -27,14 +27,23 @@
+    namespaceURI:(NSString *)namespaceURI qualifiedName:(NSString *)qName
+     attributes:(NSDictionary<NSString *, NSString *> *)attributeDict
+ {
+-  NSMutableDictionary *node = [NSMutableDictionary dictionary];
++  NSString *trimmed = [self.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
++  if (self.stack.count > 0 && trimmed.length > 0) {
++    NSMutableDictionary *parent = self.stack.lastObject;
++    NSMutableArray *children = parent[@"children"];
++    [children addObject:@{@"type": @"text", @"value": trimmed}];
++  }
+ 
+-  // Add attributes directly to the node (prefixed with @)
++  NSMutableDictionary *attrs = [NSMutableDictionary dictionary];
+   for (NSString *key in attributeDict) {
+-    node[[@"@" stringByAppendingString:key]] = attributeDict[key];
++    attrs[key] = attributeDict[key];
+   }
+ 
+-  [self.stack addObject:@{@"name": elementName, @"node": node}];
++  [self.stack addObject:@{
++    @"tag": elementName,
++    @"attrs": attrs,
++    @"children": [NSMutableArray array]
++  }];
+   [self.text setString:@""];
+ }
+ 
+@@ -46,53 +55,44 @@
+  namespaceURI:(NSString *)namespaceURI qualifiedName:(NSString *)qName
+ {
+   NSString *trimmed = [self.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+-  NSMutableDictionary *current = [self.stack.lastObject[@"node"] mutableCopy];
+-  NSString *currentName = self.stack.lastObject[@"name"];
++  NSMutableDictionary *current = [self.stack.lastObject mutableCopy];
++  NSString *tagName = current[@"tag"];
++  NSMutableArray *children = current[@"children"];
+ 
+   [self.stack removeLastObject];
+ 
+-  // Determine the value for this element
+-  id value;
+-  if (current.count == 0 && trimmed.length > 0) {
+-    // No children or attributes, just text - use the text directly
+-    value = trimmed;
+-  } else if (current.count == 0 && trimmed.length == 0) {
+-    // Empty element
+-    value = @"";
+-  } else {
+-    // Has children or attributes
+-    if (trimmed.length > 0) {
+-      current[@"#text"] = trimmed;
+-    }
+-    value = current;
++  if (trimmed.length > 0) {
++    [children addObject:@{@"type": @"text", @"value": trimmed}];
++  }
++
++  NSMutableDictionary *element = [NSMutableDictionary dictionary];
++  element[@"type"] = @"element";
++  element[@"tag"] = tagName;
++  element[@"attrs"] = current[@"attrs"] ?: @{};
++  element[@"children"] = [children copy];
++  if (children.count == 0) {
++    element[@"selfClosing"] = @YES;
+   }
+ 
+   if (self.stack.count > 0) {
+-    // Add to parent
+-    NSMutableDictionary *parent = self.stack.lastObject[@"node"];
+-
+-    if (parent[currentName]) {
+-      // Key already exists - convert to array or append
+-      id existing = parent[currentName];
+-      if ([existing isKindOfClass:[NSMutableArray class]]) {
+-        [existing addObject:value];
+-      } else {
+-        parent[currentName] = [NSMutableArray arrayWithObjects:existing, value, nil];
+-      }
+-    } else {
+-      parent[currentName] = value;
+-    }
++    NSMutableDictionary *parent = self.stack.lastObject;
++    NSMutableArray *parentChildren = parent[@"children"];
++    [parentChildren addObject:element];
+   } else {
+-    // Root element
+-    [self.stack addObject:@{currentName: value}];
++    [self.stack addObject:@{
++      @"type": @"document",
++      @"tag": tagName,
++      @"attrs": current[@"attrs"] ?: @{},
++      @"children": @[element]
++    }];
+   }
+ 
+   [self.text setString:@""];
+ }
+ 
+ - (NSDictionary *)result {
+-  if (self.stack.count > 0 && [self.stack.firstObject isKindOfClass:[NSDictionary class]]) {
+-    return self.stack.firstObject;
++  if (self.stack.count > 0 && [self.stack.lastObject isKindOfClass:[NSDictionary class]]) {
++    return self.stack.lastObject;
+   }
+   return @{};
+ }
