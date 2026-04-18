@@ -4,19 +4,31 @@ export const User = Schema.Struct({
   id: Schema.Number,
   name: Schema.String,
   avatar: Schema.NullOr(Schema.String),
-  course_role: Schema.Literal("admin", "student"),
+  // course_role: Schema.Literal("admin", "student"),
+});
+
+const userSettings = Schema.Struct({
+  tz: Schema.String,
+});
+
+export const ExtendedUser = Schema.Struct({
+  ...User.fields,
+  email: Schema.String,
+  username: Schema.NullOr(Schema.String),
+  avatar_url: Schema.NullOr(Schema.String),
+  settings: userSettings,
 });
 
 export const Course = Schema.Struct({
   id: Schema.Number,
   code: Schema.String,
   name: Schema.String,
-  year: Schema.Number,
-  session: Schema.Number,
+  year: Schema.String,
+  session: Schema.String,
   settings: Schema.Struct({
     discussion: Schema.Struct({
       sortable_feed: Schema.Boolean,
-      default_feed_sort_order: Schema.String,
+      // default_feed_sort_order: Schema.NullOr(Schema.String),
       thread_numbers: Schema.Boolean,
       readonly: Schema.Boolean,
     }),
@@ -61,30 +73,47 @@ export const Thread = Schema.Struct({
   // TODO: Add more fields later
 });
 
-export const Comment = Schema.Struct({
-  id: Schema.Number,
+// export const Comment = Schema.Struct({
+//   id: Schema.Number,
+//   user_id: Schema.Number,
+//   course_id: Schema.Number,
+//   thread_id: Schema.Number,
+//   parent_id: Schema.NullOr(Schema.Number),
+//   editor_id: Schema.NullOr(Schema.Number),
+//   number: Schema.Number,
+//   type: Schema.Literal("comment", "answer"),
+//   kind: Schema.String,
+//   content: Schema.String,
+//   document: Schema.String,
+//   flag_count: Schema.Number,
+//   vote_count: Schema.Number,
+//   is_endorsed: Schema.Boolean,
+//   is_anonymous: Schema.Boolean,
+//   is_private: Schema.Boolean,
+//   is_resolved: Schema.Boolean,
+//   created_at: Schema.String,
+//   updated_at: Schema.NullOr(Schema.String),
+//   deleted_at: Schema.NullOr(Schema.String),
+//   anonymous_id: Schema.Number,
+//   vote: Schema.Number,
+//   comments: Schema.Array(Comment),
+// });
+
+const Role = Schema.Struct({
   user_id: Schema.Number,
   course_id: Schema.Number,
-  thread_id: Schema.Number,
-  parent_id: Schema.NullOr(Schema.Number),
-  editor_id: Schema.NullOr(Schema.Number),
-  number: Schema.Number,
-  type: Schema.Literal("comment", "answer"),
-  kind: Schema.String,
-  content: Schema.String,
-  document: Schema.String,
-  flag_count: Schema.Number,
-  vote_count: Schema.Number,
-  is_endorsed: Schema.Boolean,
-  is_anonymous: Schema.Boolean,
-  is_private: Schema.Boolean,
-  is_resolved: Schema.Boolean,
-  created_at: Schema.String,
-  updated_at: Schema.NullOr(Schema.String),
-  deleted_at: Schema.NullOr(Schema.String),
-  anonymous_id: Schema.Number,
-  vote: Schema.Number,
-  comments: Schema.Array(Comment),
+  role: Schema.Literal("student", "mentor", "tutor", "staff", "admin"),
+});
+
+export const UserResponse = Schema.Struct({
+  courses: Schema.Array(
+    Schema.Struct({
+      course: Course,
+      role: Role,
+      last_active: Schema.String,
+    }),
+  ),
+  push_key: Schema.String,
 });
 
 export const ThreadResponse = Schema.Struct({

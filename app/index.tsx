@@ -11,7 +11,13 @@ import { useState, useEffect } from "react";
 import "./global.css";
 import React from "react";
 import { EyeIcon, PushPinIcon, HeartIcon } from "phosphor-react-native";
-import { User, Thread, ThreadResponse } from "../src/lib/Schemas";
+import {
+  User,
+  Course,
+  Thread,
+  UserResponse,
+  ThreadResponse,
+} from "../src/lib/Schemas";
 
 import { createMMKV } from "react-native-mmkv";
 
@@ -68,9 +74,28 @@ const renderXmlNode = (node: XmlNode, keyPrefix = "node"): React.ReactNode => {
 
 export default function Index() {
   const [test, setTest] = useState<XmlNode | undefined>();
+  const [courses, setCourses] = useState<
+    Schema.Schema.Type<typeof Course>[] | undefined
+  >();
   const [theadTest, setThreadTest] = useState<
     Schema.Schema.Type<typeof Thread> | undefined
   >();
+  const fetchCourses = () =>
+    Effect.gen(function* () {
+      if (!process.env.EXPO_PUBLIC_EDSTEM_API_KEY) {
+        return yield* Effect.fail(new Error("Missing API Key"));
+      }
+      const client = yield* HttpClient.HttpClient;
+      const request = HttpClientRequest.get(`https://edstem.org/api/user`).pipe(
+        HttpClientRequest.bearerToken(process.env.EXPO_PUBLIC_EDSTEM_API_KEY),
+        HttpClientRequest.acceptJson,
+      );
+
+      const response = yield* client.execute(request);
+      return yield* HttpClientResponse.schemaBodyJson(UserResponse)(response);
+      // return yield* response.json;
+    }).pipe(Effect.provide(FetchHttpClient.layer));
+
   const fetchCourseThreads = (course_id: number) =>
     Effect.gen(function* () {
       if (!process.env.EXPO_PUBLIC_EDSTEM_API_KEY) {
@@ -90,14 +115,21 @@ export default function Index() {
     }).pipe(Effect.provide(FetchHttpClient.layer));
 
   useEffect(() => {
-    Effect.runPromise(fetchCourseThreads(33572))
+    Effect.runPromise(fetchCourses())
       .then((response) => {
-        setThreadTest(response.threads[1]);
-        parseXml(response.threads[1].content)
-          .then((data) => {
-            setTest(data);
-          })
-          .catch((err) => console.error("Parse error", err));
+        const mappedCourses = response.courses.map((c) => c.course);
+        setCourses(mappedCourses);
+
+        const firstCourseId = mappedCourses[0]?.id;
+        if (!firstCourseId) return;
+
+        return Effect.runPromise(fetchCourseThreads(firstCourseId));
+      })
+      .then((threadResponse) => {
+        if (!threadResponse) return;
+        setThreadTest(threadResponse.threads[1]);
+
+        return parseXml(threadResponse.threads[1].content).then(setTest);
       })
       .catch((error) => {
         console.error("error", error);
