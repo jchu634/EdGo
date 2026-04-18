@@ -10,6 +10,7 @@ import { Effect, Schema } from "effect";
 import { useState, useEffect } from "react";
 import "./global.css";
 import React from "react";
+import { EyeIcon, PushPinIcon, HeartIcon } from "phosphor-react-native";
 
 // Type for the parsed XML AST structure
 interface XmlTextNode {
@@ -46,9 +47,12 @@ const renderXmlNode = (node: XmlNode, keyPrefix = "node"): React.ReactNode => {
     }
 
     return (
-      <View key={keyPrefix} className="border-l border-gray-300 pl-2.5 ml-1.5">
+      <View
+        key={keyPrefix}
+        className="border-l border-gray-300 pl-2.5 ml-1.5 max-h-40 truncate"
+      >
         {node.children.map((child, index) =>
-          renderXmlNode(child, `${keyPrefix}-${node.tag}-${index}`)
+          renderXmlNode(child, `${keyPrefix}-${node.tag}-${index}`),
         )}
       </View>
     );
@@ -133,11 +137,33 @@ export default function Index() {
   }, []);
 
   return (
-    <View
-      className="flex-1 justify-center items-center"
-    >
+    <View className="flex-1 justify-center items-center">
       <View>{test && renderXmlNode(test, "root")}</View>
-      <Text className="text-blue-400">test</Text>
+      <View className="border-l border-gray-300 pl-2.5 w-full ml-1.5 rounded-2xl bg-gray-300 p-4 px-8">
+        <View className="flex flex-row justify-between">
+          <Text className="max-h-30 truncate font-bold">
+            {theadTest?.title}
+          </Text>
+          <View>{theadTest?.is_pinned && <PushPinIcon />}</View>
+        </View>
+        <View className="flex flex-row justify-between">
+          <View className="flex flex-row items-center">
+            <View className="rounded-full bg-red-700 size-6" />
+            <Text className="pl-2">{theadTest?.category}</Text>
+          </View>
+          <View className="flex flex-row">
+            <View className="flex flex-row items-center min-w-20">
+              <Text className="pl-2">{theadTest?.view_count}</Text>
+              <EyeIcon />
+            </View>
+            <View className="flex flex-row items-center min-w-10">
+              <Text className="pl-2">{theadTest?.vote_count}</Text>
+              <HeartIcon />
+            </View>
+          </View>
+        </View>
+      </View>
+
       <Button
         onPress={() => {
           Effect.runPromise(fetchCourseThreads(33572))
@@ -145,7 +171,7 @@ export default function Index() {
               console.log(response.threads[1].content);
               parseXml(response.threads[1].content)
                 .then((data) => {
-                  console.log(data); // "MyApp"
+                  console.log(data);
                 })
                 .catch((err) => console.error("Parse error", err));
             })
@@ -153,9 +179,7 @@ export default function Index() {
               console.error("error", error);
             });
         }}
-        
-
-        title="Refresh"
+        title="DEBUG Refresh"
         color="#841584"
         accessibilityLabel="Learn more about this purple button"
       />
