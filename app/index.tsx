@@ -11,6 +11,11 @@ import { useState, useEffect } from "react";
 import "./global.css";
 import React from "react";
 import { EyeIcon, PushPinIcon, HeartIcon } from "phosphor-react-native";
+import { User, Thread, ThreadResponse } from "../src/lib/Schemas";
+
+import { createMMKV } from "react-native-mmkv";
+
+export const storage = createMMKV({ id: "test" });
 
 // Type for the parsed XML AST structure
 interface XmlTextNode {
@@ -60,43 +65,6 @@ const renderXmlNode = (node: XmlNode, keyPrefix = "node"): React.ReactNode => {
 
   return null;
 };
-
-const User = Schema.Struct({
-  id: Schema.Number,
-  name: Schema.String,
-  avatar: Schema.NullOr(Schema.String),
-  course_role: Schema.Literal("admin", "student"),
-});
-const Thread = Schema.Struct({
-  id: Schema.Number,
-  title: Schema.String,
-  number: Schema.Number,
-  user_id: Schema.Number, // User ID = 0 is anonymous
-  type: Schema.Literal("post", "question", "announcement"),
-  content: Schema.String,
-  /*
-    No Category/Subcategory is returned as empty string
-  */
-  document: Schema.String,
-  category: Schema.String,
-  subcategory: Schema.String,
-  subsubcategory: Schema.String,
-  star_count: Schema.Number,
-  view_count: Schema.Number,
-  vote_count: Schema.Number,
-  is_pinned: Schema.Boolean,
-  is_answered: Schema.Boolean,
-  is_student_answered: Schema.Boolean,
-  is_staff_answered: Schema.Boolean,
-  is_anonymous: Schema.Boolean,
-  user: Schema.NullOr(User),
-  // TODO: Add more fields later
-});
-
-const ThreadResponse = Schema.Struct({
-  threads: Schema.Array(Thread),
-  users: Schema.Array(User),
-});
 
 export default function Index() {
   const [test, setTest] = useState<XmlNode | undefined>();
