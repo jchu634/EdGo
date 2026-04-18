@@ -8,7 +8,7 @@ import { Button, View, Text, Alert, Platform } from "react-native";
 import { parseXml } from "react-native-turboxml";
 import { Effect, Schema } from "effect";
 import { useState, useEffect } from "react";
-import "./global.css"
+import "./global.css";
 import React from "react";
 
 // Type for the parsed XML AST structure
@@ -73,9 +73,12 @@ const Thread = Schema.Struct({
   /*
     No Category/Subcategory is returned as empty string
   */
+  document: Schema.String,
   category: Schema.String,
   subcategory: Schema.String,
+  subsubcategory: Schema.String,
   star_count: Schema.Number,
+  view_count: Schema.Number,
   vote_count: Schema.Number,
   is_pinned: Schema.Boolean,
   is_answered: Schema.Boolean,
@@ -93,6 +96,9 @@ const ThreadResponse = Schema.Struct({
 
 export default function Index() {
   const [test, setTest] = useState<XmlNode | undefined>();
+  const [theadTest, setThreadTest] = useState<
+    Schema.Schema.Type<typeof Thread> | undefined
+  >();
   const fetchCourseThreads = (course_id: number) =>
     Effect.gen(function* () {
       if (!process.env.EXPO_PUBLIC_EDSTEM_API_KEY) {
@@ -114,7 +120,7 @@ export default function Index() {
   useEffect(() => {
     Effect.runPromise(fetchCourseThreads(33572))
       .then((response) => {
-        // console.log("response", response.threads[1]);
+        setThreadTest(response.threads[1]);
         parseXml(response.threads[1].content)
           .then((data) => {
             setTest(data);
