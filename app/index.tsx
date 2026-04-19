@@ -19,9 +19,8 @@ import {
   ThreadResponse,
 } from "../src/lib/Schemas";
 
-import { createMMKV } from "react-native-mmkv";
-
-export const storage = createMMKV({ id: "test" });
+import { getCourseStore } from "../src/lib/courseStorage";
+import { getUnreadCounts, UnreadCountEntry } from "../src/lib/stream";
 
 // Type for the parsed XML AST structure
 interface XmlTextNode {
@@ -119,6 +118,10 @@ export default function Index() {
       .then((response) => {
         const mappedCourses = response.courses.map((c) => c.course);
         setCourses(mappedCourses);
+
+        // Pre-warm MMKV stores for all fetched courses
+        mappedCourses.forEach((course) => getCourseStore(course.id));
+
 
         const firstCourseId = mappedCourses[0]?.id;
         if (!firstCourseId) return;
