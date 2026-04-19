@@ -78,6 +78,9 @@ export default function Index() {
   const [theadTest, setThreadTest] = useState<
     Schema.Schema.Type<typeof Thread> | undefined
   >();
+  const [unreadCounts, setUnreadCounts] = useState<
+    Record<string, UnreadCountEntry> | undefined
+  >();
   const fetchCourses = () =>
     Effect.gen(function* () {
       if (!process.env.EXPO_PUBLIC_EDSTEM_API_KEY) {
@@ -112,15 +115,28 @@ export default function Index() {
       // return yield* response.json;
     }).pipe(Effect.provide(FetchHttpClient.layer));
 
+  const wrapNumbers = (num: number) => {
+    if (num > 99) return "99+";
+    else return num;
+  };
+
   useEffect(() => {
     Effect.runPromise(fetchCourses())
       .then((response) => {
         const mappedCourses = response.courses.map((c) => c.course);
+        mappedCourses.sort();
         setCourses(mappedCourses);
 
         // Pre-warm MMKV stores for all fetched courses
         mappedCourses.forEach((course) => getCourseStore(course.id));
 
+        // Fetch unread counts via WebSocket (non-blocking)
+        getUnreadCounts()
+          .then((counts) => {
+            console.log("[stream] Unread counts:", counts);
+            setUnreadCounts(counts.data);
+          })
+          .catch((err) => console.error("[stream] Error:", err));
 
         const firstCourseId = mappedCourses[0]?.id;
         if (!firstCourseId) return;
@@ -130,6 +146,13 @@ export default function Index() {
       .then((threadResponse) => {
         if (!threadResponse) return;
         setThreadTest(threadResponse.threads[1]);
+
+        // Cache threads for the first course in its own MMKV store
+        const firstCourseId = courses?.[0]?.id;
+        if (firstCourseId != null) {
+          const store = getCourseStore(firstCourseId);
+          store.set("threads", JSON.stringify(threadResponse.threads));
+        }
 
         return parseXml(threadResponse.threads[1].content).then(setTest);
       })
@@ -141,6 +164,42 @@ export default function Index() {
   return (
     <View className="flex-1 justify-center items-center">
       <View>{test && renderXmlNode(test, "root")}</View>
+      <View className="h-fit">
+        {courses ? (
+          <View className="w-screen p-4 flex flex-col gap-y-2 min-h-40 justify-center">
+            {courses.map((course) => (
+              <View
+                key={course.id}
+                className="border-l border-gray-300 pl-2.5 w-max h-30 ml-1.5 rounded-2xl bg-gray-300 p-4 px-8  flex flex-row"
+              >
+                <View className="w-90 justify-center">
+                  <Text
+                    className="font-bold text-lg text-ellipsis w-80"
+                    numberOfLines={1}
+                  >
+                    {course.code}
+                  </Text>
+                  <Text numberOfLines={2}>{course.name}</Text>
+                </View>
+                <View className="bg-blue-700 size-12 justify-center items-center rounded-lg ">
+                  <Text className=" text-center text-white text-sm">
+                    {unreadCounts
+                      ? unreadCounts[String(course.id)]
+                        ? wrapNumbers(unreadCounts[String(course.id)].unread)
+                        : "…"
+                      : "…"}
+                  </Text>
+                </View>
+              </View>
+            ))}
+          </View>
+        ) : (
+          <Text className="w-screen p-4 flex flex-col space-y-4 text-center ">
+            No Courses Found
+          </Text>
+        )}
+      </View>
+      {/*<View>{test && renderXmlNode(test, "root")}</View>*/}
       <View className="border-l border-gray-300 pl-2.5 w-full ml-1.5 rounded-2xl bg-gray-300 p-4 px-8">
         <View className="flex flex-row justify-between">
           <Text className="max-h-30 truncate font-bold">
