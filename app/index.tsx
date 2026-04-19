@@ -4,12 +4,11 @@ import {
   HttpClientRequest,
   HttpClientResponse,
 } from "@effect/platform";
-import { Button, View, Text, Alert, Platform } from "react-native";
+import { Button, View, Text } from "react-native";
 import { parseXml } from "react-native-turboxml";
 import { Effect, Schema } from "effect";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import "./global.css";
-import React from "react";
 import { EyeIcon, PushPinIcon, HeartIcon } from "phosphor-react-native";
 import {
   User,
