@@ -33,6 +33,7 @@
     "expo-symbols": "~1.0.8",
     "expo-system-ui": "~6.0.9",
     "expo-web-browser": "~15.0.10",
+    "patch-package": "^8.0.1",
     "phosphor-react-native": "^3.0.4",
     "react": "19.1.0",
     "react-dom": "19.1.0",
@@ -53,6 +54,9 @@
     "@types/react": "~19.1.0",
     "eslint": "^9.25.0",
     "eslint-config-expo": "~10.0.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.5",
+    "prettier": "^3.8.3",
     "typescript": "~5.9.2"
   },
   "private": true
