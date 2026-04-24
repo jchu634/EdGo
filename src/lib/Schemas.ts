@@ -11,6 +11,12 @@ const userSettings = Schema.Struct({
   tz: Schema.String,
 });
 
+export const CourseCategory = Schema.Struct({
+  name: Schema.String,
+  // Don't want to deal with those yet, those are a pita
+  // subcategories:
+});
+
 export const ExtendedUser = Schema.Struct({
   ...User.fields,
   email: Schema.String,
@@ -31,6 +37,7 @@ export const Course = Schema.Struct({
       // default_feed_sort_order: Schema.NullOr(Schema.String),
       thread_numbers: Schema.Boolean,
       readonly: Schema.Boolean,
+      categories: Schema.NullOr(Schema.Array(CourseCategory)),
     }),
     theme: Schema.Struct({
       logo: Schema.String,
@@ -52,7 +59,7 @@ export const Thread = Schema.Struct({
   title: Schema.String,
   number: Schema.Number,
   user_id: Schema.Number, // User ID = 0 is anonymous
-  type: Schema.Literal("post", "question", "announcement"),
+  type: Schema.String,
   content: Schema.String,
   /*
     No Category/Subcategory is returned as empty string
