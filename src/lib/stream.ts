@@ -28,7 +28,8 @@ function connect(
   headers?: Record<string, string>,
 ): Promise<WebSocket> {
   return new Promise((resolve, reject) => {
-    console.log("[stream] new WebSocket(", url, "headers:", !!headers, ")");
+    // console.log("[stream] new WebSocket(", url, "headers:", !!headers, ")");
+
     // React Native's WebSocket accepts a third `options` arg with `headers`,
     // but the type definitions only allow 1–2 args. Cast to bypass.
     const Ws = WebSocket as unknown as new (
@@ -39,7 +40,7 @@ function connect(
     const ws = new Ws(url, [], { headers });
 
     ws.onopen = () => {
-      console.log("[stream] open — readyState:", ws.readyState);
+      // console.log("[stream] open — readyState:", ws.readyState);
       resolve(ws);
     };
 
@@ -58,14 +59,14 @@ function connect(
     };
 
     ws.onclose = (event: CloseEvent) => {
-      console.log(
-        "[stream] onclose — code:",
-        event.code,
-        "reason:",
-        event.reason,
-        "wasClean:",
-        event.wasClean,
-      );
+      // console.log(
+      //   "[stream] onclose — code:",
+      //   event.code,
+      //   "reason:",
+      //   event.reason,
+      //   "wasClean:",
+      //   event.wasClean,
+      // );
     };
   });
 }
