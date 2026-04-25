@@ -1,2 +1,15 @@
-@import 'tailwindcss';
-@import 'uniwind';
+@import "tailwindcss";
+@import "uniwind";
+
+@theme {
+  --font-mono: "IntelOneMono-Regular";
+  --font-mono-light: "IntelOneMono-Light";
+  --font-mono-medium: "IntelOneMono-Medium";
+  --font-mono-semibold: "IntelOneMono-SemiBold";
+  --font-mono-bold: "IntelOneMono-Bold";
+  --font-mono-light-italic: "IntelOneMono-LightItalic";
+  --font-mono-italic: "IntelOneMono-Italic";
+  --font-mono-medium-italic: "IntelOneMono-MediumItalic";
+  --font-mono-semibold-italic: "IntelOneMono-SemiBoldItalic";
+  --font-mono-bold-italic: "IntelOneMono-BoldItalic";
+}

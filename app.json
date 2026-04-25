@@ -50,6 +50,24 @@
             "useSQLCipher": false
           }
         }
+      ],
+      "expo-secure-store",
+      [
+        "expo-font",
+        {
+          "fonts": [
+            "./assets/fonts/IntelOneMono-Bold.ttf",
+            "./assets/fonts/IntelOneMono-BoldItalic.ttf",
+            "./assets/fonts/IntelOneMono-Italic.ttf",
+            "./assets/fonts/IntelOneMono-Light.ttf",
+            "./assets/fonts/IntelOneMono-LightItalic.ttf",
+            "./assets/fonts/IntelOneMono-Medium.ttf",
+            "./assets/fonts/IntelOneMono-MediumItalic.ttf",
+            "./assets/fonts/IntelOneMono-Regular.ttf",
+            "./assets/fonts/IntelOneMono-SemiBold.ttf",
+            "./assets/fonts/IntelOneMono-SemiBoldItalic.ttf"
+          ]
+        }
       ]
     ],
     "experiments": {
