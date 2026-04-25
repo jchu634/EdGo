@@ -2,14 +2,98 @@
 @import "uniwind";
 
 @theme {
-  --font-mono: "IntelOneMono-Regular";
-  --font-mono-light: "IntelOneMono-Light";
-  --font-mono-medium: "IntelOneMono-Medium";
-  --font-mono-semibold: "IntelOneMono-SemiBold";
-  --font-mono-bold: "IntelOneMono-Bold";
-  --font-mono-light-italic: "IntelOneMono-LightItalic";
-  --font-mono-italic: "IntelOneMono-Italic";
-  --font-mono-medium-italic: "IntelOneMono-MediumItalic";
-  --font-mono-semibold-italic: "IntelOneMono-SemiBoldItalic";
-  --font-mono-bold-italic: "IntelOneMono-BoldItalic";
+  --font-mono: "IntelOneMono_400Regular";
+  --font-mono-light: "IntelOneMono_300Light";
+  --font-mono-medium: "IntelOneMono_500Medium";
+  --font-mono-semibold: "IntelOneMono_600SemiBold";
+  --font-mono-bold: "IntelOneMono_700Bold";
+  --font-mono-light-italic: "IntelOneMono_300Light_Italic";
+  --font-mono-italic: "IntelOneMono_400Regular_Italic";
+  --font-mono-medium-italic: "IntelOneMono_500Medium_Italic";
+  --font-mono-semibold-italic: "IntelOneMono_600SemiBold_Italic";
+  --font-mono-bold-italic: "IntelOneMono_700Bold_Italic";
+
+  --font-serif: "PTSerif_400Regular";
+  --font-serif-bold: "PTSerif_700Bold";
+  --font-serif-italic: "PTSerif_400Regular_Italic";
+  --font-serif-bold-italic: "PTSerif_700Bold_Italic";
+
+  --font-display: "Rokkitt_400Regular";
+  --font-display-thin: "Rokkitt_100Thin";
+  --font-display-extralight: "Rokkitt_200ExtraLight";
+  --font-display-light: "Rokkitt_300Light";
+  --font-display-medium: "Rokkitt_500Medium";
+  --font-display-semibold: "Rokkitt_600SemiBold";
+  --font-display-bold: "Rokkitt_700Bold";
+  --font-display-extrabold: "Rokkitt_800ExtraBold";
+  --font-display-black: "Rokkitt_900Black";
+  --font-display-thin-italic: "Rokkitt_100Thin_Italic";
+  --font-display-extralight-italic: "Rokkitt_200ExtraLight_Italic";
+  --font-display-light-italic: "Rokkitt_300Light_Italic";
+  --font-display-italic: "Rokkitt_400Regular_Italic";
+  --font-display-medium-italic: "Rokkitt_500Medium_Italic";
+  --font-display-semibold-italic: "Rokkitt_600SemiBold_Italic";
+  --font-display-bold-italic: "Rokkitt_700Bold_Italic";
+  --font-display-extrabold-italic: "Rokkitt_800ExtraBold_Italic";
+  --font-display-black-italic: "Rokkitt_900Black_Italic";
+
+  --color-indigo-bloom-50: oklch(94.55% 0.037 316.19);
+  --color-indigo-bloom-100: oklch(89.38% 0.072 315.81);
+  --color-indigo-bloom-200: oklch(79.25% 0.146 315.4);
+  --color-indigo-bloom-300: oklch(70.07% 0.218 314.5);
+  --color-indigo-bloom-400: oklch(62.83% 0.269 313.05);
+  --color-indigo-bloom-500: oklch(58.22% 0.291 310.22);
+  --color-indigo-bloom-600: oklch(49.39% 0.246 310.42);
+  --color-indigo-bloom-700: oklch(40.15% 0.199 310.72);
+  --color-indigo-bloom-800: oklch(30.3% 0.147 311.72);
+  --color-indigo-bloom-900: oklch(19.61% 0.091 313.48);
+  --color-indigo-bloom-950: oklch(15.9% 0.074 314.53);
+
+  --color-burgundy-50: oklch(95.11% 0.019 9.31);
+  --color-burgundy-100: oklch(90.07% 0.04 8.17);
+  --color-burgundy-200: oklch(80.43% 0.083 8.73);
+  --color-burgundy-300: oklch(71.33% 0.13 11.22);
+  --color-burgundy-400: oklch(63.31% 0.172 14.86);
+  --color-burgundy-500: oklch(57.18% 0.206 19.53);
+  --color-burgundy-600: oklch(48.57% 0.172 19.43);
+  --color-burgundy-700: oklch(39.7% 0.139 18.61);
+  --color-burgundy-800: oklch(30.22% 0.101 17.25);
+  --color-burgundy-900: oklch(20% 0.058 15.58);
+  --color-burgundy-950: oklch(16.75% 0.043 14.24);
+
+  --color-tropical-teal-50: oklch(96.91% 0.01 189.07);
+  --color-tropical-teal-100: oklch(93.75% 0.02 189.21);
+  --color-tropical-teal-200: oklch(87.53% 0.04 188.62);
+  --color-tropical-teal-300: oklch(81.36% 0.059 187.94);
+  --color-tropical-teal-400: oklch(75.3% 0.077 187.11);
+  --color-tropical-teal-500: oklch(69.4% 0.091 186.08);
+  --color-tropical-teal-600: oklch(58.98% 0.076 186.15);
+  --color-tropical-teal-700: oklch(48.06% 0.061 186.27);
+  --color-tropical-teal-800: oklch(36.49% 0.044 186.48);
+  --color-tropical-teal-900: oklch(23.91% 0.025 186.98);
+  --color-tropical-teal-950: oklch(19.66% 0.018 189.57);
+
+  --color-charcoal-brown-50: oklch(96.53% 0.005 117.92);
+  --color-charcoal-brown-100: oklch(93.05% 0.01 119.59);
+  --color-charcoal-brown-200: oklch(86.09% 0.023 123.68);
+  --color-charcoal-brown-300: oklch(78.89% 0.033 122.78);
+  --color-charcoal-brown-400: oklch(71.54% 0.044 122.49);
+  --color-charcoal-brown-500: oklch(64.15% 0.058 124.05);
+  --color-charcoal-brown-600: oklch(54.55% 0.046 122.9);
+  --color-charcoal-brown-700: oklch(44.65% 0.038 123.49);
+  --color-charcoal-brown-800: oklch(34.15% 0.028 124.57);
+  --color-charcoal-brown-900: oklch(22.6% 0.013 120.44);
+  --color-charcoal-brown-950: oklch(19.12% 0.012 122.53);
+
+  --color-pumpkin-spice-50: oklch(96.51% 0.018 59.48);
+  --color-pumpkin-spice-100: oklch(93.03% 0.037 60.72);
+  --color-pumpkin-spice-200: oklch(86% 0.073 58.46);
+  --color-pumpkin-spice-300: oklch(79.53% 0.111 57.7);
+  --color-pumpkin-spice-400: oklch(73.53% 0.146 55.39);
+  --color-pumpkin-spice-500: oklch(67.9% 0.173 49.92);
+  --color-pumpkin-spice-600: oklch(57.85% 0.145 50.61);
+  --color-pumpkin-spice-700: oklch(47.03% 0.116 51.15);
+  --color-pumpkin-spice-800: oklch(35.54% 0.084 51.99);
+  --color-pumpkin-spice-900: oklch(23.43% 0.049 56.93);
+  --color-pumpkin-spice-950: oklch(19.4% 0.038 59.47);
 }
