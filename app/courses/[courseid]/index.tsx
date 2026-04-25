@@ -17,7 +17,7 @@ import React, { useState, useEffect, useCallback, useMemo } from "react";
 import "@/app/global.css";
 import { useLocalSearchParams } from "expo-router";
 import { EyeIcon, PushPinIcon, HeartIcon } from "phosphor-react-native";
-import { Course, Thread, ThreadResponse } from "@/src/lib/Schemas";
+import { Course, Thread, ThreadResponse } from "@/src/lib/schemas";
 
 import {
   getThreadsByCourse,

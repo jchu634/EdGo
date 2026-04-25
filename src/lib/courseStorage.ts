@@ -1,7 +1,7 @@
 import * as SQLite from "expo-sqlite";
 import { Schema } from "effect";
 import { createMMKV } from "react-native-mmkv";
-import { Thread, Course, CourseCategory } from "@/src/lib/Schemas";
+import { Thread, Course, CourseCategory } from "@/src/lib/schemas";
 /**
  * @file This file contains an orm for storing and retrieving course/thread data.
  * @description
@@ -10,7 +10,9 @@ import { Thread, Course, CourseCategory } from "@/src/lib/Schemas";
  */
 
 const courseCache = createMMKV({ id: "courseCache" });
-const settingsStore = createMMKV({ id: "settings" });
+const settingsStore = createMMKV({
+  id: "settings",
+});
 
 /** Cache the full course list as JSON for instant loading on the main page. */
 export function cacheCourses(

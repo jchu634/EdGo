@@ -5,20 +5,17 @@ import {
   HttpClientResponse,
 } from "@effect/platform";
 import { View, Text, Pressable } from "react-native";
-import { parseXml } from "react-native-turboxml";
 import { Effect, Schema } from "effect";
 import React, { useState, useEffect } from "react";
 import { useRouter } from "expo-router";
 import "@/app/global.css";
-import { EyeIcon, PushPinIcon, HeartIcon } from "phosphor-react-native";
 import {
   User,
   Course,
   Thread,
   UserResponse,
   ThreadResponse,
-} from "@/src/lib/Schemas";
-
+} from "@/src/lib/schemas";
 import { getUnreadCounts, UnreadCountEntry } from "@/src/lib/stream";
 import { cacheCourses, getCachedCourses } from "@/src/lib/courseStorage";
 
@@ -107,39 +104,41 @@ export default function Index() {
   }, []);
 
   return (
-    <View className="flex-1 justify-center items-center">
+    <View className="flex-1 items-center justify-center">
       <View className="h-fit">
         {courses ? (
-          <View className="w-screen p-4 flex flex-col gap-y-2 min-h-40 justify-center">
-            {courses.map((course) => (
-              <Pressable
-                key={course.id}
-                className="border-l border-gray-300 pl-2.5 w-max h-30 ml-1.5 rounded-2xl bg-gray-300 p-4 px-8  flex flex-row"
-                onPress={() => router.navigate(`/courses/${course.id}`)}
-              >
-                <View className="w-90 justify-center">
-                  <Text
-                    className="font-bold text-lg text-ellipsis w-80"
-                    numberOfLines={1}
-                  >
-                    {course.code}
-                  </Text>
-                  <Text numberOfLines={2}>{course.name}</Text>
-                </View>
-                <View className="bg-blue-700 size-12 justify-center items-center rounded-lg ">
-                  <Text className=" text-center text-white text-sm">
-                    {unreadCounts
-                      ? unreadCounts[String(course.id)]
-                        ? wrapNumbers(unreadCounts[String(course.id)].unread)
-                        : "…"
-                      : "…"}
-                  </Text>
-                </View>
-              </Pressable>
-            ))}
+          <View className="flex min-h-40 w-screen flex-col justify-center gap-y-2 p-4">
+            {[...courses]
+              .sort((a, b) => a.id - b.id)
+              .map((course) => (
+                <Pressable
+                  key={course.id}
+                  className="ml-1.5 flex h-30 w-max flex-row rounded-2xl border-l border-gray-300 bg-gray-300 p-4 px-8 pl-2.5"
+                  onPress={() => router.navigate(`/courses/${course.id}`)}
+                >
+                  <View className="w-90 justify-center">
+                    <Text
+                      className="w-80 text-lg font-bold text-ellipsis"
+                      numberOfLines={1}
+                    >
+                      {course.code}
+                    </Text>
+                    <Text numberOfLines={2}>{course.name}</Text>
+                  </View>
+                  <View className="size-12 items-center justify-center rounded-lg bg-blue-700">
+                    <Text className="font-display-semibold text-center text-sm text-white">
+                      {unreadCounts
+                        ? unreadCounts[String(course.id)]
+                          ? wrapNumbers(unreadCounts[String(course.id)].unread)
+                          : "…"
+                        : "…"}
+                    </Text>
+                  </View>
+                </Pressable>
+              ))}
           </View>
         ) : (
-          <Text className="w-screen p-4 flex flex-col space-y-4 text-center ">
+          <Text className="flex w-screen flex-col space-y-4 p-4 text-center">
             No Courses Found
           </Text>
         )}
