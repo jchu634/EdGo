@@ -20,7 +20,7 @@ import {
 } from "@/src/lib/Schemas";
 
 import { getUnreadCounts, UnreadCountEntry } from "@/src/lib/stream";
-import { cacheCourses, getCachedCourses } from "../src/lib/courseStorage";
+import { cacheCourses, getCachedCourses } from "@/src/lib/courseStorage";
 
 export default function Index() {
   const router = useRouter();
