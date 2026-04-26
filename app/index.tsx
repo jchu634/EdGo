@@ -18,6 +18,7 @@ import {
 } from "@/src/lib/schemas";
 import { getUnreadCounts, UnreadCountEntry } from "@/src/lib/stream";
 import { cacheCourses, getCachedCourses } from "@/src/lib/courseStorage";
+const courseColours = ["#16DB93", "#F72585", "#00241B", "#6A66A3", "#FF7F11"];
 
 export default function Index() {
   const router = useRouter();
@@ -110,29 +111,43 @@ export default function Index() {
           <View className="flex min-h-40 w-screen flex-col justify-center gap-y-2 p-4">
             {[...courses]
               .sort((a, b) => a.id - b.id)
-              .map((course) => (
+              .map((course, index) => (
                 <Pressable
                   key={course.id}
-                  className="ml-1.5 flex h-30 w-max flex-row rounded-2xl border-l border-gray-300 bg-gray-300 p-4 px-8 pl-2.5"
+                  className="ml-1.5 flex h-30 w-max flex-row gap-x-2 rounded-2xl bg-gray-300 p-4 px-2.5"
                   onPress={() => router.navigate(`/courses/${course.id}`)}
                 >
-                  <View className="w-90 justify-center">
-                    <Text
-                      className="w-80 text-lg font-bold text-ellipsis"
-                      numberOfLines={1}
-                    >
-                      {course.code}
-                    </Text>
-                    <Text numberOfLines={2}>{course.name}</Text>
-                  </View>
-                  <View className="size-12 items-center justify-center rounded-lg bg-blue-700">
-                    <Text className="font-display-semibold text-center text-sm text-white">
-                      {unreadCounts
-                        ? unreadCounts[String(course.id)]
-                          ? wrapNumbers(unreadCounts[String(course.id)].unread)
-                          : "…"
-                        : "…"}
-                    </Text>
+                  <View
+                    className="h-full w-4 rounded-4xl"
+                    style={{
+                      backgroundColor:
+                        courseColours[index % courseColours.length],
+                    }}
+                  />
+
+                  <View className="flex w-max flex-row">
+                    <View className="w-86 justify-center">
+                      <Text
+                        className="font-display-bold text-xl text-ellipsis"
+                        numberOfLines={1}
+                      >
+                        {course.code}
+                      </Text>
+                      <Text numberOfLines={2} className="font-display">
+                        {course.name}
+                      </Text>
+                    </View>
+                    <View className="size-12 items-center justify-center rounded-lg bg-blue-700">
+                      <Text className="font-display-semibold text-center text-sm text-white">
+                        {unreadCounts
+                          ? unreadCounts[String(course.id)]
+                            ? wrapNumbers(
+                                unreadCounts[String(course.id)].unread,
+                              )
+                            : "…"
+                          : "…"}
+                      </Text>
+                    </View>
                   </View>
                 </Pressable>
               ))}
@@ -143,6 +158,7 @@ export default function Index() {
           </Text>
         )}
       </View>
+      <Pressable className="h-10 w-10"></Pressable>
     </View>
   );
 }
