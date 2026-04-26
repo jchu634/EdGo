@@ -39,24 +39,24 @@ export default function ApiKeyScreen() {
   };
 
   return (
-    <View className="flex-1 justify-center items-center p-6 bg-white">
+    <View className="flex-1 items-center justify-center bg-white p-6">
       <View className="w-full max-w-md">
         <Image
-          source={require("@/assets/images/logo.png")}
+          source={require("@/assets/images/icon.png")}
           contentFit="cover"
           transition={1000}
           style={{ width: 200, height: 200, alignSelf: "center" }}
         />
 
-        <Text className="text-5xl text-center mb-2 font-display-black">
+        <Text className="font-display-black mb-2 text-center text-5xl">
           Welcome to EdGo
         </Text>
-        <Text className="text-black text-center mb-2 font-display-medium">
+        <Text className="font-display-medium mb-2 text-center text-black">
           Enter your EdSTEM API key to get started. {"\n"}
           You can find your API key at this link below.
         </Text>
         <Text
-          className="text-blue-500 text-center mb-8 font-mono text-lg"
+          className="mb-8 text-center font-mono text-lg text-blue-500"
           onPress={() =>
             Linking.openURL("https://edstem.org/us/settings/api-tokens")
           }
@@ -64,9 +64,9 @@ export default function ApiKeyScreen() {
           https://edstem.org/us/settings/api-tokens
         </Text>
 
-        <View className="flex flex-row relative items-center gap-x-4 mb-4">
+        <View className="relative mb-4 flex flex-row items-center gap-x-4">
           <TextInput
-            className="border border-gray-300 rounded-xl p-4 text-base w-full font-mono"
+            className="w-full rounded-xl border border-gray-300 p-4 font-mono text-base"
             placeholder="Enter your API key here"
             value={inputKey}
             onChangeText={setInputKey}
@@ -86,7 +86,7 @@ export default function ApiKeyScreen() {
         </View>
 
         <Pressable
-          className={`rounded-xl p-4 items-center ${
+          className={`items-center rounded-xl p-4 ${
             saving || isLoading
               ? "bg-blue-400"
               : "bg-[#71059f] active:bg-blue-700"
@@ -94,7 +94,7 @@ export default function ApiKeyScreen() {
           onPress={handleSave}
           disabled={saving || isLoading}
         >
-          <Text className="text-white text-lg font-display-semibold">
+          <Text className="font-display-semibold text-lg text-white">
             {saving ? "Saving..." : "Continue"}
           </Text>
         </Pressable>
