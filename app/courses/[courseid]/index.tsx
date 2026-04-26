@@ -4,27 +4,29 @@ import {
   HttpClientRequest,
   HttpClientResponse,
 } from "@effect/platform";
-import {
-  Button,
-  View,
-  Text,
-  FlatList,
-  Pressable,
-  ScrollView,
-} from "react-native";
 import { Effect, Schema } from "effect";
-import React, { useState, useEffect, useCallback, useMemo } from "react";
-import "@/app/global.css";
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  useRef,
+} from "react";
+import { View, Text, FlatList, Pressable, ScrollView } from "react-native";
+
 import { useLocalSearchParams } from "expo-router";
 import { EyeIcon, PushPinIcon, HeartIcon } from "phosphor-react-native";
-import { Course, CourseCategory, ThreadResponse } from "@/src/lib/schemas";
 
+import { cn } from "@/src/lib/utils";
+import { CourseCategory, ThreadResponse } from "@/src/lib/schemas";
 import {
   getThreadsByCourse,
   syncThreads,
   type ThreadType,
 } from "@/src/lib/courseStorage";
 import { getCachedCourseCategory } from "@/src/lib/courseStorage";
+
+import "@/app/global.css";
 
 const categoryColours = [
   "0d74da",
@@ -38,7 +40,7 @@ const categoryColours = [
 ];
 
 const getCategoryColourMap = (
-  categories: Schema.Schema.Type<typeof Course>[] | null,
+  categories: readonly Schema.Schema.Type<typeof CourseCategory>[] | null,
 ): Map<string, string> => {
   const map = new Map<string, string>();
   if (!categories) return map;
@@ -100,7 +102,9 @@ const renderXmlNode = (node: XmlNode, keyPrefix = "node"): React.ReactNode => {
 export default function Index() {
   const { courseid } = useLocalSearchParams();
   const courseIdNum = Number(Array.isArray(courseid) ? courseid[0] : courseid);
+  const [currentCategory, setCurrentCategory] = useState<string | undefined>();
   const courseCategories = getCachedCourseCategory(courseIdNum);
+
   console.log(courseCategories);
 
   const categoryColourMap = useMemo(
@@ -110,15 +114,22 @@ export default function Index() {
 
   const [threads, setThreads] = useState<ThreadType[]>([]);
 
-  const fetchCourseThreads = (course_id: number) =>
+  const fetchCourseThreads = (
+    course_id: number,
+    category?: string,
+    offset?: number,
+  ) =>
     Effect.gen(function* () {
       if (!process.env.EXPO_PUBLIC_EDSTEM_API_KEY) {
         return yield* Effect.fail(new Error("Missing API Key"));
       }
       const client = yield* HttpClient.HttpClient;
-      const request = HttpClientRequest.get(
-        `https://edstem.org/api/courses/${course_id}/threads?sort=new`,
-      ).pipe(
+      let requestURL = `https://edstem.org/api/courses/${course_id}/threads?sort=new`;
+      if (category) {
+        requestURL = `${requestURL}&category=${category}`;
+      }
+      const request = HttpClientRequest.get(requestURL).pipe(
+        HttpClientRequest.setHeader("limit", "100"),
         HttpClientRequest.bearerToken(process.env.EXPO_PUBLIC_EDSTEM_API_KEY),
         HttpClientRequest.acceptJson,
       );
@@ -153,22 +164,65 @@ export default function Index() {
       });
   }, [courseIdNum, loadThreadsFromStore]);
 
-  const renderThreadItem = useCallback(
+  // Split threads into pinned and regular
+  const pinnedThreads = useMemo(
+    () => threads.filter((t) => t.is_pinned),
+    [threads],
+  );
+  const regularThreads = useMemo(
+    () => threads.filter((t) => !t.is_pinned),
+    [threads],
+  );
+
+  const renderPinnedThreadItem = useCallback(
     ({ item }: { item: ThreadType }) => {
       const colour = categoryColourMap.get(item.category);
       return (
         <Pressable
-          className="w-80% mx-1.5 mb-3 rounded-2xl border-l p-4 px-8 pl-2.5"
+          className="mx-2 w-56 rounded-2xl border-l p-3 pl-2.5"
           style={{
             borderLeftColor: colour || "#d1d5db",
             backgroundColor: "#e5e5e5",
           }}
         >
-          <View className="flex flex-row justify-between">
-            <Text className="font-display-bold max-h-30 truncate">
+          <View className="flex w-full flex-row items-start justify-between">
+            <Text
+              className="font-display-bold max-h-20 w-44 text-sm"
+              numberOfLines={2}
+            >
               {item.title}
             </Text>
-            <View>{item.is_pinned && <PushPinIcon />}</View>
+            <PushPinIcon size={14} />
+          </View>
+          <View className="mt-1 flex flex-row items-center">
+            <View
+              className="size-4 rounded-full"
+              style={{ backgroundColor: colour || "#6b7280" }}
+            />
+            <Text className="font-display pl-1.5 text-xs">{item.category}</Text>
+          </View>
+        </Pressable>
+      );
+    },
+    [categoryColourMap],
+  );
+
+  const renderThreadItem = useCallback(
+    ({ item }: { item: ThreadType }) => {
+      const colour = categoryColourMap.get(item.category);
+      return (
+        <Pressable
+          className="w-80% mx-1.5 mb-3 rounded-2xl border-l p-4 px-4 pl-2.5"
+          style={{
+            borderLeftColor: colour || "#d1d5db",
+            backgroundColor: "#e5e5e5",
+          }}
+        >
+          <View className="flex w-max flex-row justify-between">
+            <Text className="font-display-bold max-h-30 w-100 truncate">
+              {item.title}
+            </Text>
+            {item.is_pinned && <PushPinIcon />}
           </View>
           <View className="flex flex-row justify-between">
             <View className="flex flex-row items-center">
@@ -196,7 +250,7 @@ export default function Index() {
   );
 
   return (
-    <View className="flex-1">
+    <View className="flex">
       {courseCategories && (
         <ScrollView
           horizontal={true}
@@ -212,6 +266,11 @@ export default function Index() {
                 backgroundColor:
                   categoryColourMap.get(category.name) || "#eab308",
               }}
+              onPress={() => {
+                if (currentCategory === category.name)
+                  setCurrentCategory(undefined);
+                else setCurrentCategory(category.name);
+              }}
             >
               <Text className="font-display text-center text-white">
                 {category.name}
@@ -220,9 +279,27 @@ export default function Index() {
           ))}
         </ScrollView>
       )}
+      {pinnedThreads.length > 0 && (
+        <View className="mt-2 mb-3">
+          <Text className="font-display-bold mb-1.5 px-4 text-sm text-gray-600">
+            📌 Pinned
+          </Text>
+          <FlatList
+            data={pinnedThreads}
+            keyExtractor={(item) => item.id.toString()}
+            renderItem={renderPinnedThreadItem}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{
+              paddingHorizontal: 6,
+              paddingVertical: 4,
+            }}
+          />
+        </View>
+      )}
 
       <FlatList
-        data={threads}
+        data={regularThreads}
         keyExtractor={(item) => item.id.toString()}
         renderItem={renderThreadItem}
         contentContainerStyle={{ paddingHorizontal: 8, paddingBottom: 16 }}

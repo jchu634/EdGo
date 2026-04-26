@@ -59,7 +59,7 @@ export function getCachedCourses<T>():
 
 export function getCachedCourseCategory(
   course_id: number,
-): ReadonlyArray<Schema.Schema.Type<typeof CourseCategory>> | null {
+): readonly Schema.Schema.Type<typeof CourseCategory>[] | null {
   console.debug(
     "[courseStorage] getCachedCourseCategory: called with course_id=",
     course_id,
