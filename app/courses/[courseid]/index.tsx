@@ -17,14 +17,13 @@ import React, { useState, useEffect, useCallback, useMemo } from "react";
 import "@/app/global.css";
 import { useLocalSearchParams } from "expo-router";
 import { EyeIcon, PushPinIcon, HeartIcon } from "phosphor-react-native";
-import { Course, Thread, ThreadResponse } from "@/src/lib/schemas";
+import { Course, CourseCategory, ThreadResponse } from "@/src/lib/schemas";
 
 import {
   getThreadsByCourse,
   syncThreads,
   type ThreadType,
 } from "@/src/lib/courseStorage";
-import { getUnreadCounts, UnreadCountEntry } from "@/src/lib/stream";
 import { getCachedCourseCategory } from "@/src/lib/courseStorage";
 
 const categoryColours = [
@@ -39,7 +38,7 @@ const categoryColours = [
 ];
 
 const getCategoryColourMap = (
-  categories: ReadonlyArray<{ name: string }> | null,
+  categories: Schema.Schema.Type<typeof Course>[] | null,
 ): Map<string, string> => {
   const map = new Map<string, string>();
   if (!categories) return map;
@@ -86,7 +85,7 @@ const renderXmlNode = (node: XmlNode, keyPrefix = "node"): React.ReactNode => {
     return (
       <View
         key={keyPrefix}
-        className="border-l border-gray-300 pl-2.5 ml-1.5 max-h-40 truncate"
+        className="ml-1.5 max-h-40 truncate border-l border-gray-300 pl-2.5"
       >
         {node.children.map((child, index) =>
           renderXmlNode(child, `${keyPrefix}-${node.tag}-${index}`),
@@ -158,34 +157,39 @@ export default function Index() {
     ({ item }: { item: ThreadType }) => {
       const colour = categoryColourMap.get(item.category);
       return (
-        <View
-          className="border-l border-gray-300 pl-2.5 w-full ml-1.5 rounded-2xl bg-gray-300 p-4 px-8 mb-3"
-          style={{ borderLeftColor: colour || "#d1d5db" }}
+        <Pressable
+          className="w-80% mx-1.5 mb-3 rounded-2xl border-l p-4 px-8 pl-2.5"
+          style={{
+            borderLeftColor: colour || "#d1d5db",
+            backgroundColor: "#e5e5e5",
+          }}
         >
           <View className="flex flex-row justify-between">
-            <Text className="max-h-30 truncate font-bold">{item.title}</Text>
+            <Text className="font-display-bold max-h-30 truncate">
+              {item.title}
+            </Text>
             <View>{item.is_pinned && <PushPinIcon />}</View>
           </View>
           <View className="flex flex-row justify-between">
             <View className="flex flex-row items-center">
               <View
-                className="rounded-full size-6"
+                className="size-6 rounded-full"
                 style={{ backgroundColor: colour || "#6b7280" }}
               />
-              <Text className="pl-2">{item.category}</Text>
+              <Text className="font-display pl-2">{item.category}</Text>
             </View>
             <View className="flex flex-row">
-              <View className="flex flex-row items-center min-w-20">
-                <Text className="pl-2">{item.view_count}</Text>
+              <View className="flex min-w-20 flex-row items-center">
+                <Text className="font-display pl-2">{item.view_count}</Text>
                 <EyeIcon />
               </View>
-              <View className="flex flex-row items-center min-w-10">
-                <Text className="pl-2">{item.vote_count}</Text>
+              <View className="flex min-w-10 flex-row items-center">
+                <Text className="font-display pl-2">{item.vote_count}</Text>
                 <HeartIcon />
               </View>
             </View>
           </View>
-        </View>
+        </Pressable>
       );
     },
     [categoryColourMap],
@@ -196,20 +200,22 @@ export default function Index() {
       {courseCategories && (
         <ScrollView
           horizontal={true}
-          className="pt-4 px-2 mb-3 h-20"
+          className="mb-3 h-20 px-2 pt-4"
           contentContainerClassName="flex-row gap-x-2"
           endFillColorClassName="accent-gray-100"
         >
           {courseCategories.map((category) => (
             <Pressable
               key={category.name}
-              className="rounded-xl h-12 px-3 items-center justify-center"
+              className="h-12 items-center justify-center rounded-xl px-3"
               style={{
                 backgroundColor:
                   categoryColourMap.get(category.name) || "#eab308",
               }}
             >
-              <Text className="text-center text-white">{category.name}</Text>
+              <Text className="font-display text-center text-white">
+                {category.name}
+              </Text>
             </Pressable>
           ))}
         </ScrollView>
