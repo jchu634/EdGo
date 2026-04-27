@@ -1,11 +1,11 @@
 import React, { useState, useCallback, useMemo } from "react";
 import { View, Text, FlatList, Pressable, ScrollView } from "react-native";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { EyeIcon, PushPinIcon, HeartIcon } from "phosphor-react-native";
 import { Schema } from "effect";
 
 import { CourseCategory } from "@/src/lib/schemas";
-import { getCachedCourseCategory } from "@/src/lib/courseStorage";
+import { getCachedCourseCategory } from "@/src/lib/storage";
 import { useCourseThreads } from "@/src/lib/threads";
 import type { Thread } from "@/src/db/schema";
 
@@ -35,6 +35,7 @@ const getCategoryColourMap = (
 
 export default function Index() {
   const { courseid } = useLocalSearchParams();
+  const router = useRouter();
   const courseIdNum = Number(Array.isArray(courseid) ? courseid[0] : courseid);
   const [currentCategory, setCurrentCategory] = useState<string | undefined>();
   const courseCategories = getCachedCourseCategory(courseIdNum);
@@ -53,6 +54,13 @@ export default function Index() {
     endOfPages,
   } = useCourseThreads(courseIdNum, currentCategory);
 
+  const navigateToThread = useCallback(
+    (threadNumber: number) => {
+      router.navigate(`/courses/${courseIdNum}/${threadNumber}`);
+    },
+    [router, courseIdNum],
+  );
+
   const renderPinnedThreadItem = useCallback(
     ({ item }: { item: Thread }) => {
       const colour = categoryColourMap.get(item.category);
@@ -63,6 +71,7 @@ export default function Index() {
             borderLeftColor: colour || "#d1d5db",
             backgroundColor: "#e5e5e5",
           }}
+          onPress={() => navigateToThread(item.number)}
         >
           <View className="flex w-full flex-row items-start justify-between">
             <Text
@@ -83,7 +92,7 @@ export default function Index() {
         </Pressable>
       );
     },
-    [categoryColourMap],
+    [categoryColourMap, navigateToThread],
   );
 
   const renderThreadItem = useCallback(
@@ -96,6 +105,7 @@ export default function Index() {
             borderLeftColor: colour || "#d1d5db",
             backgroundColor: "#e5e5e5",
           }}
+          onPress={() => navigateToThread(item.number)}
         >
           <View className="flex w-max flex-row justify-between">
             <Text className="font-display-bold max-h-30 w-100 truncate">
@@ -125,7 +135,7 @@ export default function Index() {
         </Pressable>
       );
     },
-    [categoryColourMap],
+    [categoryColourMap, navigateToThread],
   );
 
   return (

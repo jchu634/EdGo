@@ -12,9 +12,28 @@ import { threadsTable, type Thread, type NewThread } from "@/src/db/schema";
 import { useLiveQuery } from "drizzle-orm/expo-sqlite";
 import { useDb } from "@/src/providers/dbProvider";
 import type { Db } from "@/src/providers/dbProvider";
-import { ThreadResponse } from "@/src/lib/schemas";
+import { ThreadResponse, ThreadDetailResponse } from "@/src/lib/schemas";
 
 const PAGE_SIZE = 100;
+
+export function fetchThreadDetail(courseId: number, threadNumber: number) {
+  return Effect.gen(function* () {
+    if (!process.env.EXPO_PUBLIC_EDSTEM_API_KEY) {
+      return yield* Effect.fail(new Error("Missing API Key"));
+    }
+    const client = yield* HttpClient.HttpClient;
+    const request = HttpClientRequest.get(
+      `https://edstem.org/api/courses/${courseId}/threads/${threadNumber}`,
+    ).pipe(
+      HttpClientRequest.bearerToken(process.env.EXPO_PUBLIC_EDSTEM_API_KEY),
+      HttpClientRequest.acceptJson,
+    );
+    const response = yield* client.execute(request);
+    return yield* HttpClientResponse.schemaBodyJson(ThreadDetailResponse)(
+      response,
+    );
+  }).pipe(Effect.provide(FetchHttpClient.layer));
+}
 
 export function fetchThreadsFromApi(
   courseId: number,
