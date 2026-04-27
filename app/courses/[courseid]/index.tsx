@@ -182,6 +182,7 @@ export default function Index() {
         keyExtractor={(item) => item.id.toString()}
         renderItem={renderThreadItem}
         onEndReached={fetchMore}
+        className="h-full"
         contentContainerStyle={{ paddingHorizontal: 8, paddingBottom: 16 }}
         ListEmptyComponent={
           <View className="flex-1 items-center justify-center py-10">
