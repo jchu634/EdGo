@@ -12,7 +12,6 @@
     "postinstall": "patch-package"
   },
   "dependencies": {
-    "@effect/platform": "^0.96.0",
     "@expo-google-fonts/intel-one-mono": "^0.4.0",
     "@expo-google-fonts/pt-serif": "^0.4.1",
     "@expo-google-fonts/rokkitt": "^0.4.2",
@@ -22,10 +21,12 @@
     "@react-navigation/native": "^7.1.8",
     "babel-preset-expo": "^55.0.17",
     "clsx": "^2.1.1",
-    "effect": "^3.21.0",
+    "drizzle-orm": "^0.45.2",
+    "effect": "^4.0.0-beta.57",
     "expo": "~54.0.33",
     "expo-constants": "~18.0.13",
     "expo-dev-client": "~6.0.20",
+    "expo-drizzle-studio-plugin": "^0.2.1",
     "expo-font": "~14.0.11",
     "expo-haptics": "~15.0.8",
     "expo-image": "~3.0.11",
@@ -58,6 +59,7 @@
   },
   "devDependencies": {
     "@types/react": "~19.1.0",
+    "drizzle-kit": "^0.31.10",
     "eslint": "^9.25.0",
     "eslint-config-expo": "~10.0.0",
     "eslint-config-prettier": "^10.1.8",

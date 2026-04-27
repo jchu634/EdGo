@@ -3,7 +3,7 @@ import {
   HttpClient,
   HttpClientRequest,
   HttpClientResponse,
-} from "@effect/platform";
+} from "effect/unstable/http";
 import { Effect, Schema } from "effect";
 import React, {
   useState,
@@ -104,8 +104,8 @@ export default function Index() {
   const courseIdNum = Number(Array.isArray(courseid) ? courseid[0] : courseid);
   const [currentCategory, setCurrentCategory] = useState<string | undefined>();
   const courseCategories = getCachedCourseCategory(courseIdNum);
-
-  console.log(courseCategories);
+  const [currentOffset, setCurrentOffset] = useState(100);
+  const [endOfPages, setEndOfPages] = useState(false);
 
   const categoryColourMap = useMemo(
     () => getCategoryColourMap(courseCategories),
@@ -130,6 +130,10 @@ export default function Index() {
       }
       const request = HttpClientRequest.get(requestURL).pipe(
         HttpClientRequest.setHeader("limit", "100"),
+        (req) =>
+          offset !== undefined
+            ? HttpClientRequest.setHeader("offset", String(offset))(req)
+            : req,
         HttpClientRequest.bearerToken(process.env.EXPO_PUBLIC_EDSTEM_API_KEY),
         HttpClientRequest.acceptJson,
       );
@@ -139,7 +143,6 @@ export default function Index() {
     }).pipe(Effect.provide(FetchHttpClient.layer));
 
   const loadThreadsFromStore = useCallback(async () => {
-    if (courseIdNum == null) return;
     try {
       const threads = await getThreadsByCourse(courseIdNum);
       setThreads(threads);
@@ -149,15 +152,13 @@ export default function Index() {
   }, [courseIdNum]);
 
   useEffect(() => {
-    loadThreadsFromStore();
+    // loadThreadsFromStore();
 
     Effect.runPromise(fetchCourseThreads(courseIdNum))
       .then((threadResponse) => {
         if (!threadResponse) return;
         setThreads([...threadResponse.threads]);
-        if (courseIdNum != null) {
-          syncThreads(courseIdNum, [...threadResponse.threads]);
-        }
+        // syncThreads(courseIdNum, [...threadResponse.threads]);
       })
       .catch((error) => {
         console.error("error", error);
@@ -250,7 +251,7 @@ export default function Index() {
   );
 
   return (
-    <View className="flex">
+    <View className="flex h-full">
       {courseCategories && (
         <ScrollView
           horizontal={true}
@@ -302,6 +303,28 @@ export default function Index() {
         data={regularThreads}
         keyExtractor={(item) => item.id.toString()}
         renderItem={renderThreadItem}
+        onEndReached={() => {
+          console.log("Attempting to fetch new threads");
+          if (endOfPages) return;
+          Effect.runPromise(
+            fetchCourseThreads(courseIdNum, undefined, currentOffset),
+          )
+            .then((threadResponse) => {
+              if (!threadResponse) return;
+              if (threadResponse.threads.length === 0) {
+                setEndOfPages(true);
+                return;
+              }
+
+              setThreads([...new Set([...threads, ...threadResponse.threads])]);
+              setCurrentOffset(currentOffset + 100);
+
+              //   syncThreads(courseIdNum, [...threadResponse.threads]);
+            })
+            .catch((error) => {
+              console.error("error", error);
+            });
+        }}
         contentContainerStyle={{ paddingHorizontal: 8, paddingBottom: 16 }}
         ListEmptyComponent={
           <View className="flex-1 items-center justify-center py-10">

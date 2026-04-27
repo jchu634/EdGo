@@ -3,7 +3,7 @@ import {
   HttpClient,
   HttpClientRequest,
   HttpClientResponse,
-} from "@effect/platform";
+} from "effect/unstable/http";
 import { Effect, Schema } from "effect";
 import React, { useState, useEffect } from "react";
 import { View, Text, Pressable } from "react-native";
