@@ -133,29 +133,36 @@ export default function Index() {
       {courseCategories && (
         <ScrollView
           horizontal={true}
-          className="mb-3 h-20 px-2 pt-4"
+          className="mb-3 h-25 px-2 pt-4"
           contentContainerClassName="flex-row gap-x-2"
           endFillColorClassName="accent-gray-100"
         >
-          {courseCategories.map((category) => (
-            <Pressable
-              key={category.name}
-              className="h-12 items-center justify-center rounded-xl px-3"
-              style={{
-                backgroundColor:
-                  categoryColourMap.get(category.name) || "#eab308",
-              }}
-              onPress={() => {
-                if (currentCategory === category.name)
-                  setCurrentCategory(undefined);
-                else setCurrentCategory(category.name);
-              }}
-            >
-              <Text className="font-display text-center text-white">
-                {category.name}
-              </Text>
-            </Pressable>
-          ))}
+          {courseCategories.map((category) => {
+            const isActive = currentCategory === category.name;
+            const colour = categoryColourMap.get(category.name) || "#eab308";
+            return (
+              <Pressable
+                key={category.name}
+                className="h-12 items-center justify-center rounded-xl px-3"
+                style={
+                  isActive
+                    ? { borderWidth: 2, borderColor: colour }
+                    : { backgroundColor: colour }
+                }
+                onPress={() => {
+                  if (isActive) setCurrentCategory(undefined);
+                  else setCurrentCategory(category.name);
+                }}
+              >
+                <Text
+                  className="font-display text-center"
+                  style={isActive ? { color: colour } : { color: "white" }}
+                >
+                  {category.name}
+                </Text>
+              </Pressable>
+            );
+          })}
         </ScrollView>
       )}
       {pinnedThreads.length > 0 && (
