@@ -1,30 +1,13 @@
-import {
-  FetchHttpClient,
-  HttpClient,
-  HttpClientRequest,
-  HttpClientResponse,
-} from "effect/unstable/http";
-import { Effect, Schema } from "effect";
-import React, {
-  useState,
-  useEffect,
-  useCallback,
-  useMemo,
-  useRef,
-} from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import { View, Text, FlatList, Pressable, ScrollView } from "react-native";
-
 import { useLocalSearchParams } from "expo-router";
 import { EyeIcon, PushPinIcon, HeartIcon } from "phosphor-react-native";
+import { Schema } from "effect";
 
-import { cn } from "@/src/lib/utils";
-import { CourseCategory, ThreadResponse } from "@/src/lib/schemas";
-import {
-  getThreadsByCourse,
-  syncThreads,
-  type ThreadType,
-} from "@/src/lib/courseStorage";
+import { CourseCategory } from "@/src/lib/schemas";
 import { getCachedCourseCategory } from "@/src/lib/courseStorage";
+import { useCourseThreads } from "@/src/lib/threads";
+import type { Thread } from "@/src/db/schema";
 
 import "@/app/global.css";
 
@@ -50,133 +33,28 @@ const getCategoryColourMap = (
   return map;
 };
 
-// Type for the parsed XML AST structure
-interface XmlTextNode {
-  type: "text";
-  value: string;
-}
-
-interface XmlElementNode {
-  type: "element" | "document";
-  tag: string;
-  attrs: Record<string, string>;
-  children: XmlNode[];
-  selfClosing?: boolean;
-}
-
-type XmlNode = XmlTextNode | XmlElementNode;
-
-// Recursive function to render XML nodes
-const renderXmlNode = (node: XmlNode, keyPrefix = "node"): React.ReactNode => {
-  // Handle text nodes
-  if (node.type === "text") {
-    return <Text key={keyPrefix}>{node.value}</Text>;
-  }
-
-  // Handle element/document nodes
-  if (node.type === "element" || node.type === "document") {
-    // For self-closing elements with no children, render nothing visible
-    if (node.selfClosing && node.children.length === 0) {
-      // Could render a line break for <break /> tags, etc.
-      if (node.tag === "break" || node.tag === "br") {
-        return <Text key={keyPrefix}>{"\n"}</Text>;
-      }
-      return null;
-    }
-
-    return (
-      <View
-        key={keyPrefix}
-        className="ml-1.5 max-h-40 truncate border-l border-gray-300 pl-2.5"
-      >
-        {node.children.map((child, index) =>
-          renderXmlNode(child, `${keyPrefix}-${node.tag}-${index}`),
-        )}
-      </View>
-    );
-  }
-
-  return null;
-};
-
 export default function Index() {
   const { courseid } = useLocalSearchParams();
   const courseIdNum = Number(Array.isArray(courseid) ? courseid[0] : courseid);
   const [currentCategory, setCurrentCategory] = useState<string | undefined>();
   const courseCategories = getCachedCourseCategory(courseIdNum);
-  const [currentOffset, setCurrentOffset] = useState(100);
-  const [endOfPages, setEndOfPages] = useState(false);
 
   const categoryColourMap = useMemo(
     () => getCategoryColourMap(courseCategories),
     [courseCategories],
   );
 
-  const [threads, setThreads] = useState<ThreadType[]>([]);
-
-  const fetchCourseThreads = (
-    course_id: number,
-    category?: string,
-    offset?: number,
-  ) =>
-    Effect.gen(function* () {
-      if (!process.env.EXPO_PUBLIC_EDSTEM_API_KEY) {
-        return yield* Effect.fail(new Error("Missing API Key"));
-      }
-      const client = yield* HttpClient.HttpClient;
-      let requestURL = `https://edstem.org/api/courses/${course_id}/threads?sort=new`;
-      if (category) {
-        requestURL = `${requestURL}&category=${category}`;
-      }
-      const request = HttpClientRequest.get(requestURL).pipe(
-        HttpClientRequest.setHeader("limit", "100"),
-        (req) =>
-          offset !== undefined
-            ? HttpClientRequest.setHeader("offset", String(offset))(req)
-            : req,
-        HttpClientRequest.bearerToken(process.env.EXPO_PUBLIC_EDSTEM_API_KEY),
-        HttpClientRequest.acceptJson,
-      );
-
-      const response = yield* client.execute(request);
-      return yield* HttpClientResponse.schemaBodyJson(ThreadResponse)(response);
-    }).pipe(Effect.provide(FetchHttpClient.layer));
-
-  const loadThreadsFromStore = useCallback(async () => {
-    try {
-      const threads = await getThreadsByCourse(courseIdNum);
-      setThreads(threads);
-    } catch (e) {
-      console.error("Failed to load cached threads", e);
-    }
-  }, [courseIdNum]);
-
-  useEffect(() => {
-    // loadThreadsFromStore();
-
-    Effect.runPromise(fetchCourseThreads(courseIdNum))
-      .then((threadResponse) => {
-        if (!threadResponse) return;
-        setThreads([...threadResponse.threads]);
-        // syncThreads(courseIdNum, [...threadResponse.threads]);
-      })
-      .catch((error) => {
-        console.error("error", error);
-      });
-  }, [courseIdNum, loadThreadsFromStore]);
-
-  // Split threads into pinned and regular
-  const pinnedThreads = useMemo(
-    () => threads.filter((t) => t.is_pinned),
-    [threads],
-  );
-  const regularThreads = useMemo(
-    () => threads.filter((t) => !t.is_pinned),
-    [threads],
-  );
+  const {
+    pinnedThreads,
+    regularThreads,
+    loading,
+    error,
+    fetchMore,
+    endOfPages,
+  } = useCourseThreads(courseIdNum, currentCategory);
 
   const renderPinnedThreadItem = useCallback(
-    ({ item }: { item: ThreadType }) => {
+    ({ item }: { item: Thread }) => {
       const colour = categoryColourMap.get(item.category);
       return (
         <Pressable
@@ -209,7 +87,7 @@ export default function Index() {
   );
 
   const renderThreadItem = useCallback(
-    ({ item }: { item: ThreadType }) => {
+    ({ item }: { item: Thread }) => {
       const colour = categoryColourMap.get(item.category);
       return (
         <Pressable
@@ -223,7 +101,7 @@ export default function Index() {
             <Text className="font-display-bold max-h-30 w-100 truncate">
               {item.title}
             </Text>
-            {item.is_pinned && <PushPinIcon />}
+            {item.isPinned && <PushPinIcon />}
           </View>
           <View className="flex flex-row justify-between">
             <View className="flex flex-row items-center">
@@ -235,11 +113,11 @@ export default function Index() {
             </View>
             <View className="flex flex-row">
               <View className="flex min-w-20 flex-row items-center">
-                <Text className="font-display pl-2">{item.view_count}</Text>
+                <Text className="font-display pl-2">{item.viewCount}</Text>
                 <EyeIcon />
               </View>
               <View className="flex min-w-10 flex-row items-center">
-                <Text className="font-display pl-2">{item.vote_count}</Text>
+                <Text className="font-display pl-2">{item.voteCount}</Text>
                 <HeartIcon />
               </View>
             </View>
@@ -283,7 +161,7 @@ export default function Index() {
       {pinnedThreads.length > 0 && (
         <View className="mt-2 mb-3">
           <Text className="font-display-bold mb-1.5 px-4 text-sm text-gray-600">
-            📌 Pinned
+            Pinned
           </Text>
           <FlatList
             data={pinnedThreads}
@@ -303,32 +181,13 @@ export default function Index() {
         data={regularThreads}
         keyExtractor={(item) => item.id.toString()}
         renderItem={renderThreadItem}
-        onEndReached={() => {
-          console.log("Attempting to fetch new threads");
-          if (endOfPages) return;
-          Effect.runPromise(
-            fetchCourseThreads(courseIdNum, undefined, currentOffset),
-          )
-            .then((threadResponse) => {
-              if (!threadResponse) return;
-              if (threadResponse.threads.length === 0) {
-                setEndOfPages(true);
-                return;
-              }
-
-              setThreads([...new Set([...threads, ...threadResponse.threads])]);
-              setCurrentOffset(currentOffset + 100);
-
-              //   syncThreads(courseIdNum, [...threadResponse.threads]);
-            })
-            .catch((error) => {
-              console.error("error", error);
-            });
-        }}
+        onEndReached={fetchMore}
         contentContainerStyle={{ paddingHorizontal: 8, paddingBottom: 16 }}
         ListEmptyComponent={
           <View className="flex-1 items-center justify-center py-10">
-            <Text className="text-gray-500">No threads found</Text>
+            <Text className="text-gray-500">
+              {loading ? "Loading threads..." : "No threads found"}
+            </Text>
           </View>
         }
       />

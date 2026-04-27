@@ -1,0 +1,22 @@
+CREATE TABLE `threads` (
+	`id` integer PRIMARY KEY NOT NULL,
+	`course_id` integer NOT NULL,
+	`title` text NOT NULL,
+	`number` integer NOT NULL,
+	`user_id` integer NOT NULL,
+	`type` text NOT NULL,
+	`content` text NOT NULL,
+	`document` text DEFAULT '' NOT NULL,
+	`category` text DEFAULT '' NOT NULL,
+	`subcategory` text DEFAULT '' NOT NULL,
+	`subsubcategory` text DEFAULT '' NOT NULL,
+	`star_count` integer DEFAULT 0 NOT NULL,
+	`view_count` integer DEFAULT 0 NOT NULL,
+	`vote_count` integer DEFAULT 0 NOT NULL,
+	`is_pinned` integer DEFAULT false NOT NULL,
+	`is_answered` integer DEFAULT false NOT NULL,
+	`is_student_answered` integer DEFAULT false NOT NULL,
+	`is_staff_answered` integer DEFAULT false NOT NULL,
+	`is_anonymous` integer DEFAULT false NOT NULL,
+	`user` text
+);

@@ -1,0 +1,1 @@
+CREATE INDEX `threads_course_id_idx` ON `threads` (`course_id`);
