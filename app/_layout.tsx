@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { Stack } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { SQLiteProvider, openDatabaseSync } from "expo-sqlite";
+import { Ionicons } from "@expo/vector-icons";
 
 import { drizzle } from "drizzle-orm/expo-sqlite";
 import migrations from "@/drizzle/migrations";
@@ -31,6 +32,21 @@ export default function RootLayout() {
           <DbProvider>
             <Stack
               screenOptions={{
+                headerStyle: {
+                  backgroundColor: "#70069e",
+                },
+                headerTitle: "",
+                headerRight: () => (
+                  <>
+                    <Ionicons
+                      name="search"
+                      size={24}
+                      color="white"
+                      style={{ marginRight: 16 }}
+                    />
+                    <Ionicons name="person" size={24} color="white" />
+                  </>
+                ),
                 contentStyle: {
                   paddingBottom: Platform.OS === "android" ? insets.bottom : 0,
                 },
