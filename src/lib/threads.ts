@@ -18,26 +18,22 @@ const PAGE_SIZE = 100;
 
 export function fetchThreadsFromApi(
   courseId: number,
-  category?: string,
-  offset?: number,
+  options?: { category?: string; offset?: number; sort?: string },
 ) {
+  const { category, offset, sort = "new" } = options ?? {};
   return Effect.gen(function* () {
     if (!process.env.EXPO_PUBLIC_EDSTEM_API_KEY) {
       return yield* Effect.fail(new Error("Missing API Key"));
     }
     const client = yield* HttpClient.HttpClient;
-    let url = `https://edstem.org/api/courses/${courseId}/threads?sort=new`;
-    if (category) url += `&category=${category}`;
+    const params = new URLSearchParams({ sort, limit: String(PAGE_SIZE) });
+    if (category) params.set("category", category);
+    if (offset !== undefined) params.set("offset", String(offset));
 
-    const request = HttpClientRequest.get(url).pipe(
-      HttpClientRequest.setHeader("limit", String(PAGE_SIZE)),
-      (req) =>
-        offset !== undefined
-          ? HttpClientRequest.setHeader("offset", String(offset))(req)
-          : req,
-      HttpClientRequest.bearerToken(
-        process.env.EXPO_PUBLIC_EDSTEM_API_KEY,
-      ),
+    const request = HttpClientRequest.get(
+      `https://edstem.org/api/courses/${courseId}/threads?${params.toString()}`,
+    ).pipe(
+      HttpClientRequest.bearerToken(process.env.EXPO_PUBLIC_EDSTEM_API_KEY),
       HttpClientRequest.acceptJson,
     );
 
@@ -139,8 +135,10 @@ export function useCourseThreads(courseId: number, category?: string) {
       setError(undefined);
       try {
         const response = await Effect.runPromise(
-          fetchThreadsFromApi(courseId, category, offset),
+          fetchThreadsFromApi(courseId, { category, offset }),
         );
+        console.log("Offset", offset);
+        console.log("Fetched thread 1", response?.threads[0].title);
         if (!response) return;
         if (response.threads.length === 0) {
           setEndOfPages(true);
@@ -164,6 +162,8 @@ export function useCourseThreads(courseId: number, category?: string) {
   }, [fetchAndSync]);
 
   const fetchMore = useCallback(() => {
+    console.log("Fetching more threads");
+    console.log("Current Offset", offsetRef.current);
     if (endOfPages || loading) return;
     fetchAndSync(offsetRef.current);
   }, [endOfPages, loading, fetchAndSync]);
