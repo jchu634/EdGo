@@ -1,6 +1,0 @@
-- Migrate ORM to Drizzle (Much less painful)
-- Switch rendering setup from PITA query + update render hell to livequery 
-  - If there are perf issues with 1000+ threads, switch newest ~300 messages to livequery and just don't bother having live updates to older threads
-- Switch rendering style to livequery data
-- dumb down pages, and add a lib for fetch, update and sync that just returns a hook or something
-- Switch to db-first rendering.
