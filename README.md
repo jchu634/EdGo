@@ -1,7 +1,7 @@
 # EdGo
-![Logo]("/assets/images/icon.png" =250x250)
-    
 A UNOFFICIAL react-native app for Ed Discussion.
+
+<img src="/assets/images/icon.png" alt="EdGo Log" width="200" height="200">
 
 ## Running dev build
 
