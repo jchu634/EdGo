@@ -280,7 +280,7 @@ export default function ThreadPage() {
           return doc as XmlNode;
         }
       } catch (e) {
-        console.warn(`Failed to parse XML for ${xmlKey}:`, e);
+        console.warn(`[XML] Failed to parse ${xmlKey}:`, e);
       }
       return null;
     },
@@ -337,23 +337,35 @@ export default function ThreadPage() {
 
         const newXmlMap = new Map<string, XmlNode>();
 
-        const xmlContent = response.thread.document || response.thread.content;
+        const xmlContent = response.thread.content;
         if (xmlContent) {
           const parsed = await parseAndCacheXml(xmlContent, "main");
-          if (parsed) newXmlMap.set("main", parsed);
+          if (parsed) {
+            newXmlMap.set("main", parsed);
+          } else {
+            console.warn(
+              `[XML] Thread body failed to parse (${xmlContent.length} chars)`,
+            );
+          }
         }
 
         const parseComments = async (
           comments: typeof response.thread.comments,
         ) => {
           for (const c of comments) {
-            const commentContent = c.document || c.content;
+            const commentContent = c.content;
             if (commentContent) {
               const parsed = await parseAndCacheXml(
                 commentContent,
                 `comment-${c.id}`,
               );
-              if (parsed) newXmlMap.set(`comment-${c.id}`, parsed);
+              if (parsed) {
+                newXmlMap.set(`comment-${c.id}`, parsed);
+              } else {
+                console.warn(
+                  `[XML] Comment ${c.id} failed to parse (${commentContent.length} chars)`,
+                );
+              }
             }
             if (c.comments.length > 0) {
               await parseComments(c.comments);
@@ -367,7 +379,7 @@ export default function ThreadPage() {
           setLoading(false);
         }
       } catch (err) {
-        console.error("Failed to load thread detail:", err);
+        console.error("[XML] Failed to load thread detail:", err);
         if (!cancelled) setLoading(false);
       }
     };
