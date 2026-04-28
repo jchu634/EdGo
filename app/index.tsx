@@ -11,7 +11,7 @@ import { View, Text, Pressable } from "react-native";
 import { useRouter } from "expo-router";
 import { Course, UserResponse } from "@/src/lib/schema";
 import { getUnreadCounts, UnreadCountEntry } from "@/src/lib/stream";
-import { cacheCourses, getCachedCourses } from "@/src/lib/storage";
+import { cacheCourses, getCachedCourses, getApiKey } from "@/src/lib/storage";
 
 import "@/app/global.css";
 
@@ -28,12 +28,13 @@ export default function Index() {
   >();
   const fetchCourses = () =>
     Effect.gen(function* () {
-      if (!process.env.EXPO_PUBLIC_EDSTEM_API_KEY) {
+      const apiKey = getApiKey();
+      if (!apiKey) {
         return yield* Effect.fail(new Error("Missing API Key"));
       }
       const client = yield* HttpClient.HttpClient;
       const request = HttpClientRequest.get(`https://edstem.org/api/user`).pipe(
-        HttpClientRequest.bearerToken(process.env.EXPO_PUBLIC_EDSTEM_API_KEY),
+        HttpClientRequest.bearerToken(apiKey),
         HttpClientRequest.acceptJson,
       );
 

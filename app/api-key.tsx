@@ -13,6 +13,8 @@ import { Image } from "expo-image";
 import { useApiKey } from "@/src/providers/keyProvider";
 import { EyeClosedIcon, EyeIcon } from "phosphor-react-native";
 
+import "@/app/global.css";
+
 export default function ApiKeyScreen() {
   const { setApiKey, isLoading } = useApiKey();
   const [inputKey, setInputKey] = useState("");

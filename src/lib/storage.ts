@@ -8,6 +8,19 @@ import {
 
 const courseCache = createMMKV({ id: "courseCache" });
 const threadCache = createMMKV({ id: "threadCache" });
+const settingsStore = createMMKV({ id: "settings" });
+
+export function getApiKey(): string | null {
+  return settingsStore.getString("apiKey") ?? null;
+}
+
+export function setApiKey(key: string): void {
+  settingsStore.set("apiKey", key);
+}
+
+export function clearApiKey(): void {
+  settingsStore.remove("apiKey");
+}
 
 export function cacheCourses(
   courses: Schema.Schema.Type<typeof Course>[],
