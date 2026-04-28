@@ -89,7 +89,8 @@
             "node_modules/@expo-google-fonts/rokkitt/900Black_Italic/Rokkitt_900Black_Italic.ttf"
           ]
         }
-      ]
+      ],
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true,

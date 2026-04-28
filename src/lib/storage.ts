@@ -4,7 +4,7 @@ import {
   Course,
   CourseCategory,
   ThreadDetailResponse,
-} from "@/src/lib/schemas";
+} from "@/src/lib/schema";
 
 const courseCache = createMMKV({ id: "courseCache" });
 const threadCache = createMMKV({ id: "threadCache" });

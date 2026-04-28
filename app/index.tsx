@@ -9,7 +9,7 @@ import React, { useState, useEffect } from "react";
 import { View, Text, Pressable } from "react-native";
 
 import { useRouter } from "expo-router";
-import { Course, UserResponse } from "@/src/lib/schemas";
+import { Course, UserResponse } from "@/src/lib/schema";
 import { getUnreadCounts, UnreadCountEntry } from "@/src/lib/stream";
 import { cacheCourses, getCachedCourses } from "@/src/lib/storage";
 
