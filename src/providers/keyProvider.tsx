@@ -70,26 +70,6 @@ export function KeyProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const segments = useSegments();
 
-  useEffect(() => {
-    const inApiKeyRoute = segments[0] === "api-key";
-
-    if (!apiKey && !inApiKeyRoute) {
-      router.replace("/api-key");
-    } else if (apiKey && inApiKeyRoute) {
-      router.replace("/");
-    }
-  }, [apiKey, segments, router]);
-
-  const handleSetApiKey = useCallback(async (key: string) => {
-    setStoredApiKey(key);
-    setApiKeyState(key);
-  }, []);
-
-  const handleClearApiKey = useCallback(async () => {
-    clearStoredApiKey();
-    setApiKeyState(null);
-  }, []);
-
   /*
    * Temporary workaround to keep fonts loaded globally as expo config does not load them
    */
@@ -130,6 +110,28 @@ export function KeyProvider({ children }: { children: React.ReactNode }) {
     Rokkitt_800ExtraBold_Italic,
     Rokkitt_900Black_Italic,
   });
+
+  useEffect(() => {
+    if (!fontsLoaded) return;
+
+    const inApiKeyRoute = segments[0] === "api-key";
+
+    if (!apiKey && !inApiKeyRoute) {
+      router.replace("/api-key");
+    } else if (apiKey && inApiKeyRoute) {
+      router.replace("/");
+    }
+  }, [apiKey, segments, router, fontsLoaded]);
+
+  const handleSetApiKey = useCallback(async (key: string) => {
+    setStoredApiKey(key);
+    setApiKeyState(key);
+  }, []);
+
+  const handleClearApiKey = useCallback(async () => {
+    clearStoredApiKey();
+    setApiKeyState(null);
+  }, []);
 
   if (!fontsLoaded) {
     return null;
