@@ -1,10 +1,6 @@
 import { Schema } from "effect";
 import { createMMKV } from "react-native-mmkv";
-import {
-  Course,
-  CourseCategory,
-  ThreadDetailResponse,
-} from "@/src/lib/schema";
+import { Course, CourseCategory, ThreadDetailResponse } from "@/src/lib/schema";
 
 const courseCache = createMMKV({ id: "courseCache" });
 const threadCache = createMMKV({ id: "threadCache" });
@@ -20,6 +16,14 @@ export function setApiKey(key: string): void {
 
 export function clearApiKey(): void {
   settingsStore.remove("apiKey");
+}
+
+export function clearCourseCache(): void {
+  courseCache.clearAll();
+}
+
+export function clearThreadCache(): void {
+  threadCache.clearAll();
 }
 
 export function cacheCourses(
