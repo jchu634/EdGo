@@ -4,7 +4,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { EyeIcon, PushPinIcon, HeartIcon } from "phosphor-react-native";
 import { Schema } from "effect";
 
-import { CourseCategory } from "@/src/lib/schemas";
+import { CourseCategory } from "@/src/lib/schema";
 import { getCachedCourseCategory } from "@/src/lib/storage";
 import { useCourseThreads } from "@/src/lib/threads";
 import type { Thread } from "@/src/db/schema";

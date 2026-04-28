@@ -14,7 +14,7 @@ import {
 import {
   EdComment as CommentSchema,
   ThreadDetailResponse,
-} from "@/src/lib/schemas";
+} from "@/src/lib/schema";
 import { fetchThreadDetail } from "@/src/lib/threads";
 import {
   getCachedThreadDetail,
