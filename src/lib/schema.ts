@@ -54,63 +54,16 @@ export const Course = Schema.Struct({
   }),
 });
 
-export const EdComment: Schema.Schema<{
-  readonly id: number;
-  readonly user_id: number;
-  readonly course_id: number;
-  readonly thread_id: number;
-  readonly parent_id: number | null;
-  readonly editor_id: number | null;
-  readonly number: number;
-  readonly type: "comment" | "answer";
-  readonly kind: string;
-  readonly content: string;
-  readonly document: string;
-  readonly flag_count: number;
-  readonly vote_count: number;
-  readonly is_endorsed: boolean;
-  readonly is_anonymous: boolean;
-  readonly is_private: boolean;
-  readonly is_resolved: boolean;
-  readonly created_at: string;
-  readonly updated_at: string | null;
-  readonly deleted_at: string | null;
-  readonly anonymous_id: number;
-  readonly vote: number;
-  readonly comments: readonly {
-    readonly id: number;
-    readonly user_id: number;
-    readonly course_id: number;
-    readonly thread_id: number;
-    readonly parent_id: number | null;
-    readonly editor_id: number | null;
-    readonly number: number;
-    readonly type: "comment" | "answer";
-    readonly kind: string;
-    readonly content: string;
-    readonly document: string;
-    readonly flag_count: number;
-    readonly vote_count: number;
-    readonly is_endorsed: boolean;
-    readonly is_anonymous: boolean;
-    readonly is_private: boolean;
-    readonly is_resolved: boolean;
-    readonly created_at: string;
-    readonly updated_at: string | null;
-    readonly deleted_at: string | null;
-    readonly anonymous_id: number;
-    readonly vote: number;
-    readonly comments: readonly any[];
-  }[];
-}> = Schema.Struct({
+const edCommentFields = {
   id: Schema.Number,
   user_id: Schema.Number,
   course_id: Schema.Number,
   thread_id: Schema.Number,
+  original_id: Schema.NullOr(Schema.Number),
   parent_id: Schema.NullOr(Schema.Number),
   editor_id: Schema.NullOr(Schema.Number),
   number: Schema.Number,
-  type: Schema.Literal("comment", "answer"),
+  type: Schema.Literals(["comment", "answer"]),
   kind: Schema.String,
   content: Schema.String,
   document: Schema.String,
@@ -120,13 +73,26 @@ export const EdComment: Schema.Schema<{
   is_anonymous: Schema.Boolean,
   is_private: Schema.Boolean,
   is_resolved: Schema.Boolean,
+  created_by_bot_id: Schema.NullOr(Schema.Number),
   created_at: Schema.String,
   updated_at: Schema.NullOr(Schema.String),
   deleted_at: Schema.NullOr(Schema.String),
-  anonymous_id: Schema.Number,
-  vote: Schema.Number,
-  comments: Schema.Array(Schema.suspend(() => EdComment)),
+  anonymous_id: Schema.NullOr(Schema.Number),
+  vote: Schema.NullOr(Schema.Number),
+};
+
+interface EdComment extends Schema.Struct.Type<typeof edCommentFields> {
+  readonly comments: ReadonlyArray<EdComment>;
+}
+
+const EdComment = Schema.Struct({
+  ...edCommentFields,
+  comments: Schema.Array(
+    Schema.suspend((): Schema.Schema<EdComment> => EdComment),
+  ),
 });
+
+export { EdComment };
 
 export const Thread = Schema.Struct({
   id: Schema.Number,
@@ -173,6 +139,7 @@ export const ThreadDetail = Schema.Struct({
   is_staff_answered: Schema.Boolean,
   is_anonymous: Schema.Boolean,
   comments: Schema.Array(EdComment),
+  answers: Schema.Array(EdComment),
 });
 
 export const ThreadDetailResponse = Schema.Struct({
@@ -183,7 +150,7 @@ export const ThreadDetailResponse = Schema.Struct({
 const Role = Schema.Struct({
   user_id: Schema.Number,
   course_id: Schema.Number,
-  role: Schema.Literal("student", "mentor", "tutor", "staff", "admin"),
+  role: Schema.Literals(["student", "mentor", "tutor", "staff", "admin"]),
 });
 
 export const UserResponse = Schema.Struct({
