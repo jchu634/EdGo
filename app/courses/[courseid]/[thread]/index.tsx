@@ -3,6 +3,7 @@ import { View, Text, ScrollView, ActivityIndicator, Image } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import { Effect, Schema } from "effect";
 import { parseXml } from "react-native-turboxml";
+import LinkText from "@/src/components/LinkText";
 import {
   EyeIcon,
   HeartIcon,
@@ -55,7 +56,7 @@ function isXmlNode(val: unknown): val is XmlNode {
 
 const renderXmlNode = (node: XmlNode, keyPrefix = "node"): React.ReactNode => {
   if (node.type === "text") {
-    return <Text key={keyPrefix}>{node.value}</Text>;
+    return <Text key={keyPrefix}>{node.value} </Text>;
   }
 
   if (node.type === "element" || node.type === "document") {
@@ -78,7 +79,7 @@ const renderXmlNode = (node: XmlNode, keyPrefix = "node"): React.ReactNode => {
       case "p":
         return (
           <Text key={keyPrefix} className="font-display mb-2">
-            {children()}
+            {children()}{" "}
           </Text>
         );
       case "bold":
@@ -147,9 +148,9 @@ const renderXmlNode = (node: XmlNode, keyPrefix = "node"): React.ReactNode => {
       }
       case "link": {
         return (
-          <Text key={keyPrefix} className="text-blue-600 underline">
+          <LinkText key={keyPrefix} href={node.attrs.href}>
             {children()}
-          </Text>
+          </LinkText>
         );
       }
       default:
@@ -318,6 +319,7 @@ export default function ThreadPage() {
           }
         };
         loadCommentXml(cached.thread.comments);
+        loadCommentXml(cached.thread.answers);
         setParsedXmlMap(xmlMap);
         setLoading(false);
       }
@@ -350,7 +352,9 @@ export default function ThreadPage() {
         }
 
         const parseComments = async (
-          comments: typeof response.thread.comments,
+          comments:
+            | typeof response.thread.comments
+            | typeof response.thread.answers,
         ) => {
           for (const c of comments) {
             const commentContent = c.content;
@@ -373,6 +377,11 @@ export default function ThreadPage() {
           }
         };
         await parseComments(response.thread.comments);
+        await parseComments(response.thread.answers);
+
+        console.log(
+          `[XML] Parsed ${newXmlMap.size}/${1 + response.thread.comments.length + response.thread.answers.length} XML entries`,
+        );
 
         if (!cancelled) {
           setParsedXmlMap(newXmlMap);
@@ -409,7 +418,10 @@ export default function ThreadPage() {
   const { thread: t } = threadData;
   const author = usersMap.get(t.user_id);
   const mainXml = parsedXmlMap.get("main");
-  const answers = t.comments.filter((c) => c.type === "answer");
+  const answers = [
+    ...t.answers,
+    ...t.comments.filter((c) => c.type === "answer"),
+  ];
   const comments = t.comments.filter((c) => c.type === "comment");
 
   return (
