@@ -23,6 +23,7 @@ export const threadsTable = sqliteTable(
     starCount: integer("star_count").default(0).notNull(),
     viewCount: integer("view_count").default(0).notNull(),
     voteCount: integer("vote_count").default(0).notNull(),
+    replyCount: integer("reply_count").default(0).notNull(),
     isPinned: integer("is_pinned", { mode: "boolean" })
       .default(false)
       .notNull(),

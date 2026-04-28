@@ -26,10 +26,7 @@ export function fetchThreadDetail(courseId: number, threadNumber: number) {
     const client = yield* HttpClient.HttpClient;
     const request = HttpClientRequest.get(
       `https://edstem.org/api/courses/${courseId}/threads/${threadNumber}`,
-    ).pipe(
-      HttpClientRequest.bearerToken(apiKey),
-      HttpClientRequest.acceptJson,
-    );
+    ).pipe(HttpClientRequest.bearerToken(apiKey), HttpClientRequest.acceptJson);
     const response = yield* client.execute(request);
     return yield* HttpClientResponse.schemaBodyJson(ThreadDetailResponse)(
       response,
@@ -54,10 +51,7 @@ export function fetchThreadsFromApi(
 
     const request = HttpClientRequest.get(
       `https://edstem.org/api/courses/${courseId}/threads?${params.toString()}`,
-    ).pipe(
-      HttpClientRequest.bearerToken(apiKey),
-      HttpClientRequest.acceptJson,
-    );
+    ).pipe(HttpClientRequest.bearerToken(apiKey), HttpClientRequest.acceptJson);
 
     const response = yield* client.execute(request);
     return yield* HttpClientResponse.schemaBodyJson(ThreadResponse)(response);
@@ -83,6 +77,7 @@ function toDbThread(
     starCount: t.star_count,
     viewCount: t.view_count,
     voteCount: t.vote_count,
+    replyCount: t.reply_count,
     isPinned: t.is_pinned,
     isAnswered: t.is_answered,
     isStudentAnswered: t.is_student_answered,
@@ -117,6 +112,7 @@ export async function syncThreadsToDb(
         starCount: sql`excluded.star_count`,
         viewCount: sql`excluded.view_count`,
         voteCount: sql`excluded.vote_count`,
+        replyCount: sql`excluded.reply_count`,
         isPinned: sql`excluded.is_pinned`,
         isAnswered: sql`excluded.is_answered`,
         isStudentAnswered: sql`excluded.is_student_answered`,

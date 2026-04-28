@@ -1,7 +1,12 @@
 import React, { useState, useCallback, useMemo } from "react";
 import { View, Text, FlatList, Pressable, ScrollView } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { EyeIcon, PushPinIcon, HeartIcon } from "phosphor-react-native";
+import {
+  EyeIcon,
+  PushPinIcon,
+  HeartIcon,
+  ChatsIcon,
+} from "phosphor-react-native";
 import { Schema } from "effect";
 
 import { CourseCategory } from "@/src/lib/schema";
@@ -122,7 +127,13 @@ export default function Index() {
               <Text className="font-display pl-2">{item.category}</Text>
             </View>
             <View className="flex flex-row">
-              <View className="flex min-w-20 flex-row items-center">
+              {item.replyCount !== 0 && (
+                <View className="flex min-w-10 flex-row items-center">
+                  <Text className="font-display pl-2">{item.replyCount}</Text>
+                  <ChatsIcon />
+                </View>
+              )}
+              <View className="flex min-w-10 flex-row items-center">
                 <Text className="font-display pl-2">{item.viewCount}</Text>
                 <EyeIcon />
               </View>

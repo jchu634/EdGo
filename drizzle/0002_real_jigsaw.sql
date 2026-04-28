@@ -1,0 +1,1 @@
+ALTER TABLE `threads` ADD `reply_count` integer DEFAULT 0 NOT NULL;

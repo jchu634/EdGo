@@ -138,6 +138,7 @@ export const Thread = Schema.Struct({
   /*
     No Category/Subcategory is returned as empty string
   */
+  reply_count: Schema.Number,
   document: Schema.String,
   category: Schema.String,
   subcategory: Schema.String,
