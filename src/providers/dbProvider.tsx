@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useMemo } from "react";
+import { View, ActivityIndicator } from "react-native";
 import { openDatabaseSync } from "expo-sqlite";
 import { drizzle, ExpoSQLiteDatabase } from "drizzle-orm/expo-sqlite";
 import * as schema from "@/src/db/schema";
