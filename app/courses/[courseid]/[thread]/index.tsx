@@ -74,7 +74,7 @@ const renderXmlNode = (node: XmlNode, keyPrefix = "node"): React.ReactNode => {
 
     switch (node.tag) {
       case "document":
-        return <View key={keyPrefix}>{children()}</View>;
+        return <React.Fragment key={keyPrefix}>{children()}</React.Fragment>;
       case "paragraph":
       case "p":
         return (
@@ -154,7 +154,7 @@ const renderXmlNode = (node: XmlNode, keyPrefix = "node"): React.ReactNode => {
         );
       }
       default:
-        return <View key={keyPrefix}>{children()}</View>;
+        return <React.Fragment key={keyPrefix}>{children()}</React.Fragment>;
     }
   }
 
