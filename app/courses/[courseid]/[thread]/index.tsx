@@ -25,7 +25,6 @@ import {
 } from "@/src/lib/storage";
 
 import "@/app/global.css";
-
 interface XmlTextNode {
   type: "text";
   value: string;
@@ -292,8 +291,12 @@ export default function ThreadPage() {
     let cancelled = false;
 
     const loadData = async () => {
+      setLoading(true);
+      setParsedXmlMap(new Map());
       const cached = getCachedThreadDetail(courseIdNum, threadNumber);
-      if (cached) {
+      if (!cached) {
+        setThreadData(null);
+      } else {
         setThreadData(cached);
 
         const xmlMap = new Map<string, XmlNode>();
