@@ -19,6 +19,20 @@ export default function LinkText({ href, children }: LinkTextProps) {
   const [menuVisible, setMenuVisible] = useState(false);
   const [copied, setCopied] = useState(false);
 
+  const openExternalUrl = useCallback(async (url: string) => {
+    const trimmed = url.trim().toLowerCase();
+    if (!trimmed.startsWith("http://") && !trimmed.startsWith("https://"))
+      return;
+    try {
+      const supported = await Linking.canOpenURL(url);
+      if (supported) {
+        await Linking.openURL(url);
+      }
+    } catch (err) {
+      console.error("Failed to open URL:", err);
+    }
+  }, []);
+
   const handleCopy = useCallback(async () => {
     await Clipboard.setStringAsync(href);
     setCopied(true);
@@ -30,24 +44,14 @@ export default function LinkText({ href, children }: LinkTextProps) {
 
   const handleOpen = useCallback(() => {
     setMenuVisible(false);
-    Linking.canOpenURL(href).then((supported) => {
-      if (supported) {
-        Linking.openURL(href);
-      }
-    });
-  }, [href]);
+    openExternalUrl(href);
+  }, [href, openExternalUrl]);
 
   return (
     <>
       <Text
         className="text-blue-700 underline"
-        onPress={() =>
-          Linking.canOpenURL(href).then((supported) => {
-            if (supported) {
-              Linking.openURL(href);
-            }
-          })
-        }
+        onPress={() => openExternalUrl(href)}
         onLongPress={() => setMenuVisible(true)}
       >
         {children}
