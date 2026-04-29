@@ -33,7 +33,11 @@ export function DbProvider({ children }: { children: React.ReactNode }) {
   }
 
   if (!success) {
-    return null;
+    return (
+      <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+        <ActivityIndicator size="large" />
+      </View>
+    );
   }
 
   return <DbContext.Provider value={db}>{children}</DbContext.Provider>;
