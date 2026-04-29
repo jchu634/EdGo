@@ -42,7 +42,7 @@ export default function Index() {
 
   const fetchCourses = () =>
     Effect.gen(function* () {
-      const apiKey = getApiKey();
+      const apiKey = yield* Effect.promise(() => getApiKey());
       if (!apiKey) {
         return yield* Effect.fail(new Error("Missing API Key"));
       }

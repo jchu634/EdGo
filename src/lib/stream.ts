@@ -139,7 +139,7 @@ export async function streamRequest<T = unknown>(
     timeoutMs?: number;
   },
 ): Promise<T> {
-  const token = getApiKey();
+  const token = await getApiKey();
   if (!token) throw new Error("Missing API Key");
 
   const url = "wss://edstem.org/api/stream";

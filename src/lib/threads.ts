@@ -18,8 +18,8 @@ import { getApiKey } from "@/src/lib/storage";
 const PAGE_SIZE = 100;
 
 export function fetchThreadDetail(courseId: number, threadNumber: number) {
-  const apiKey = getApiKey();
   return Effect.gen(function* () {
+    const apiKey = yield* Effect.promise(() => getApiKey());
     if (!apiKey) {
       return yield* Effect.fail(new Error("Missing API Key"));
     }
@@ -39,8 +39,8 @@ export function fetchThreadsFromApi(
   options?: { category?: string; offset?: number; sort?: string },
 ) {
   const { category, offset, sort = "new" } = options ?? {};
-  const apiKey = getApiKey();
   return Effect.gen(function* () {
+    const apiKey = yield* Effect.promise(() => getApiKey());
     if (!apiKey) {
       return yield* Effect.fail(new Error("Missing API Key"));
     }

@@ -66,7 +66,8 @@ export function useApiKey() {
 }
 
 export function KeyProvider({ children }: { children: React.ReactNode }) {
-  const [apiKey, setApiKeyState] = useState<string | null>(getStoredApiKey);
+  const [apiKey, setApiKeyState] = useState<string | null>(null);
+  const [keyLoaded, setKeyLoaded] = useState(false);
   const router = useRouter();
   const segments = useSegments();
 
@@ -112,7 +113,14 @@ export function KeyProvider({ children }: { children: React.ReactNode }) {
   });
 
   useEffect(() => {
-    if (!fontsLoaded) return;
+    getStoredApiKey().then((key) => {
+      setApiKeyState(key);
+      setKeyLoaded(true);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!fontsLoaded || !keyLoaded) return;
 
     const inApiKeyRoute = segments[0] === "api-key";
 
@@ -121,24 +129,31 @@ export function KeyProvider({ children }: { children: React.ReactNode }) {
     } else if (apiKey && inApiKeyRoute) {
       router.replace("/");
     }
-  }, [apiKey, segments, router, fontsLoaded]);
+  }, [apiKey, segments, router, fontsLoaded, keyLoaded]);
 
   const handleSetApiKey = useCallback(async (key: string) => {
-    setStoredApiKey(key);
+    await setStoredApiKey(key);
     setApiKeyState(key);
   }, []);
 
   const handleClearApiKey = useCallback(async () => {
-    clearStoredApiKey();
+    await clearStoredApiKey();
     setApiKeyState(null);
   }, []);
 
-  if (!fontsLoaded) {
+  if (!fontsLoaded || !keyLoaded) {
     return null;
   }
 
   return (
-    <KeyContext.Provider value={{ apiKey, setApiKey: handleSetApiKey, clearApiKey: handleClearApiKey, isLoading: !fontsLoaded }}>
+    <KeyContext.Provider
+      value={{
+        apiKey,
+        setApiKey: handleSetApiKey,
+        clearApiKey: handleClearApiKey,
+        isLoading: !fontsLoaded || !keyLoaded,
+      }}
+    >
       {children}
     </KeyContext.Provider>
   );

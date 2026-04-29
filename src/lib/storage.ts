@@ -1,21 +1,25 @@
 import { Schema } from "effect";
 import { createMMKV } from "react-native-mmkv";
+import * as SecureStore from "expo-secure-store";
 import { Course, CourseCategory, ThreadDetailResponse } from "@/src/lib/schema";
 
 const courseCache = createMMKV({ id: "courseCache" });
 const threadCache = createMMKV({ id: "threadCache" });
-const settingsStore = createMMKV({ id: "settings" });
 
-export function getApiKey(): string | null {
-  return settingsStore.getString("apiKey") ?? null;
+const API_KEY_KEY = "edstem_bearer_token";
+
+export async function getApiKey(): Promise<string | null> {
+  return SecureStore.getItemAsync(API_KEY_KEY);
 }
 
-export function setApiKey(key: string): void {
-  settingsStore.set("apiKey", key);
+export async function setApiKey(key: string): Promise<void> {
+  await SecureStore.setItemAsync(API_KEY_KEY, key, {
+    keychainAccessible: SecureStore.AFTER_FIRST_UNLOCK_THIS_DEVICE_ONLY,
+  });
 }
 
-export function clearApiKey(): void {
-  settingsStore.remove("apiKey");
+export async function clearApiKey(): Promise<void> {
+  await SecureStore.deleteItemAsync(API_KEY_KEY);
 }
 
 export function clearCourseCache(): void {
@@ -73,7 +77,9 @@ export function getCachedThreadDetail(
   const raw = threadCache.getString(key);
   if (!raw) return null;
   try {
-    return JSON.parse(raw) as Schema.Schema.Type<typeof ThreadDetailResponse>;
+    const parsed = JSON.parse(raw);
+    const validated = Schema.decodeUnknownSync(ThreadDetailResponse)(parsed);
+    return validated;
   } catch {
     return null;
   }
