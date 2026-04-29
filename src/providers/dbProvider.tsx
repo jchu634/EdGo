@@ -21,12 +21,20 @@ export function useDb() {
 export function DbProvider({ children }: { children: React.ReactNode }) {
   const expoDb = useMemo(
     () => openDatabaseSync("edgo.db", { enableChangeListener: true }),
-    []
+    [],
   );
   const db = useMemo(() => drizzle(expoDb, { schema }), [expoDb]);
 
   useDrizzleStudio(expoDb);
-  useMigrations(db, migrations);
+  const { success, error } = useMigrations(db, migrations);
+
+  if (error) {
+    throw error;
+  }
+
+  if (!success) {
+    return null;
+  }
 
   return <DbContext.Provider value={db}>{children}</DbContext.Provider>;
 }
