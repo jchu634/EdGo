@@ -5,9 +5,9 @@ import {
   Pressable,
   Modal,
   useWindowDimensions,
-  Linking,
 } from "react-native";
 import * as Clipboard from "expo-clipboard";
+import * as Linking from "expo-linking";
 
 interface LinkTextProps {
   href: string;
@@ -30,13 +30,23 @@ export default function LinkText({ href, children }: LinkTextProps) {
 
   const handleOpen = useCallback(() => {
     setMenuVisible(false);
-    Linking.openURL(href);
+    Linking.canOpenURL(href).then((supported) => {
+      if (supported) {
+        Linking.openURL(href);
+      }
+    });
   }, [href]);
 
   return (
     <Text
       className="text-blue-700 underline"
-      onPress={() => Linking.openURL(href)}
+      onPress={() =>
+        Linking.canOpenURL(href).then((supported) => {
+          if (supported) {
+            Linking.openURL(href);
+          }
+        })
+      }
       onLongPress={() => setMenuVisible(true)}
     >
       {children}
