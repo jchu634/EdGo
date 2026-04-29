@@ -1,4 +1,5 @@
 // ─── Types ──────────────────────────────────────────────────────────────────
+import { getApiKey } from "@/src/lib/storage";
 
 export type StreamMessageType = "thread.unreadCounts" | "pong";
 
@@ -138,8 +139,8 @@ export async function streamRequest<T = unknown>(
     timeoutMs?: number;
   },
 ): Promise<T> {
-  const token = process.env.EXPO_PUBLIC_EDSTEM_API_KEY;
-  if (!token) throw new Error("Missing EXPO_PUBLIC_EDSTEM_API_KEY");
+  const token = await getApiKey();
+  if (!token) throw new Error("Missing API Key");
 
   const url = "wss://edstem.org/api/stream";
   console.log("[stream] Connecting to", url, "(Bearer token in header)");

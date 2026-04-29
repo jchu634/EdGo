@@ -6,7 +6,11 @@ import React, {
   useCallback,
 } from "react";
 import { useRouter, useSegments } from "expo-router";
-import * as SecureStore from "expo-secure-store";
+import {
+  getApiKey as getStoredApiKey,
+  setApiKey as setStoredApiKey,
+  clearApiKey as clearStoredApiKey,
+} from "@/src/lib/storage";
 import { useFonts } from "expo-font";
 import { IntelOneMono_300Light } from "@expo-google-fonts/intel-one-mono/300Light";
 import { IntelOneMono_300Light_Italic } from "@expo-google-fonts/intel-one-mono/300Light_Italic";
@@ -43,8 +47,6 @@ import { Rokkitt_800ExtraBold_Italic } from "@expo-google-fonts/rokkitt/800Extra
 import { Rokkitt_900Black } from "@expo-google-fonts/rokkitt/900Black";
 import { Rokkitt_900Black_Italic } from "@expo-google-fonts/rokkitt/900Black_Italic";
 
-const API_KEY = "edstem_api_key";
-
 interface KeyContextType {
   apiKey: string | null;
   setApiKey: (key: string) => Promise<void>;
@@ -65,58 +67,9 @@ export function useApiKey() {
 
 export function KeyProvider({ children }: { children: React.ReactNode }) {
   const [apiKey, setApiKeyState] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [keyLoaded, setKeyLoaded] = useState(false);
   const router = useRouter();
   const segments = useSegments();
-
-  // Load the API key from SecureStore on mount
-  useEffect(() => {
-    (async () => {
-      try {
-        const storedKey = await SecureStore.getItemAsync(API_KEY);
-        setApiKeyState(storedKey);
-      } catch (error) {
-        console.error("Failed to load API key from SecureStore:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    })();
-  }, []);
-
-  // Redirect based on API key presence
-  useEffect(() => {
-    if (isLoading) return;
-
-    const inApiKeyRoute = segments[0] === "api-key";
-
-    if (!apiKey && !inApiKeyRoute) {
-      // No API key and not already on the api-key page -> redirect
-      router.replace("/api-key");
-    } else if (apiKey && inApiKeyRoute) {
-      // Has API key but still on api-key page -> go home
-      router.replace("/");
-    }
-  }, [apiKey, isLoading, segments, router]);
-
-  const setApiKey = useCallback(async (key: string) => {
-    try {
-      await SecureStore.setItemAsync(API_KEY, key);
-      setApiKeyState(key);
-    } catch (error) {
-      console.error("Failed to save API key to SecureStore:", error);
-      throw error;
-    }
-  }, []);
-
-  const clearApiKey = useCallback(async () => {
-    try {
-      await SecureStore.deleteItemAsync(API_KEY);
-      setApiKeyState(null);
-    } catch (error) {
-      console.error("Failed to clear API key from SecureStore:", error);
-      throw error;
-    }
-  }, []);
 
   /*
    * Temporary workaround to keep fonts loaded globally as expo config does not load them
@@ -159,12 +112,63 @@ export function KeyProvider({ children }: { children: React.ReactNode }) {
     Rokkitt_900Black_Italic,
   });
 
-  if (!fontsLoaded) {
+  useEffect(() => {
+    getStoredApiKey().then((key) => {
+      setApiKeyState(key);
+      setKeyLoaded(true);
+    });
+  }, []);
+
+  const inApiKeyRoute = segments[0] === "api-key";
+  const shouldRedirectToApiKey = !apiKey && !inApiKeyRoute;
+  const shouldRedirectHome = !!apiKey && inApiKeyRoute;
+
+  useEffect(() => {
+    if (!fontsLoaded || !keyLoaded) return;
+
+    if (shouldRedirectToApiKey) {
+      router.replace("/api-key");
+    } else if (shouldRedirectHome) {
+      router.replace("/");
+    }
+  }, [
+    apiKey,
+    segments,
+    router,
+    fontsLoaded,
+    keyLoaded,
+    shouldRedirectToApiKey,
+    shouldRedirectHome,
+  ]);
+
+  const handleSetApiKey = useCallback(async (key: string) => {
+    await setStoredApiKey(key);
+    setApiKeyState(key);
+  }, []);
+
+  const handleClearApiKey = useCallback(async () => {
+    await clearStoredApiKey();
+    setApiKeyState(null);
+  }, []);
+
+  if (
+    !fontsLoaded ||
+    !keyLoaded ||
+    shouldRedirectToApiKey ||
+    shouldRedirectHome
+  ) {
     return null;
   }
 
   return (
-    <KeyContext.Provider value={{ apiKey, setApiKey, clearApiKey, isLoading }}>
+    <KeyContext.Provider
+      value={{
+        apiKey,
+        setApiKey: handleSetApiKey,
+        clearApiKey: handleClearApiKey,
+        isLoading: !fontsLoaded || !keyLoaded,
+      }}
+    >
       {children}
     </KeyContext.Provider>
   );

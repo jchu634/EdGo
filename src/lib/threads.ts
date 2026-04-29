@@ -12,9 +12,27 @@ import { threadsTable, type Thread, type NewThread } from "@/src/db/schema";
 import { useLiveQuery } from "drizzle-orm/expo-sqlite";
 import { useDb } from "@/src/providers/dbProvider";
 import type { Db } from "@/src/providers/dbProvider";
-import { ThreadResponse } from "@/src/lib/schemas";
+import { ThreadResponse, ThreadDetailResponse } from "@/src/lib/schema";
+import { getApiKey } from "@/src/lib/storage";
 
 const PAGE_SIZE = 100;
+
+export function fetchThreadDetail(courseId: number, threadNumber: number) {
+  return Effect.gen(function* () {
+    const apiKey = yield* Effect.promise(() => getApiKey());
+    if (!apiKey) {
+      return yield* Effect.fail(new Error("Missing API Key"));
+    }
+    const client = yield* HttpClient.HttpClient;
+    const request = HttpClientRequest.get(
+      `https://edstem.org/api/courses/${courseId}/threads/${threadNumber}`,
+    ).pipe(HttpClientRequest.bearerToken(apiKey), HttpClientRequest.acceptJson);
+    const response = yield* client.execute(request);
+    return yield* HttpClientResponse.schemaBodyJson(ThreadDetailResponse)(
+      response,
+    );
+  }).pipe(Effect.provide(FetchHttpClient.layer));
+}
 
 export function fetchThreadsFromApi(
   courseId: number,
@@ -22,7 +40,8 @@ export function fetchThreadsFromApi(
 ) {
   const { category, offset, sort = "new" } = options ?? {};
   return Effect.gen(function* () {
-    if (!process.env.EXPO_PUBLIC_EDSTEM_API_KEY) {
+    const apiKey = yield* Effect.promise(() => getApiKey());
+    if (!apiKey) {
       return yield* Effect.fail(new Error("Missing API Key"));
     }
     const client = yield* HttpClient.HttpClient;
@@ -32,10 +51,7 @@ export function fetchThreadsFromApi(
 
     const request = HttpClientRequest.get(
       `https://edstem.org/api/courses/${courseId}/threads?${params.toString()}`,
-    ).pipe(
-      HttpClientRequest.bearerToken(process.env.EXPO_PUBLIC_EDSTEM_API_KEY),
-      HttpClientRequest.acceptJson,
-    );
+    ).pipe(HttpClientRequest.bearerToken(apiKey), HttpClientRequest.acceptJson);
 
     const response = yield* client.execute(request);
     return yield* HttpClientResponse.schemaBodyJson(ThreadResponse)(response);
@@ -44,7 +60,7 @@ export function fetchThreadsFromApi(
 
 function toDbThread(
   courseId: number,
-  t: Schema.Schema.Type<typeof import("@/src/lib/schemas").Thread>,
+  t: Schema.Schema.Type<typeof import("@/src/lib/schema").Thread>,
 ): NewThread {
   return {
     id: t.id,
@@ -61,6 +77,7 @@ function toDbThread(
     starCount: t.star_count,
     viewCount: t.view_count,
     voteCount: t.vote_count,
+    replyCount: t.reply_count,
     isPinned: t.is_pinned,
     isAnswered: t.is_answered,
     isStudentAnswered: t.is_student_answered,
@@ -73,7 +90,7 @@ function toDbThread(
 export async function syncThreadsToDb(
   db: Db,
   courseId: number,
-  apiThreads: Schema.Schema.Type<typeof import("@/src/lib/schemas").Thread>[],
+  apiThreads: Schema.Schema.Type<typeof import("@/src/lib/schema").Thread>[],
 ) {
   const rows = apiThreads.map((t) => toDbThread(courseId, t));
   if (rows.length === 0) return;
@@ -95,6 +112,7 @@ export async function syncThreadsToDb(
         starCount: sql`excluded.star_count`,
         viewCount: sql`excluded.view_count`,
         voteCount: sql`excluded.vote_count`,
+        replyCount: sql`excluded.reply_count`,
         isPinned: sql`excluded.is_pinned`,
         isAnswered: sql`excluded.is_answered`,
         isStudentAnswered: sql`excluded.is_student_answered`,
@@ -137,8 +155,6 @@ export function useCourseThreads(courseId: number, category?: string) {
         const response = await Effect.runPromise(
           fetchThreadsFromApi(courseId, { category, offset }),
         );
-        console.log("Offset", offset);
-        console.log("Fetched thread 1", response?.threads[0].title);
         if (!response) return;
         if (response.threads.length === 0) {
           setEndOfPages(true);

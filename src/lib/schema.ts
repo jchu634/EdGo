@@ -54,6 +54,46 @@ export const Course = Schema.Struct({
   }),
 });
 
+const edCommentFields = {
+  id: Schema.Number,
+  user_id: Schema.Number,
+  course_id: Schema.Number,
+  thread_id: Schema.Number,
+  original_id: Schema.NullOr(Schema.Number),
+  parent_id: Schema.NullOr(Schema.Number),
+  editor_id: Schema.NullOr(Schema.Number),
+  number: Schema.Number,
+  type: Schema.Literals(["comment", "answer"]),
+  kind: Schema.String,
+  content: Schema.String,
+  document: Schema.String,
+  flag_count: Schema.Number,
+  vote_count: Schema.Number,
+  is_endorsed: Schema.Boolean,
+  is_anonymous: Schema.Boolean,
+  is_private: Schema.Boolean,
+  is_resolved: Schema.Boolean,
+  created_by_bot_id: Schema.NullOr(Schema.Number),
+  created_at: Schema.String,
+  updated_at: Schema.NullOr(Schema.String),
+  deleted_at: Schema.NullOr(Schema.String),
+  anonymous_id: Schema.NullOr(Schema.Number),
+  vote: Schema.NullOr(Schema.Number),
+};
+
+interface EdComment extends Schema.Struct.Type<typeof edCommentFields> {
+  readonly comments: ReadonlyArray<EdComment>;
+}
+
+const EdComment = Schema.Struct({
+  ...edCommentFields,
+  comments: Schema.Array(
+    Schema.suspend((): Schema.Schema<EdComment> => EdComment),
+  ),
+});
+
+export { EdComment };
+
 export const Thread = Schema.Struct({
   id: Schema.Number,
   title: Schema.String,
@@ -64,6 +104,7 @@ export const Thread = Schema.Struct({
   /*
     No Category/Subcategory is returned as empty string
   */
+  reply_count: Schema.Number,
   document: Schema.String,
   category: Schema.String,
   subcategory: Schema.String,
@@ -77,39 +118,39 @@ export const Thread = Schema.Struct({
   is_staff_answered: Schema.Boolean,
   is_anonymous: Schema.Boolean,
   user: Schema.NullOr(User),
-  // TODO: Add more fields later
+});
+export const ThreadDetail = Schema.Struct({
+  id: Schema.Number,
+  title: Schema.String,
+  number: Schema.Number,
+  user_id: Schema.Number,
+  type: Schema.String,
+  content: Schema.String,
+  document: Schema.String,
+  category: Schema.String,
+  subcategory: Schema.String,
+  subsubcategory: Schema.String,
+  star_count: Schema.Number,
+  view_count: Schema.Number,
+  vote_count: Schema.Number,
+  is_pinned: Schema.Boolean,
+  is_answered: Schema.Boolean,
+  is_student_answered: Schema.Boolean,
+  is_staff_answered: Schema.Boolean,
+  is_anonymous: Schema.Boolean,
+  comments: Schema.Array(EdComment),
+  answers: Schema.Array(EdComment),
 });
 
-// export const Comment = Schema.Struct({
-//   id: Schema.Number,
-//   user_id: Schema.Number,
-//   course_id: Schema.Number,
-//   thread_id: Schema.Number,
-//   parent_id: Schema.NullOr(Schema.Number),
-//   editor_id: Schema.NullOr(Schema.Number),
-//   number: Schema.Number,
-//   type: Schema.Literal("comment", "answer"),
-//   kind: Schema.String,
-//   content: Schema.String,
-//   document: Schema.String,
-//   flag_count: Schema.Number,
-//   vote_count: Schema.Number,
-//   is_endorsed: Schema.Boolean,
-//   is_anonymous: Schema.Boolean,
-//   is_private: Schema.Boolean,
-//   is_resolved: Schema.Boolean,
-//   created_at: Schema.String,
-//   updated_at: Schema.NullOr(Schema.String),
-//   deleted_at: Schema.NullOr(Schema.String),
-//   anonymous_id: Schema.Number,
-//   vote: Schema.Number,
-//   comments: Schema.Array(Comment),
-// });
+export const ThreadDetailResponse = Schema.Struct({
+  thread: ThreadDetail,
+  users: Schema.Array(User),
+});
 
 const Role = Schema.Struct({
   user_id: Schema.Number,
   course_id: Schema.Number,
-  role: Schema.Literal("student", "mentor", "tutor", "staff", "admin"),
+  role: Schema.Literals(["student", "mentor", "tutor", "staff", "admin"]),
 });
 
 export const UserResponse = Schema.Struct({

@@ -6,16 +6,24 @@ import {
 } from "effect/unstable/http";
 import { Effect, Schema } from "effect";
 import React, { useState, useEffect } from "react";
-import { View, Text, Pressable } from "react-native";
+import { View, Text, Pressable, Dimensions } from "react-native";
 
 import { useRouter } from "expo-router";
-import { Course, UserResponse } from "@/src/lib/schemas";
+import { Course, UserResponse } from "@/src/lib/schema";
 import { getUnreadCounts, UnreadCountEntry } from "@/src/lib/stream";
-import { cacheCourses, getCachedCourses } from "@/src/lib/courseStorage";
+import {
+  cacheCourses,
+  getCachedCourses,
+  getApiKey,
+  clearCourseCache,
+  clearThreadCache,
+} from "@/src/lib/storage";
 
 import "@/app/global.css";
 
 const courseColours = ["#16DB93", "#F72585", "#00241B", "#6A66A3", "#FF7F11"];
+const windowDimensions = Dimensions.get("window");
+const screenDimensions = Dimensions.get("screen");
 
 export default function Index() {
   const router = useRouter();
@@ -26,14 +34,21 @@ export default function Index() {
   const [unreadCounts, setUnreadCounts] = useState<
     Record<string, UnreadCountEntry> | undefined
   >();
+
+  const [dimensions, setDimensions] = useState({
+    window: windowDimensions,
+    screen: screenDimensions,
+  });
+
   const fetchCourses = () =>
     Effect.gen(function* () {
-      if (!process.env.EXPO_PUBLIC_EDSTEM_API_KEY) {
+      const apiKey = yield* Effect.promise(() => getApiKey());
+      if (!apiKey) {
         return yield* Effect.fail(new Error("Missing API Key"));
       }
       const client = yield* HttpClient.HttpClient;
       const request = HttpClientRequest.get(`https://edstem.org/api/user`).pipe(
-        HttpClientRequest.bearerToken(process.env.EXPO_PUBLIC_EDSTEM_API_KEY),
+        HttpClientRequest.bearerToken(apiKey),
         HttpClientRequest.acceptJson,
       );
 
@@ -74,6 +89,13 @@ export default function Index() {
       .catch((error) => {
         console.error("error", error);
       });
+    const subscription = Dimensions.addEventListener(
+      "change",
+      ({ window, screen }) => {
+        setDimensions({ window, screen });
+      },
+    );
+    return () => subscription?.remove();
   }, []);
 
   return (
@@ -97,8 +119,11 @@ export default function Index() {
                     }}
                   />
 
-                  <View className="flex w-max flex-row">
-                    <View className="w-86 justify-center">
+                  <View className="w-max flex-1 flex-row">
+                    <View
+                      className="justify-center"
+                      style={{ width: dimensions.window.width * 0.8 - 40 }}
+                    >
                       <Text
                         className="font-display-bold text-xl text-ellipsis"
                         numberOfLines={1}
@@ -131,6 +156,27 @@ export default function Index() {
         )}
       </View>
       <Pressable className="h-10 w-10"></Pressable>
+      <View className="absolute bottom-4 left-4 gap-y-2">
+        <Pressable
+          className="rounded-lg bg-red-100 px-3 py-1.5"
+          onPress={() => {
+            clearCourseCache();
+            setCourses(undefined);
+          }}
+        >
+          <Text className="font-display text-xs text-red-700">
+            Purge Course Cache
+          </Text>
+        </Pressable>
+        <Pressable
+          className="rounded-lg bg-red-100 px-3 py-1.5"
+          onPress={() => clearThreadCache()}
+        >
+          <Text className="font-display text-xs text-red-700">
+            Purge Thread Cache
+          </Text>
+        </Pressable>
+      </View>
     </View>
   );
 }

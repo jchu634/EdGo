@@ -13,7 +13,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#71059f",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
@@ -56,45 +56,51 @@
         "expo-font",
         {
           "fonts": [
-            "./assets/fonts/IntelOneMono_300Light.ttf",
-            "./assets/fonts/IntelOneMono_400Regular.ttf",
-            "./assets/fonts/IntelOneMono_500Medium.ttf",
-            "./assets/fonts/IntelOneMono_600SemiBold.ttf",
-            "./assets/fonts/IntelOneMono_700Bold.ttf",
-            "./assets/fonts/IntelOneMono_300Light_Italic.ttf",
-            "./assets/fonts/IntelOneMono_400Regular_Italic.ttf",
-            "./assets/fonts/IntelOneMono_500Medium_Italic.ttf",
-            "./assets/fonts/IntelOneMono_600SemiBold_Italic.ttf",
-            "./assets/fonts/IntelOneMono_700Bold_Italic.ttf",
-            "./assets/fonts/PTSerif_400Regular.ttf",
-            "./assets/fonts/PTSerif_700Bold.ttf",
-            "./assets/fonts/PTSerif_400Regular_Italic.ttf",
-            "./assets/fonts/PTSerif_700Bold_Italic.ttf",
-            "./assets/fonts/Rokkitt_100Thin.ttf",
-            "./assets/fonts/Rokkitt_200ExtraLight.ttf",
-            "./assets/fonts/Rokkitt_300Light.ttf",
-            "./assets/fonts/Rokkitt_400Regular.ttf",
-            "./assets/fonts/Rokkitt_500Medium.ttf",
-            "./assets/fonts/Rokkitt_600SemiBold.ttf",
-            "./assets/fonts/Rokkitt_700Bold.ttf",
-            "./assets/fonts/Rokkitt_800ExtraBold.ttf",
-            "./assets/fonts/Rokkitt_900Black.ttf",
-            "./assets/fonts/Rokkitt_100Thin_Italic.ttf",
-            "./assets/fonts/Rokkitt_200ExtraLight_Italic.ttf",
-            "./assets/fonts/Rokkitt_300Light_Italic.ttf",
-            "./assets/fonts/Rokkitt_400Regular_Italic.ttf",
-            "./assets/fonts/Rokkitt_500Medium_Italic.ttf",
-            "./assets/fonts/Rokkitt_600SemiBold_Italic.ttf",
-            "./assets/fonts/Rokkitt_700Bold_Italic.ttf",
-            "./assets/fonts/Rokkitt_800ExtraBold_Italic.ttf",
-            "./assets/fonts/Rokkitt_900Black_Italic.ttf"
+            "node_modules/@expo-google-fonts/intel-one-mono/300Light/IntelOneMono_300Light.ttf",
+            "node_modules/@expo-google-fonts/intel-one-mono/400Regular/IntelOneMono_400Regular.ttf",
+            "node_modules/@expo-google-fonts/intel-one-mono/500Medium/IntelOneMono_500Medium.ttf",
+            "node_modules/@expo-google-fonts/intel-one-mono/600SemiBold/IntelOneMono_600SemiBold.ttf",
+            "node_modules/@expo-google-fonts/intel-one-mono/700Bold/IntelOneMono_700Bold.ttf",
+            "node_modules/@expo-google-fonts/intel-one-mono/400Regular_Italic/IntelOneMono_400Regular_Italic.ttf",
+            "node_modules/@expo-google-fonts/intel-one-mono/500Medium_Italic/IntelOneMono_500Medium_Italic.ttf",
+            "node_modules/@expo-google-fonts/intel-one-mono/600SemiBold_Italic/IntelOneMono_600SemiBold_Italic.ttf",
+            "node_modules/@expo-google-fonts/intel-one-mono/700Bold_Italic/IntelOneMono_700Bold_Italic.ttf",
+            "node_modules/@expo-google-fonts/pt-serif/400Regular/PTSerif_400Regular.ttf",
+            "node_modules/@expo-google-fonts/pt-serif/400Regular_Italic/PTSerif_400Regular_Italic.ttf",
+            "node_modules/@expo-google-fonts/pt-serif/700Bold/PTSerif_700Bold.ttf",
+            "node_modules/@expo-google-fonts/pt-serif/700Bold_Italic/PTSerif_700Bold_Italic.ttf",
+            "node_modules/@expo-google-fonts/rokkitt/100Thin/Rokkitt_100Thin.ttf",
+            "node_modules/@expo-google-fonts/rokkitt/100Thin_Italic/Rokkitt_100Thin_Italic.ttf",
+            "node_modules/@expo-google-fonts/rokkitt/200ExtraLight/Rokkitt_200ExtraLight.ttf",
+            "node_modules/@expo-google-fonts/rokkitt/200ExtraLight_Italic/Rokkitt_200ExtraLight_Italic.ttf",
+            "node_modules/@expo-google-fonts/rokkitt/300Light/Rokkitt_300Light.ttf",
+            "node_modules/@expo-google-fonts/rokkitt/300Light_Italic/Rokkitt_300Light_Italic.ttf",
+            "node_modules/@expo-google-fonts/rokkitt/400Regular/Rokkitt_400Regular.ttf",
+            "node_modules/@expo-google-fonts/rokkitt/400Regular_Italic/Rokkitt_400Regular_Italic.ttf",
+            "node_modules/@expo-google-fonts/rokkitt/500Medium/Rokkitt_500Medium.ttf",
+            "node_modules/@expo-google-fonts/rokkitt/500Medium_Italic/Rokkitt_500Medium_Italic.ttf",
+            "node_modules/@expo-google-fonts/rokkitt/600SemiBold/Rokkitt_600SemiBold.ttf",
+            "node_modules/@expo-google-fonts/rokkitt/600SemiBold_Italic/Rokkitt_600SemiBold_Italic.ttf",
+            "node_modules/@expo-google-fonts/rokkitt/700Bold/Rokkitt_700Bold.ttf",
+            "node_modules/@expo-google-fonts/rokkitt/700Bold_Italic/Rokkitt_700Bold_Italic.ttf",
+            "node_modules/@expo-google-fonts/rokkitt/800ExtraBold/Rokkitt_800ExtraBold.ttf",
+            "node_modules/@expo-google-fonts/rokkitt/800ExtraBold_Italic/Rokkitt_800ExtraBold_Italic.ttf",
+            "node_modules/@expo-google-fonts/rokkitt/900Black/Rokkitt_900Black.ttf",
+            "node_modules/@expo-google-fonts/rokkitt/900Black_Italic/Rokkitt_900Black_Italic.ttf"
           ]
         }
-      ]
+      ],
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "1a9c8d5a-b3b3-4dca-8a2e-b46972af4417"
+      }
     }
   }
 }

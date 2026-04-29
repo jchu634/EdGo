@@ -15,6 +15,13 @@
       "when": 1777294234102,
       "tag": "0001_massive_blackheart",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1777395951904,
+      "tag": "0002_real_jigsaw",
+      "breakpoints": true
     }
   ]
 }
