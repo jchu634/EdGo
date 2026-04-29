@@ -119,17 +119,27 @@ export function KeyProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
+  const inApiKeyRoute = segments[0] === "api-key";
+  const shouldRedirectToApiKey = !apiKey && !inApiKeyRoute;
+  const shouldRedirectHome = !!apiKey && inApiKeyRoute;
+
   useEffect(() => {
     if (!fontsLoaded || !keyLoaded) return;
 
-    const inApiKeyRoute = segments[0] === "api-key";
-
-    if (!apiKey && !inApiKeyRoute) {
+    if (shouldRedirectToApiKey) {
       router.replace("/api-key");
-    } else if (apiKey && inApiKeyRoute) {
+    } else if (shouldRedirectHome) {
       router.replace("/");
     }
-  }, [apiKey, segments, router, fontsLoaded, keyLoaded]);
+  }, [
+    apiKey,
+    segments,
+    router,
+    fontsLoaded,
+    keyLoaded,
+    shouldRedirectToApiKey,
+    shouldRedirectHome,
+  ]);
 
   const handleSetApiKey = useCallback(async (key: string) => {
     await setStoredApiKey(key);
@@ -141,7 +151,12 @@ export function KeyProvider({ children }: { children: React.ReactNode }) {
     setApiKeyState(null);
   }, []);
 
-  if (!fontsLoaded || !keyLoaded) {
+  if (
+    !fontsLoaded ||
+    !keyLoaded ||
+    shouldRedirectToApiKey ||
+    shouldRedirectHome
+  ) {
     return null;
   }
 

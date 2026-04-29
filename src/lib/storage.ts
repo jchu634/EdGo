@@ -40,8 +40,17 @@ export function getCachedCourses(): Schema.Schema.Type<typeof Course>[] | null {
   const raw = courseCache.getString("courses");
   if (!raw) return null;
   try {
-    return JSON.parse(raw) as Schema.Schema.Type<typeof Course>[];
+    const parsed = JSON.parse(raw);
+    const validated = Schema.decodeUnknownSync(
+      Schema.Array(Course) as Schema.Schema<
+        Schema.Schema.Type<typeof Course>,
+        unknown,
+        never
+      >,
+    )(parsed);
+    return [...validated];
   } catch {
+    courseCache.delete("courses");
     return null;
   }
 }
@@ -52,10 +61,18 @@ export function getCachedCourseCategory(
   const raw = courseCache.getString("courses");
   if (!raw) return null;
   try {
-    const parsed = JSON.parse(raw) as Schema.Schema.Type<typeof Course>[];
-    const course = parsed.find((c) => c.id === course_id);
+    const parsed = JSON.parse(raw);
+    const validated = Schema.decodeUnknownSync(
+      Schema.Array(Course) as Schema.Schema<
+        Schema.Schema.Type<typeof Course>,
+        unknown,
+        never
+      >,
+    )(parsed);
+    const course = validated.find((c) => c.id === course_id);
     return course?.settings.discussion.categories ?? null;
   } catch {
+    courseCache.delete("courses");
     return null;
   }
 }
@@ -78,9 +95,16 @@ export function getCachedThreadDetail(
   if (!raw) return null;
   try {
     const parsed = JSON.parse(raw);
-    const validated = Schema.decodeUnknownSync(ThreadDetailResponse)(parsed);
+    const validated = Schema.decodeUnknownSync(
+      ThreadDetailResponse as Schema.Schema<
+        Schema.Schema.Type<typeof ThreadDetailResponse>,
+        unknown,
+        never
+      >,
+    )(parsed);
     return validated;
   } catch {
+    threadCache.delete(key);
     return null;
   }
 }
