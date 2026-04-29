@@ -155,8 +155,6 @@ export function useCourseThreads(courseId: number, category?: string) {
         const response = await Effect.runPromise(
           fetchThreadsFromApi(courseId, { category, offset }),
         );
-        console.log("Offset", offset);
-        console.log("Fetched thread 1", response?.threads[0].title);
         if (!response) return;
         if (response.threads.length === 0) {
           setEndOfPages(true);
