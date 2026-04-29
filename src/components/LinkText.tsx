@@ -38,19 +38,20 @@ export default function LinkText({ href, children }: LinkTextProps) {
   }, [href]);
 
   return (
-    <Text
-      className="text-blue-700 underline"
-      onPress={() =>
-        Linking.canOpenURL(href).then((supported) => {
-          if (supported) {
-            Linking.openURL(href);
-          }
-        })
-      }
-      onLongPress={() => setMenuVisible(true)}
-    >
-      {children}
-
+    <>
+      <Text
+        className="text-blue-700 underline"
+        onPress={() =>
+          Linking.canOpenURL(href).then((supported) => {
+            if (supported) {
+              Linking.openURL(href);
+            }
+          })
+        }
+        onLongPress={() => setMenuVisible(true)}
+      >
+        {children}
+      </Text>
       <Modal
         visible={menuVisible}
         transparent
@@ -120,6 +121,6 @@ export default function LinkText({ href, children }: LinkTextProps) {
           </Pressable>
         </Pressable>
       </Modal>
-    </Text>
+    </>
   );
 }
