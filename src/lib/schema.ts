@@ -94,50 +94,43 @@ const EdComment = Schema.Struct({
 
 export { EdComment };
 
-export const Thread = Schema.Struct({
+const Thread = Schema.Struct({
   id: Schema.Number,
-  title: Schema.String,
-  number: Schema.Number,
   user_id: Schema.Number, // User ID = 0 is anonymous
+  number: Schema.Number,
   type: Schema.String,
+  title: Schema.String,
   content: Schema.String,
+  document: Schema.String,
   /*
     No Category/Subcategory is returned as empty string
   */
-  reply_count: Schema.Number,
-  document: Schema.String,
   category: Schema.String,
   subcategory: Schema.String,
   subsubcategory: Schema.String,
+
   star_count: Schema.Number,
   view_count: Schema.Number,
+  unique_view_count: Schema.Number,
   vote_count: Schema.Number,
+  reply_count: Schema.Number,
+
   is_pinned: Schema.Boolean,
   is_answered: Schema.Boolean,
   is_student_answered: Schema.Boolean,
   is_staff_answered: Schema.Boolean,
   is_anonymous: Schema.Boolean,
+  created_at: Schema.String,
+  updated_at: Schema.NullOr(Schema.String),
+});
+
+export const ThreadUser = Schema.Struct({
+  ...Thread.fields,
   user: Schema.NullOr(User),
 });
+
 export const ThreadDetail = Schema.Struct({
-  id: Schema.Number,
-  title: Schema.String,
-  number: Schema.Number,
-  user_id: Schema.Number,
-  type: Schema.String,
-  content: Schema.String,
-  document: Schema.String,
-  category: Schema.String,
-  subcategory: Schema.String,
-  subsubcategory: Schema.String,
-  star_count: Schema.Number,
-  view_count: Schema.Number,
-  vote_count: Schema.Number,
-  is_pinned: Schema.Boolean,
-  is_answered: Schema.Boolean,
-  is_student_answered: Schema.Boolean,
-  is_staff_answered: Schema.Boolean,
-  is_anonymous: Schema.Boolean,
+  ...Thread.fields,
   comments: Schema.Array(EdComment),
   answers: Schema.Array(EdComment),
 });
@@ -167,4 +160,9 @@ export const UserResponse = Schema.Struct({
 export const ThreadResponse = Schema.Struct({
   threads: Schema.Array(Thread),
   users: Schema.Array(User),
+});
+
+export const RegionResponse = Schema.Struct({
+  country_code: Schema.String,
+  default_region: Schema.String,
 });

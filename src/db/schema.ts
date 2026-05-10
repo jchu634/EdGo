@@ -48,5 +48,5 @@ export const threadsTable = sqliteTable(
   (table) => [index("threads_course_id_idx").on(table.courseId)],
 );
 
-export type Thread = typeof threadsTable.$inferSelect;
+export type ThreadUser = typeof threadsTable.$inferSelect;
 export type NewThread = typeof threadsTable.$inferInsert;

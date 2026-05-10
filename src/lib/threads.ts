@@ -8,7 +8,7 @@ import {
 import { eq, and, desc, sql } from "drizzle-orm";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { threadsTable, type Thread, type NewThread } from "@/src/db/schema";
+import { threadsTable, type ThreadUser, type NewThread } from "@/src/db/schema";
 import { useLiveQuery } from "drizzle-orm/expo-sqlite";
 import { useDb } from "@/src/providers/dbProvider";
 import type { Db } from "@/src/providers/dbProvider";
@@ -60,7 +60,7 @@ export function fetchThreadsFromApi(
 
 function toDbThread(
   courseId: number,
-  t: Schema.Schema.Type<typeof import("@/src/lib/schema").Thread>,
+  t: Schema.Schema.Type<typeof import("@/src/lib/schema").ThreadUser>,
 ): NewThread {
   return {
     id: t.id,
@@ -90,7 +90,9 @@ function toDbThread(
 export async function syncThreadsToDb(
   db: Db,
   courseId: number,
-  apiThreads: Schema.Schema.Type<typeof import("@/src/lib/schema").Thread>[],
+  apiThreads: Schema.Schema.Type<
+    typeof import("@/src/lib/schema").ThreadUser
+  >[],
 ) {
   const rows = apiThreads.map((t) => toDbThread(courseId, t));
   if (rows.length === 0) return;
