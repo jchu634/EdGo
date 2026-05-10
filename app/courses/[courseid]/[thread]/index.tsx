@@ -1,9 +1,18 @@
 import React, { useEffect, useState, useMemo, useCallback } from "react";
-import { View, Text, ScrollView, ActivityIndicator, Image } from "react-native";
+import {
+  View,
+  Text,
+  ScrollView,
+  ActivityIndicator,
+  Image,
+  Pressable,
+} from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import { Effect, Schema } from "effect";
 import { parseXml } from "react-native-turboxml";
 import { XmlNode, renderXmlNode, isXmlNode } from "@/src/lib/renderXML";
+import * as Linking from "expo-linking";
+import { settings } from "@/src/lib/storage";
 
 import {
   EyeIcon,
@@ -11,6 +20,7 @@ import {
   StarIcon,
   PushPinIcon,
   CheckCircleIcon,
+  ArrowSquareOutIcon,
 } from "phosphor-react-native";
 
 import {
@@ -110,6 +120,7 @@ export default function ThreadPage() {
   const { courseid, thread } = useLocalSearchParams();
   const courseIdNum = Number(Array.isArray(courseid) ? courseid[0] : courseid);
   const threadNumber = Number(Array.isArray(thread) ? thread[0] : thread);
+  const [threadID, setThreadID] = useState(0);
 
   const [threadData, setThreadData] = useState<Schema.Schema.Type<
     typeof ThreadDetailResponse
@@ -190,6 +201,7 @@ export default function ThreadPage() {
         loadCommentXml(cached.thread.comments);
         loadCommentXml(cached.thread.answers);
         setParsedXmlMap(xmlMap);
+        setThreadID(cached.thread.id);
         setLoading(false);
       }
 
@@ -316,9 +328,26 @@ export default function ThreadPage() {
               </Text>
             </View>
           )}
+
           <Text className="font-display-semibold">
             {t.is_anonymous ? "Anonymous" : (author?.name ?? "Unknown")}
           </Text>
+          <View className="flex flex-row items-center gap-x-4">
+            <Text className="font-display">
+              {t.updated_at
+                ? `Updated: ${new Date(t.updated_at).toLocaleDateString()}`
+                : new Date(t.created_at).toLocaleDateString()}
+            </Text>
+            <Pressable
+              onPress={() =>
+                Linking.openURL(
+                  `https://edstem.org/${settings.getString("user.default_region")}/courses/${courseIdNum}/discussion/${threadID}`,
+                )
+              }
+            >
+              <ArrowSquareOutIcon size={20} color="#1e40af" />
+            </Pressable>
+          </View>
         </View>
 
         {t.category && (
