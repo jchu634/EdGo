@@ -4,6 +4,7 @@ import {
   HttpClientRequest,
   HttpClientResponse,
 } from "effect/unstable/http";
+
 import { Effect, Schema } from "effect";
 import React, { useState, useEffect } from "react";
 import { View, Text, Pressable, Dimensions } from "react-native";
@@ -64,7 +65,7 @@ export default function Index() {
 
   useEffect(() => {
     // Load cached courses from MMKV for instant display
-    const cached = getCachedCourses<Schema.Schema.Type<typeof Course>>();
+    const cached = getCachedCourses();
     if (cached) {
       setCourses(cached);
     }
