@@ -1,7 +1,6 @@
 import { View, Text, Image } from "react-native";
 import React from "react";
 import LinkText from "@/src/components/LinkText";
-
 interface XmlTextNode {
   type: "text";
   value: string;
@@ -300,10 +299,7 @@ function renderXmlNodeLegacy(
         );
       case "code":
         return (
-          <Text
-            key={keyPrefix}
-            className="font-display rounded bg-gray-200 px-1 font-mono"
-          >
+          <Text key={keyPrefix} className="rounded bg-gray-200 px-1 font-mono">
             {children()}
           </Text>
         );
@@ -320,6 +316,7 @@ function renderXmlNodeLegacy(
             {children()}
           </View>
         );
+
       case "li":
       case "listitem":
         return (
@@ -453,10 +450,7 @@ export function renderXmlNode(
         );
       case "code":
         return (
-          <Text
-            key={keyPrefix}
-            className="font-display rounded bg-gray-200 px-1 font-mono"
-          >
+          <Text key={keyPrefix} className="rounded bg-gray-200 px-1 font-mono">
             {children()}
           </Text>
         );
@@ -474,14 +468,11 @@ export function renderXmlNode(
           </View>
         );
       case "li":
-      case "listitem":
+      case "list-item":
         return (
           <View key={keyPrefix} className="mb-1 ml-2 flex-row">
             <Text className="font-display">• </Text>
-            <View className="flex-1">
-              {"TEST"}
-              {children()}
-            </View>
+            {children()}
           </View>
         );
       case "heading": {
