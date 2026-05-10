@@ -48,20 +48,6 @@ type InlineRun =
       kind: "newline";
     };
 
-function isInlineTag(tag: string): boolean {
-  return [
-    "bold",
-    "b",
-    "italic",
-    "i",
-    "underline",
-    "u",
-    "link",
-    "br",
-    "break",
-  ].includes(tag);
-}
-
 function sameMarks(a: InlineMarks, b: InlineMarks): boolean {
   return (
     a.bold === b.bold &&
@@ -114,10 +100,17 @@ function extractRunsFromNode(node: XmlNode, marks: InlineMarks): InlineRun[] {
     case "u":
       return collectInlineRuns(node.children, { ...marks, underline: true });
     case "link":
-      return collectInlineRuns(node.children, {
-        ...marks,
-        href: node.attrs.href,
-      });
+      if (node.children[0].type == "text") {
+        return collectInlineRuns(node.children, {
+          ...marks,
+          href: node.children[0].value,
+        });
+      } else {
+        return collectInlineRuns(node.children, {
+          ...marks,
+          href: node.attrs.href,
+        });
+      }
     case "heading": {
       const level = Number(node.attrs.number) || 1;
       return collectInlineRuns(node.children, {
