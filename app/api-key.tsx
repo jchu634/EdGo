@@ -10,6 +10,14 @@ import {
 } from "react-native";
 import { Image } from "expo-image";
 
+import {
+  FetchHttpClient,
+  HttpClient,
+  HttpClientRequest,
+  HttpClientResponse,
+} from "effect/unstable/http";
+import { Effect } from "effect";
+
 import { useApiKey } from "@/src/providers/keyProvider";
 import { EyeClosedIcon, EyeIcon } from "phosphor-react-native";
 
@@ -21,6 +29,22 @@ export default function ApiKeyScreen() {
   const [saving, setSaving] = useState(false);
   const [showKey, setShowKey] = useState(true);
 
+  const validateApiKey = (apiKey: string) =>
+    Effect.gen(function* () {
+      const client = yield* HttpClient.HttpClient;
+      const request = HttpClientRequest.get(`https://edstem.org/api/user`).pipe(
+        HttpClientRequest.bearerToken(apiKey),
+        HttpClientRequest.acceptJson,
+      );
+
+      const response = yield* client.execute(request);
+      if (response.status === 200) {
+        return true;
+      } else {
+        return false;
+      }
+    }).pipe(Effect.provide(FetchHttpClient.layer));
+
   const handleSave = async () => {
     const trimmed = inputKey.trim();
     if (!trimmed) {
@@ -30,6 +54,11 @@ export default function ApiKeyScreen() {
 
     setSaving(true);
     try {
+      const isValid = await Effect.runPromise(validateApiKey(trimmed));
+      if (!isValid) {
+        Alert.alert("Invalid API Key", "The key could not be verified.");
+        return;
+      }
       await setApiKey(trimmed);
       // KeyProvider will auto-redirect to "/" once apiKey is set
     } catch (error) {
