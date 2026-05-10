@@ -40,7 +40,6 @@ const renderComment = (
   const author = usersMap.get(comment.user_id);
   const xmlKey = `comment-${comment.id}`;
   const parsedXml = parsedXmlMap.get(xmlKey);
-
   return (
     <View
       key={`comment-${comment.id}`}

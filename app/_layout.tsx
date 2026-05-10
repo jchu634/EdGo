@@ -6,6 +6,7 @@ import { Ionicons } from "@expo/vector-icons";
 
 import { KeyProvider } from "@/src/providers/keyProvider";
 import { DbProvider } from "@/src/providers/dbProvider";
+import { LinkTextProvider } from "@/src/components/LinkText";
 
 export default function RootLayout() {
   const insets = useSafeAreaInsets();
@@ -14,7 +15,8 @@ export default function RootLayout() {
     <Suspense fallback={<ActivityIndicator size="large" />}>
       <KeyProvider>
         <DbProvider>
-          <Stack
+          <LinkTextProvider>
+            <Stack
             screenOptions={{
               headerStyle: {
                 backgroundColor: "#70069e",
@@ -36,6 +38,7 @@ export default function RootLayout() {
               },
             }}
           />
+          </LinkTextProvider>
         </DbProvider>
       </KeyProvider>
     </Suspense>

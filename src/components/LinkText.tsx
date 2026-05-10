@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { createContext, useCallback, useContext, useState } from "react";
 import {
   View,
   Text,
@@ -9,14 +9,23 @@ import {
 import * as Clipboard from "expo-clipboard";
 import * as Linking from "expo-linking";
 
-interface LinkTextProps {
-  href: string;
-  children: React.ReactNode;
+interface LinkTextContextValue {
+  openLink: (url: string) => void;
+  showMenu: (url: string) => void;
 }
 
-export default function LinkText({ href, children }: LinkTextProps) {
+const LinkTextContext = createContext<LinkTextContextValue>({
+  openLink: () => {},
+  showMenu: () => {},
+});
+
+export function useLinkTextContext() {
+  return useContext(LinkTextContext);
+}
+
+export function LinkTextProvider({ children }: { children: React.ReactNode }) {
   const { width, height } = useWindowDimensions();
-  const [menuVisible, setMenuVisible] = useState(false);
+  const [activeHref, setActiveHref] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
   const openExternalUrl = useCallback(async (url: string) => {
@@ -33,38 +42,52 @@ export default function LinkText({ href, children }: LinkTextProps) {
     }
   }, []);
 
+  const openLink = useCallback(
+    (url: string) => {
+      openExternalUrl(url);
+    },
+    [openExternalUrl],
+  );
+
+  const showMenu = useCallback((url: string) => {
+    setActiveHref(url);
+    setCopied(false);
+  }, []);
+
+  const dismissMenu = useCallback(() => {
+    setActiveHref(null);
+    setCopied(false);
+  }, []);
+
   const handleCopy = useCallback(async () => {
-    await Clipboard.setStringAsync(href);
+    if (!activeHref) return;
+    await Clipboard.setStringAsync(activeHref);
     setCopied(true);
     setTimeout(() => {
-      setMenuVisible(false);
+      setActiveHref(null);
       setCopied(false);
     }, 800);
-  }, [href]);
+  }, [activeHref]);
 
   const handleOpen = useCallback(() => {
-    setMenuVisible(false);
-    openExternalUrl(href);
-  }, [href, openExternalUrl]);
+    if (!activeHref) return;
+    const url = activeHref;
+    setActiveHref(null);
+    openExternalUrl(url);
+  }, [activeHref, openExternalUrl]);
 
   return (
-    <>
-      <Text
-        className="text-blue-700 underline"
-        onPress={() => openExternalUrl(href)}
-        onLongPress={() => setMenuVisible(true)}
-      >
-        {children}
-      </Text>
+    <LinkTextContext.Provider value={{ openLink, showMenu }}>
+      {children}
       <Modal
-        visible={menuVisible}
+        visible={activeHref !== null}
         transparent
         animationType="fade"
         statusBarTranslucent={true}
-        onRequestClose={() => setMenuVisible(false)}
+        onRequestClose={dismissMenu}
       >
         <Pressable
-          onPress={() => setMenuVisible(false)}
+          onPress={dismissMenu}
           style={{
             width,
             height,
@@ -87,7 +110,7 @@ export default function LinkText({ href, children }: LinkTextProps) {
               numberOfLines={2}
               ellipsizeMode="middle"
             >
-              {href}
+              {activeHref}
             </Text>
 
             {copied ? (
@@ -125,6 +148,25 @@ export default function LinkText({ href, children }: LinkTextProps) {
           </Pressable>
         </Pressable>
       </Modal>
-    </>
+    </LinkTextContext.Provider>
+  );
+}
+
+interface LinkTextProps {
+  href: string;
+  children: React.ReactNode;
+}
+
+export default function LinkText({ href, children }: LinkTextProps) {
+  const { openLink, showMenu } = useLinkTextContext();
+
+  return (
+    <Text
+      className="text-blue-700 underline"
+      onPress={() => openLink(href)}
+      onLongPress={() => showMenu(href)}
+    >
+      {children}
+    </Text>
   );
 }
