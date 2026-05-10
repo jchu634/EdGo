@@ -10,7 +10,7 @@ import React, { useState, useEffect } from "react";
 import { View, Text, Pressable, Dimensions } from "react-native";
 
 import { useRouter } from "expo-router";
-import { Course, UserResponse } from "@/src/lib/schema";
+import { Course, UserResponse, RegionResponse } from "@/src/lib/schema";
 import { getUnreadCounts, UnreadCountEntry } from "@/src/lib/stream";
 import {
   cacheCourses,
@@ -18,6 +18,7 @@ import {
   getApiKey,
   clearCourseCache,
   clearThreadCache,
+  settings,
 } from "@/src/lib/storage";
 
 import "@/app/global.css";
@@ -58,6 +59,24 @@ export default function Index() {
       // return yield* response.json;
     }).pipe(Effect.provide(FetchHttpClient.layer));
 
+  const fetchRegion = () =>
+    Effect.gen(function* () {
+      const apiKey = yield* Effect.promise(() => getApiKey());
+      if (!apiKey) {
+        return yield* Effect.fail(new Error("Missing API Key"));
+      }
+      const client = yield* HttpClient.HttpClient;
+      const request = HttpClientRequest.get(
+        `https://edstem.org/api/region`,
+      ).pipe(
+        HttpClientRequest.bearerToken(apiKey),
+        HttpClientRequest.acceptJson,
+      );
+
+      const response = yield* client.execute(request);
+      return yield* HttpClientResponse.schemaBodyJson(RegionResponse)(response);
+    }).pipe(Effect.provide(FetchHttpClient.layer));
+
   const wrapNumbers = (num: number) => {
     if (num > 99) return "99+";
     else return num;
@@ -90,6 +109,15 @@ export default function Index() {
       .catch((error) => {
         console.error("error", error);
       });
+    Effect.runPromise(fetchRegion())
+      .then((response) => {
+        settings.set("user.default_region", response.default_region);
+        settings.set("user.country_code", response.country_code);
+      })
+      .catch((error) => {
+        console.error("error", error);
+      });
+
     const subscription = Dimensions.addEventListener(
       "change",
       ({ window, screen }) => {
