@@ -58,7 +58,12 @@ const renderComment = (
       <View className="mb-2 flex-row items-center gap-x-2">
         {author?.avatar ? (
           <Image
-            source={{ uri: author.avatar }}
+            /*
+            Note: No idea what s=128 and fallback=1 does, but the official api uses it
+            */
+            source={{
+              uri: `https://static.${settings.getString("user.default_region")}.edusercontent.com/avatars/${author.avatar}?s=128&fallback=1`,
+            }}
             className="size-6 rounded-full"
           />
         ) : (
@@ -317,8 +322,13 @@ export default function ThreadPage() {
 
         <View className="mb-3 flex-row items-center gap-x-2">
           {author?.avatar ? (
+            /*
+            Note: No idea what s=128 and fallback=1 does, but the official api uses it
+            */
             <Image
-              source={{ uri: author.avatar }}
+              source={{
+                uri: `https://static.${settings.getString("user.default_region")}.edusercontent.com/avatars/${author.avatar}?s=128&fallback=1`,
+              }}
               className="size-8 rounded-full"
             />
           ) : (
