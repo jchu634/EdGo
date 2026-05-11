@@ -351,7 +351,7 @@ export default function ThreadPage() {
             <Pressable
               onPress={() =>
                 Linking.openURL(
-                  `https://edstem.org/${settings.getString("user.default_region")}/courses/${courseIdNum}/discussion/${threadID}`,
+                  `https://edstem.org/${settings.getString("user.default_region")}/courses/${courseIdNum}/discussion/${t.id}`,
                 )
               }
             >
