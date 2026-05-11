@@ -56,7 +56,7 @@ const renderComment = (
       className={`mb-3 rounded-xl bg-gray-100 p-3 ${depth > 0 ? "ml-4 border-l-2 border-gray-300" : ""}`}
     >
       <View className="mb-2 flex-row items-center gap-x-2">
-        {author?.avatar ? (
+        {!comment.is_anonymous && author?.avatar ? (
           <Image
             /*
             Note: No idea what s=128 and fallback=1 does, but the official api uses it
@@ -69,7 +69,9 @@ const renderComment = (
         ) : (
           <View className="size-6 items-center justify-center rounded-full bg-gray-400">
             <Text className="text-xs font-semibold text-white">
-              {author?.name?.charAt(0)?.toUpperCase() ?? "?"}
+              {comment.is_anonymous
+                ? "?"
+                : (author?.name?.charAt(0)?.toUpperCase() ?? "?")}
             </Text>
           </View>
         )}
@@ -321,11 +323,10 @@ export default function ThreadPage() {
         </View>
 
         <View className="mb-3 flex-row items-center gap-x-2">
-          {author?.avatar ? (
+          {!t.is_anonymous && author?.avatar ? (
             /*
             Note: No idea what s=128 and fallback=1 does, but the official api uses it
-            */
-            <Image
+            */ <Image
               source={{
                 uri: `https://static.${settings.getString("user.default_region")}.edusercontent.com/avatars/${author.avatar}?s=128&fallback=1`,
               }}
