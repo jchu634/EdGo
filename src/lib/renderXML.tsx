@@ -100,7 +100,7 @@ function extractRunsFromNode(node: XmlNode, marks: InlineMarks): InlineRun[] {
     case "u":
       return collectInlineRuns(node.children, { ...marks, underline: true });
     case "link":
-      if (node.children[0].type == "text") {
+      if (node.children.length > 0 && node.children[0].type === "text") {
         return collectInlineRuns(node.children, {
           ...marks,
           href: node.children[0].value,
