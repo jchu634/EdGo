@@ -1,4 +1,10 @@
-import React, { useCallback, useState } from "react";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useState,
+  useEffect,
+} from "react";
 import {
   View,
   Text,
@@ -9,14 +15,23 @@ import {
 import * as Clipboard from "expo-clipboard";
 import * as Linking from "expo-linking";
 
-interface LinkTextProps {
-  href: string;
-  children: React.ReactNode;
+interface LinkTextContextValue {
+  openLink: (url: string) => void;
+  showMenu: (url: string) => void;
 }
 
-export default function LinkText({ href, children }: LinkTextProps) {
+const LinkTextContext = createContext<LinkTextContextValue>({
+  openLink: () => {},
+  showMenu: () => {},
+});
+
+export function useLinkTextContext() {
+  return useContext(LinkTextContext);
+}
+
+export function LinkTextProvider({ children }: { children: React.ReactNode }) {
   const { width, height } = useWindowDimensions();
-  const [menuVisible, setMenuVisible] = useState(false);
+  const [activeHref, setActiveHref] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
   const openExternalUrl = useCallback(async (url: string) => {
@@ -33,38 +48,71 @@ export default function LinkText({ href, children }: LinkTextProps) {
     }
   }, []);
 
+  const openLink = useCallback(
+    (url: string) => {
+      openExternalUrl(url);
+    },
+    [openExternalUrl],
+  );
+
+  const showMenu = useCallback((url: string) => {
+    if (copyTimeoutRef.current) {
+      clearTimeout(copyTimeoutRef.current);
+      copyTimeoutRef.current = null;
+    }
+    setActiveHref(url);
+    setCopied(false);
+  }, []);
+
+  const dismissMenu = useCallback(() => {
+    if (copyTimeoutRef.current) {
+      clearTimeout(copyTimeoutRef.current);
+      copyTimeoutRef.current = null;
+    }
+    setActiveHref(null);
+    setCopied(false);
+  }, []);
+
+  const copyTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
+
   const handleCopy = useCallback(async () => {
-    await Clipboard.setStringAsync(href);
+    if (!activeHref) return;
+    await Clipboard.setStringAsync(activeHref);
     setCopied(true);
-    setTimeout(() => {
-      setMenuVisible(false);
+    copyTimeoutRef.current = setTimeout(() => {
+      setActiveHref(null);
       setCopied(false);
+      copyTimeoutRef.current = null;
     }, 800);
-  }, [href]);
+  }, [activeHref]);
 
   const handleOpen = useCallback(() => {
-    setMenuVisible(false);
-    openExternalUrl(href);
-  }, [href, openExternalUrl]);
+    if (!activeHref) return;
+    const url = activeHref;
+    setActiveHref(null);
+    openExternalUrl(url);
+  }, [activeHref, openExternalUrl]);
+
+  useEffect(() => {
+    return () => {
+      if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current);
+    };
+  }, []);
 
   return (
-    <>
-      <Text
-        className="text-blue-700 underline"
-        onPress={() => openExternalUrl(href)}
-        onLongPress={() => setMenuVisible(true)}
-      >
-        {children}
-      </Text>
+    <LinkTextContext.Provider value={{ openLink, showMenu }}>
+      {children}
       <Modal
-        visible={menuVisible}
+        visible={activeHref !== null}
         transparent
         animationType="fade"
         statusBarTranslucent={true}
-        onRequestClose={() => setMenuVisible(false)}
+        onRequestClose={dismissMenu}
       >
         <Pressable
-          onPress={() => setMenuVisible(false)}
+          onPress={dismissMenu}
           style={{
             width,
             height,
@@ -75,7 +123,7 @@ export default function LinkText({ href, children }: LinkTextProps) {
         >
           <Pressable
             style={{
-              width: "80%",
+              width: "90%",
               borderRadius: 12,
               backgroundColor: "white",
               padding: 16,
@@ -87,7 +135,7 @@ export default function LinkText({ href, children }: LinkTextProps) {
               numberOfLines={2}
               ellipsizeMode="middle"
             >
-              {href}
+              {activeHref}
             </Text>
 
             {copied ? (
@@ -125,6 +173,29 @@ export default function LinkText({ href, children }: LinkTextProps) {
           </Pressable>
         </Pressable>
       </Modal>
-    </>
+    </LinkTextContext.Provider>
+  );
+}
+
+interface LinkTextProps {
+  href: string;
+  children: React.ReactNode;
+}
+
+export default function LinkText({ href, children }: LinkTextProps) {
+  const { openLink, showMenu } = useLinkTextContext();
+
+  /*
+   * href is currently bugged as somehow href is passed as a child instead of a node attr, hence temp workaround with children as string
+   */
+  return (
+    <Text
+      className="text-blue-700 underline"
+      onPress={() => openLink(children as string)}
+      onLongPress={() => showMenu(children as string)}
+      selectable={false}
+    >
+      {children}
+    </Text>
   );
 }

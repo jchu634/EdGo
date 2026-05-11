@@ -1,15 +1,26 @@
 import React, { useEffect, useState, useMemo, useCallback } from "react";
-import { View, Text, ScrollView, ActivityIndicator, Image } from "react-native";
+import {
+  View,
+  Text,
+  ScrollView,
+  ActivityIndicator,
+  Image,
+  Pressable,
+} from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import { Effect, Schema } from "effect";
 import { parseXml } from "react-native-turboxml";
-import LinkText from "@/src/components/LinkText";
+import { XmlNode, renderXmlNode, isXmlNode } from "@/src/lib/renderXML";
+import * as Linking from "expo-linking";
+import { settings } from "@/src/lib/storage";
+
 import {
   EyeIcon,
   HeartIcon,
   StarIcon,
   PushPinIcon,
   CheckCircleIcon,
+  ArrowSquareOutIcon,
 } from "phosphor-react-native";
 
 import {
@@ -25,140 +36,6 @@ import {
 } from "@/src/lib/storage";
 
 import "@/app/global.css";
-interface XmlTextNode {
-  type: "text";
-  value: string;
-}
-
-interface XmlElementNode {
-  type: "element" | "document";
-  tag: string;
-  attrs: Record<string, string>;
-  children: XmlNode[];
-  selfClosing?: boolean;
-}
-
-type XmlNode = XmlTextNode | XmlElementNode;
-
-function isXmlNode(val: unknown): val is XmlNode {
-  if (!val || typeof val !== "object") return false;
-  const obj = val as Record<string, unknown>;
-  if (obj.type === "text" && typeof obj.value === "string") return true;
-  if (
-    (obj.type === "element" || obj.type === "document") &&
-    typeof obj.tag === "string" &&
-    Array.isArray(obj.children)
-  )
-    return true;
-  return false;
-}
-
-const renderXmlNode = (node: XmlNode, keyPrefix = "node"): React.ReactNode => {
-  if (node.type === "text") {
-    return <Text key={keyPrefix}>{node.value} </Text>;
-  }
-
-  if (node.type === "element" || node.type === "document") {
-    const children = () =>
-      node.children.map((child, i) =>
-        renderXmlNode(child, `${keyPrefix}-${node.tag}-${i}`),
-      );
-
-    if (node.selfClosing && node.children.length === 0) {
-      if (node.tag === "break" || node.tag === "br") {
-        return <Text key={keyPrefix}>{"\n"}</Text>;
-      }
-      return null;
-    }
-
-    switch (node.tag) {
-      case "document":
-        return <React.Fragment key={keyPrefix}>{children()}</React.Fragment>;
-      case "paragraph":
-      case "p":
-        return (
-          <Text key={keyPrefix} className="font-display mb-2">
-            {children()}{" "}
-          </Text>
-        );
-      case "bold":
-      case "b":
-        return (
-          <Text key={keyPrefix} className="font-display-bold">
-            {children()}
-          </Text>
-        );
-      case "italic":
-      case "i":
-        return (
-          <Text key={keyPrefix} className="font-display italic">
-            {children()}
-          </Text>
-        );
-      case "code":
-        return (
-          <Text
-            key={keyPrefix}
-            className="font-display rounded bg-gray-200 px-1 font-mono"
-          >
-            {children()}
-          </Text>
-        );
-      case "pre":
-      case "codeblock":
-        return (
-          <View key={keyPrefix} className="my-2 rounded-lg bg-gray-200 p-3">
-            <Text className="font-mono text-sm">{children()}</Text>
-          </View>
-        );
-      case "list":
-        return (
-          <View key={keyPrefix} className="mb-2 ml-2">
-            {children()}
-          </View>
-        );
-      case "li":
-      case "listitem":
-        return (
-          <View key={keyPrefix} className="mb-1 ml-2 flex-row">
-            <Text className="font-display">• </Text>
-            <View className="flex-1">{children()}</View>
-          </View>
-        );
-      case "heading":
-        return (
-          <Text key={keyPrefix} className="font-display-bold mb-1 text-lg">
-            {children()}
-          </Text>
-        );
-      case "image": {
-        const src = node.attrs.src || node.attrs.url;
-        if (src) {
-          return (
-            <Image
-              key={keyPrefix}
-              source={{ uri: src }}
-              className="my-2 h-40 w-full rounded-lg"
-              resizeMode="contain"
-            />
-          );
-        }
-        return null;
-      }
-      case "link": {
-        return (
-          <LinkText key={keyPrefix} href={node.attrs.href}>
-            {children()}
-          </LinkText>
-        );
-      }
-      default:
-        return <React.Fragment key={keyPrefix}>{children()}</React.Fragment>;
-    }
-  }
-
-  return null;
-};
 
 type CommentType = Schema.Schema.Type<typeof CommentSchema>;
 
@@ -173,22 +50,28 @@ const renderComment = (
   const author = usersMap.get(comment.user_id);
   const xmlKey = `comment-${comment.id}`;
   const parsedXml = parsedXmlMap.get(xmlKey);
-
   return (
     <View
       key={`comment-${comment.id}`}
       className={`mb-3 rounded-xl bg-gray-100 p-3 ${depth > 0 ? "ml-4 border-l-2 border-gray-300" : ""}`}
     >
       <View className="mb-2 flex-row items-center gap-x-2">
-        {author?.avatar ? (
+        {!comment.is_anonymous && author?.avatar ? (
           <Image
-            source={{ uri: author.avatar }}
+            /*
+            Note: No idea what s=128 and fallback=1 does, but the official api uses it
+            */
+            source={{
+              uri: `https://static.${settings.getString("user.default_region")}.edusercontent.com/avatars/${author.avatar}?s=128&fallback=1`,
+            }}
             className="size-6 rounded-full"
           />
         ) : (
           <View className="size-6 items-center justify-center rounded-full bg-gray-400">
             <Text className="text-xs font-semibold text-white">
-              {author?.name?.charAt(0)?.toUpperCase() ?? "?"}
+              {comment.is_anonymous
+                ? "?"
+                : (author?.name?.charAt(0)?.toUpperCase() ?? "?")}
             </Text>
           </View>
         )}
@@ -438,9 +321,13 @@ export default function ThreadPage() {
         </View>
 
         <View className="mb-3 flex-row items-center gap-x-2">
-          {author?.avatar ? (
-            <Image
-              source={{ uri: author.avatar }}
+          {!t.is_anonymous && author?.avatar ? (
+            /*
+            Note: No idea what s=128 and fallback=1 does, but the official api uses it
+            */ <Image
+              source={{
+                uri: `https://static.${settings.getString("user.default_region")}.edusercontent.com/avatars/${author.avatar}?s=128&fallback=1`,
+              }}
               className="size-8 rounded-full"
             />
           ) : (
@@ -450,9 +337,26 @@ export default function ThreadPage() {
               </Text>
             </View>
           )}
+
           <Text className="font-display-semibold">
             {t.is_anonymous ? "Anonymous" : (author?.name ?? "Unknown")}
           </Text>
+          <View className="flex flex-row items-center gap-x-4">
+            <Text className="font-display">
+              {t.updated_at
+                ? `Updated: ${new Date(t.updated_at).toLocaleDateString()}`
+                : `Created: ${new Date(t.created_at).toLocaleDateString()}`}
+            </Text>
+            <Pressable
+              onPress={() =>
+                Linking.openURL(
+                  `https://edstem.org/${settings.getString("user.default_region")}/courses/${courseIdNum}/discussion/${t.id}`,
+                )
+              }
+            >
+              <ArrowSquareOutIcon size={20} color="#1e40af" />
+            </Pressable>
+          </View>
         </View>
 
         {t.category && (

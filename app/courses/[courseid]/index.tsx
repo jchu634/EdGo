@@ -6,13 +6,15 @@ import {
   PushPinIcon,
   HeartIcon,
   ChatsIcon,
+  CheckIcon,
+  CheckFatIcon,
 } from "phosphor-react-native";
 import { Schema } from "effect";
 
 import { CourseCategory } from "@/src/lib/schema";
 import { getCachedCourseCategory } from "@/src/lib/storage";
 import { useCourseThreads } from "@/src/lib/threads";
-import type { Thread } from "@/src/db/schema";
+import { type ThreadUser } from "@/src/db/schema";
 
 import "@/app/global.css";
 
@@ -67,7 +69,7 @@ export default function Index() {
   );
 
   const renderPinnedThreadItem = useCallback(
-    ({ item }: { item: Thread }) => {
+    ({ item }: { item: ThreadUser }) => {
       const colour = categoryColourMap.get(item.category);
       return (
         <Pressable
@@ -101,7 +103,7 @@ export default function Index() {
   );
 
   const renderThreadItem = useCallback(
-    ({ item }: { item: Thread }) => {
+    ({ item }: { item: ThreadUser }) => {
       const colour = categoryColourMap.get(item.category);
       return (
         <Pressable
@@ -116,6 +118,7 @@ export default function Index() {
             <Text className="font-display-bold max-h-30 w-100 truncate">
               {item.title}
             </Text>
+            {item.isAnswered && <CheckIcon color="#3f6212" />}
             {item.isPinned && <PushPinIcon />}
           </View>
           <View className="flex flex-row justify-between">

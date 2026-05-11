@@ -4,12 +4,13 @@ import {
   HttpClientRequest,
   HttpClientResponse,
 } from "effect/unstable/http";
-import { Effect, Schema } from "effect";
+
+import { Effect, Schedule, Schema, Duration, Fiber } from "effect";
 import React, { useState, useEffect } from "react";
 import { View, Text, Pressable, Dimensions } from "react-native";
 
 import { useRouter } from "expo-router";
-import { Course, UserResponse } from "@/src/lib/schema";
+import { Course, UserResponse, RegionResponse } from "@/src/lib/schema";
 import { getUnreadCounts, UnreadCountEntry } from "@/src/lib/stream";
 import {
   cacheCourses,
@@ -17,6 +18,7 @@ import {
   getApiKey,
   clearCourseCache,
   clearThreadCache,
+  settings,
 } from "@/src/lib/storage";
 
 import "@/app/global.css";
@@ -57,6 +59,50 @@ export default function Index() {
       // return yield* response.json;
     }).pipe(Effect.provide(FetchHttpClient.layer));
 
+  const loadRegion = () =>
+    Effect.gen(function* () {
+      const apiKey = yield* Effect.promise(() => getApiKey());
+
+      if (!apiKey) {
+        return yield* Effect.fail(new Error("Missing API Key"));
+      }
+
+      const client = yield* HttpClient.HttpClient;
+
+      const request = HttpClientRequest.get(
+        "https://edstem.org/api/region",
+      ).pipe(
+        HttpClientRequest.bearerToken(apiKey),
+        HttpClientRequest.acceptJson,
+      );
+
+      const region = yield* Effect.gen(function* () {
+        const response = yield* client.execute(request);
+        return yield* HttpClientResponse.schemaBodyJson(RegionResponse)(
+          response,
+        );
+      }).pipe(
+        Effect.retry({
+          schedule: Schedule.exponential(Duration.seconds(1)),
+          times: 5,
+        }),
+      );
+
+      yield* Effect.sync(() => {
+        settings.set("user.default_region", region.default_region);
+        settings.set("user.country_code", region.country_code);
+      });
+    }).pipe(
+      Effect.provide(FetchHttpClient.layer),
+      Effect.matchEffect({
+        onSuccess: () => Effect.void,
+        onFailure: (error) =>
+          Effect.sync(() => {
+            console.error("error", error);
+          }),
+      }),
+    );
+
   const wrapNumbers = (num: number) => {
     if (num > 99) return "99+";
     else return num;
@@ -64,7 +110,7 @@ export default function Index() {
 
   useEffect(() => {
     // Load cached courses from MMKV for instant display
-    const cached = getCachedCourses<Schema.Schema.Type<typeof Course>>();
+    const cached = getCachedCourses();
     if (cached) {
       setCourses(cached);
     }
@@ -89,13 +135,18 @@ export default function Index() {
       .catch((error) => {
         console.error("error", error);
       });
+    const regionFiber = Effect.runFork(loadRegion());
+
     const subscription = Dimensions.addEventListener(
       "change",
       ({ window, screen }) => {
         setDimensions({ window, screen });
       },
     );
-    return () => subscription?.remove();
+    return () => {
+      Effect.runFork(Fiber.interrupt(regionFiber));
+      subscription?.remove();
+    };
   }, []);
 
   return (

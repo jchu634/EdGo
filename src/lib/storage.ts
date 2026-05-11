@@ -5,6 +5,7 @@ import { Course, CourseCategory, ThreadDetailResponse } from "@/src/lib/schema";
 
 const courseCache = createMMKV({ id: "courseCache" });
 const threadCache = createMMKV({ id: "threadCache" });
+export const settings = createMMKV({ id: "settings" });
 
 const API_KEY_KEY = "edstem_bearer_token";
 
