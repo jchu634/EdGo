@@ -127,7 +127,6 @@ export default function ThreadPage() {
   const { courseid, thread } = useLocalSearchParams();
   const courseIdNum = Number(Array.isArray(courseid) ? courseid[0] : courseid);
   const threadNumber = Number(Array.isArray(thread) ? thread[0] : thread);
-  const [threadID, setThreadID] = useState(0);
 
   const [threadData, setThreadData] = useState<Schema.Schema.Type<
     typeof ThreadDetailResponse
@@ -208,7 +207,6 @@ export default function ThreadPage() {
         loadCommentXml(cached.thread.comments);
         loadCommentXml(cached.thread.answers);
         setParsedXmlMap(xmlMap);
-        setThreadID(cached.thread.id);
         setLoading(false);
       }
 
