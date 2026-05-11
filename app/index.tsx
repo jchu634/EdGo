@@ -5,7 +5,7 @@ import {
   HttpClientResponse,
 } from "effect/unstable/http";
 
-import { Effect, Schema } from "effect";
+import { Effect, Schedule, Schema, Duration, Fiber } from "effect";
 import React, { useState, useEffect } from "react";
 import { View, Text, Pressable, Dimensions } from "react-native";
 
@@ -59,23 +59,49 @@ export default function Index() {
       // return yield* response.json;
     }).pipe(Effect.provide(FetchHttpClient.layer));
 
-  const fetchRegion = () =>
+  const loadRegion = () =>
     Effect.gen(function* () {
       const apiKey = yield* Effect.promise(() => getApiKey());
+
       if (!apiKey) {
         return yield* Effect.fail(new Error("Missing API Key"));
       }
+
       const client = yield* HttpClient.HttpClient;
+
       const request = HttpClientRequest.get(
-        `https://edstem.org/api/region`,
+        "https://edstem.org/api/region",
       ).pipe(
         HttpClientRequest.bearerToken(apiKey),
         HttpClientRequest.acceptJson,
       );
 
-      const response = yield* client.execute(request);
-      return yield* HttpClientResponse.schemaBodyJson(RegionResponse)(response);
-    }).pipe(Effect.provide(FetchHttpClient.layer));
+      const region = yield* Effect.gen(function* () {
+        const response = yield* client.execute(request);
+        return yield* HttpClientResponse.schemaBodyJson(RegionResponse)(
+          response,
+        );
+      }).pipe(
+        Effect.retry({
+          schedule: Schedule.exponential(Duration.seconds(1)),
+          times: 5,
+        }),
+      );
+
+      yield* Effect.sync(() => {
+        settings.set("user.default_region", region.default_region);
+        settings.set("user.country_code", region.country_code);
+      });
+    }).pipe(
+      Effect.provide(FetchHttpClient.layer),
+      Effect.matchEffect({
+        onSuccess: () => Effect.void,
+        onFailure: (error) =>
+          Effect.sync(() => {
+            console.error("error", error);
+          }),
+      }),
+    );
 
   const wrapNumbers = (num: number) => {
     if (num > 99) return "99+";
@@ -109,14 +135,7 @@ export default function Index() {
       .catch((error) => {
         console.error("error", error);
       });
-    Effect.runPromise(fetchRegion())
-      .then((response) => {
-        settings.set("user.default_region", response.default_region);
-        settings.set("user.country_code", response.country_code);
-      })
-      .catch((error) => {
-        console.error("error", error);
-      });
+    const regionFiber = Effect.runFork(loadRegion());
 
     const subscription = Dimensions.addEventListener(
       "change",
@@ -124,7 +143,10 @@ export default function Index() {
         setDimensions({ window, screen });
       },
     );
-    return () => subscription?.remove();
+    return () => {
+      Effect.runFork(Fiber.interrupt(regionFiber));
+      subscription?.remove();
+    };
   }, []);
 
   return (
