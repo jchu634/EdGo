@@ -1,4 +1,10 @@
-import React, { createContext, useCallback, useContext, useState } from "react";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useState,
+  useEffect,
+} from "react";
 import {
   View,
   Text,
@@ -50,22 +56,35 @@ export function LinkTextProvider({ children }: { children: React.ReactNode }) {
   );
 
   const showMenu = useCallback((url: string) => {
+    if (copyTimeoutRef.current) {
+      clearTimeout(copyTimeoutRef.current);
+      copyTimeoutRef.current = null;
+    }
     setActiveHref(url);
     setCopied(false);
   }, []);
 
   const dismissMenu = useCallback(() => {
+    if (copyTimeoutRef.current) {
+      clearTimeout(copyTimeoutRef.current);
+      copyTimeoutRef.current = null;
+    }
     setActiveHref(null);
     setCopied(false);
   }, []);
+
+  const copyTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
 
   const handleCopy = useCallback(async () => {
     if (!activeHref) return;
     await Clipboard.setStringAsync(activeHref);
     setCopied(true);
-    setTimeout(() => {
+    copyTimeoutRef.current = setTimeout(() => {
       setActiveHref(null);
       setCopied(false);
+      copyTimeoutRef.current = null;
     }, 800);
   }, [activeHref]);
 
@@ -75,6 +94,12 @@ export function LinkTextProvider({ children }: { children: React.ReactNode }) {
     setActiveHref(null);
     openExternalUrl(url);
   }, [activeHref, openExternalUrl]);
+
+  useEffect(() => {
+    return () => {
+      if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current);
+    };
+  }, []);
 
   return (
     <LinkTextContext.Provider value={{ openLink, showMenu }}>
