@@ -346,7 +346,7 @@ export default function ThreadPage() {
             <Text className="font-display">
               {t.updated_at
                 ? `Updated: ${new Date(t.updated_at).toLocaleDateString()}`
-                : new Date(t.created_at).toLocaleDateString()}
+                : `Created: ${new Date(t.created_at).toLocaleDateString()}`}
             </Text>
             <Pressable
               onPress={() =>
