@@ -59,10 +59,20 @@ export default function ApiKeyScreen() {
         Alert.alert("Invalid API Key", "The key could not be verified.");
         return;
       }
+    } catch (error) {
+      Alert.alert(
+        "Validation Error",
+        "Could not verify the API key. Please check your network connection.",
+      );
+      console.error("Failed to validate API key:", error);
+      return;
+    }
+
+    try {
       await setApiKey(trimmed);
       // KeyProvider will auto-redirect to "/" once apiKey is set
     } catch (error) {
-      Alert.alert("Error", "Failed to save API key. Please try again.");
+      Alert.alert("Save Error", "Failed to save API key. Please try again.");
       console.error("Failed to save API key:", error);
     } finally {
       setSaving(false);
