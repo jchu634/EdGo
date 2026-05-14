@@ -16,13 +16,13 @@ export default function Index() {
       <View>
         <Text className="font-display-bold text-2xl">User Details</Text>
         <Text className="font-display">
-          Name: {settings.getString("user.name")}
+          Name: {settings.getString("user.name") ?? "Loading..."}
         </Text>
         <Text className="font-display">
-          Email: {settings.getString("user.email")}
+          Email: {settings.getString("user.email") ?? "Loading..."}
         </Text>
         <Text className="font-display">
-          Region: {settings.getString("user.default_region")}
+          Region: {settings.getString("user.default_region") ?? "Loading..."}
         </Text>
       </View>
 
