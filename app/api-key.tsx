@@ -34,48 +34,50 @@ export default function ApiKeyScreen() {
   const validateApiKey = (apiKey: string) =>
     Effect.gen(function* () {
       const client = yield* HttpClient.HttpClient;
+
       const request = HttpClientRequest.get(`https://edstem.org/api/user`).pipe(
         HttpClientRequest.bearerToken(apiKey),
         HttpClientRequest.acceptJson,
       );
 
       const response = yield* client.execute(request);
-      if (response.status === 200) {
-        // Fetch and store the user's region, defaulting to "US" on failure
-        yield* Effect.gen(function* () {
-          const regionRequest = HttpClientRequest.get(
-            `https://edstem.org/api/region`,
-          ).pipe(
-            HttpClientRequest.bearerToken(apiKey),
-            HttpClientRequest.acceptJson,
-          );
-          const regionResponse = yield* client.execute(regionRequest);
-          const region =
-            yield* HttpClientResponse.schemaBodyJson(RegionResponse)(
-              regionResponse,
-            );
-          yield* Effect.sync(() => {
-            settings.set("user.default_region", region.default_region);
-            settings.set("user.country_code", region.country_code);
-          });
-        }).pipe(
-          Effect.matchEffect({
-            onSuccess: () => Effect.void,
-            onFailure: (error) =>
-              Effect.sync(() => {
-                console.warn(
-                  "Failed to fetch region, falling back to US:",
-                  error,
-                );
-                settings.set("user.default_region", "US");
-                settings.set("user.country_code", "US");
-              }),
-          }),
-        );
-        return true;
-      } else {
+
+      if (response.status !== 200) {
         return false;
       }
+
+      // Fetch and store the user's region, defaulting to "US" on failure
+      yield* Effect.gen(function* () {
+        const regionRequest = HttpClientRequest.get(
+          `https://edstem.org/api/region`,
+        ).pipe(
+          HttpClientRequest.bearerToken(apiKey),
+          HttpClientRequest.acceptJson,
+        );
+        const regionResponse = yield* client.execute(regionRequest);
+        const region =
+          yield* HttpClientResponse.schemaBodyJson(RegionResponse)(
+            regionResponse,
+          );
+        yield* Effect.sync(() => {
+          settings.set("user.default_region", region.default_region);
+          settings.set("user.country_code", region.country_code);
+        });
+      }).pipe(
+        Effect.matchEffect({
+          onSuccess: () => Effect.void,
+          onFailure: (error) =>
+            Effect.sync(() => {
+              console.warn(
+                "Failed to fetch region, falling back to US:",
+                error,
+              );
+              settings.set("user.default_region", "US");
+              settings.set("user.country_code", "US");
+            }),
+        }),
+      );
+      return true;
     }).pipe(Effect.provide(FetchHttpClient.layer));
 
   const handleSave = async () => {
