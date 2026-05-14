@@ -1,6 +1,6 @@
 import { Schema } from "effect";
 
-export const User = Schema.Struct({
+const _baseUser = Schema.Struct({
   id: Schema.Number,
   name: Schema.String,
   avatar: Schema.NullOr(Schema.String),
@@ -17,11 +17,10 @@ export const CourseCategory = Schema.Struct({
   // subcategories:
 });
 
-export const ExtendedUser = Schema.Struct({
-  ...User.fields,
+export const UserResponseUser = Schema.Struct({
+  ..._baseUser.fields,
   email: Schema.String,
   username: Schema.NullOr(Schema.String),
-  avatar_url: Schema.NullOr(Schema.String),
   settings: userSettings,
 });
 
@@ -126,7 +125,7 @@ const Thread = Schema.Struct({
 
 export const ThreadUser = Schema.Struct({
   ...Thread.fields,
-  user: Schema.NullOr(User),
+  user: Schema.NullOr(_baseUser),
 });
 
 export const ThreadDetail = Schema.Struct({
@@ -137,7 +136,7 @@ export const ThreadDetail = Schema.Struct({
 
 export const ThreadDetailResponse = Schema.Struct({
   thread: ThreadDetail,
-  users: Schema.Array(User),
+  users: Schema.Array(_baseUser),
 });
 
 const Role = Schema.Struct({
@@ -155,11 +154,12 @@ export const UserResponse = Schema.Struct({
     }),
   ),
   push_key: Schema.String,
+  user: UserResponseUser,
 });
 
 export const ThreadResponse = Schema.Struct({
   threads: Schema.Array(Thread),
-  users: Schema.Array(User),
+  users: Schema.Array(_baseUser),
 });
 
 export const RegionResponse = Schema.Struct({

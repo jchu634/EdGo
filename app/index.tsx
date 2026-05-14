@@ -16,8 +16,6 @@ import {
   cacheCourses,
   getCachedCourses,
   getApiKey,
-  clearCourseCache,
-  clearThreadCache,
   settings,
 } from "@/src/lib/storage";
 
@@ -207,27 +205,6 @@ export default function Index() {
         )}
       </View>
       <Pressable className="h-10 w-10"></Pressable>
-      <View className="absolute bottom-4 left-4 gap-y-2">
-        <Pressable
-          className="rounded-lg bg-red-100 px-3 py-1.5"
-          onPress={() => {
-            clearCourseCache();
-            setCourses(undefined);
-          }}
-        >
-          <Text className="font-display text-xs text-red-700">
-            Purge Course Cache
-          </Text>
-        </Pressable>
-        <Pressable
-          className="rounded-lg bg-red-100 px-3 py-1.5"
-          onPress={() => clearThreadCache()}
-        >
-          <Text className="font-display text-xs text-red-700">
-            Purge Thread Cache
-          </Text>
-        </Pressable>
-      </View>
     </View>
   );
 }
