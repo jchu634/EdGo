@@ -19,7 +19,7 @@ import {
 import { Effect } from "effect";
 
 import { useApiKey } from "@/src/providers/keyProvider";
-import { RegionResponse } from "@/src/lib/schema";
+import { RegionResponse, UserResponse } from "@/src/lib/schema";
 import { settings } from "@/src/lib/storage";
 import { EyeClosedIcon, EyeIcon } from "phosphor-react-native";
 
@@ -41,44 +41,48 @@ export default function ApiKeyScreen() {
       );
 
       const response = yield* client.execute(request);
-
       if (response.status !== 200) {
         return false;
+      } else {
+        const user =
+          yield* HttpClientResponse.schemaBodyJson(UserResponse)(response);
+        settings.set("user.name", user.user.name);
+        settings.set("user.email", user.user.email);
+        return true;
       }
-
-      // Fetch and store the user's region, defaulting to "US" on failure
-      yield* Effect.gen(function* () {
-        const regionRequest = HttpClientRequest.get(
-          `https://edstem.org/api/region`,
-        ).pipe(
-          HttpClientRequest.bearerToken(apiKey),
-          HttpClientRequest.acceptJson,
-        );
-        const regionResponse = yield* client.execute(regionRequest);
-        const region =
-          yield* HttpClientResponse.schemaBodyJson(RegionResponse)(
-            regionResponse,
-          );
-        yield* Effect.sync(() => {
-          settings.set("user.default_region", region.default_region);
-          settings.set("user.country_code", region.country_code);
-        });
-      }).pipe(
-        Effect.matchEffect({
-          onSuccess: () => Effect.void,
-          onFailure: (error) =>
-            Effect.sync(() => {
-              console.warn(
-                "Failed to fetch region, falling back to US:",
-                error,
-              );
-              settings.set("user.default_region", "US");
-              settings.set("user.country_code", "US");
-            }),
-        }),
-      );
-      return true;
     }).pipe(Effect.provide(FetchHttpClient.layer));
+
+  const fetchRegion = () =>
+    Effect.gen(function* () {
+      const client = yield* HttpClient.HttpClient;
+
+      const request = HttpClientRequest.get(
+        `https://edstem.org/api/region`,
+      ).pipe(HttpClientRequest.acceptJson);
+
+      const regionResponse = yield* client.execute(request);
+
+      const region =
+        yield* HttpClientResponse.schemaBodyJson(RegionResponse)(
+          regionResponse,
+        );
+
+      yield* Effect.sync(() => {
+        settings.set("user.default_region", region.default_region);
+        settings.set("user.country_code", region.country_code);
+      });
+    }).pipe(
+      Effect.matchEffect({
+        onSuccess: () => Effect.void,
+        onFailure: (error) =>
+          Effect.sync(() => {
+            console.warn("Failed to fetch region, falling back to US:", error);
+            settings.set("user.default_region", "US");
+            settings.set("user.country_code", "US");
+          }),
+      }),
+      Effect.provide(FetchHttpClient.layer),
+    );
 
   const handleSave = async () => {
     const trimmed = inputKey.trim();
@@ -92,6 +96,8 @@ export default function ApiKeyScreen() {
       const isValid = await Effect.runPromise(validateApiKey(trimmed));
       if (!isValid) {
         Alert.alert("Invalid API Key", "The key could not be verified.");
+        setSaving(false);
+
         return;
       }
     } catch (error) {
@@ -100,9 +106,10 @@ export default function ApiKeyScreen() {
         "Could not verify the API key. Please check your network connection.",
       );
       console.error("Failed to validate API key:", error);
+      setSaving(false);
       return;
     }
-
+    Effect.runFork(fetchRegion());
     try {
       await setApiKey(trimmed);
       // KeyProvider will auto-redirect to "/" once apiKey is set

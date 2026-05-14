@@ -1,6 +1,7 @@
 import React from "react";
 import { View, Text, Pressable } from "react-native";
 import { clearCourseCache, clearThreadCache } from "@/src/lib/storage";
+import { settings } from "@/src/lib/storage";
 
 import "@/app/global.css";
 
@@ -8,9 +9,15 @@ export default function Index() {
   return (
     <View className="flex h-full p-4">
       <Text className="font-display-bold text-2xl">User Details</Text>
-      <Text className="font-display">PLACEHOLDER NAME</Text>
-      <Text className="font-display">PLACEHOLDER EMAIL</Text>
-      <Text className="font-display">PLACEHOLDER REGION</Text>
+      <Text className="font-display">
+        Name: {settings.getString("user.name")}
+      </Text>
+      <Text className="font-display">
+        Email: {settings.getString("user.email")}
+      </Text>
+      <Text className="font-display">
+        Region: {settings.getString("user.default_region")}
+      </Text>
 
       <View className="absolute bottom-4 left-4 gap-y-2">
         <Pressable
