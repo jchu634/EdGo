@@ -182,10 +182,13 @@ export function useCourseThreads(courseId: number, category?: string) {
 
   const refresh = useCallback(async () => {
     setRefreshing(true);
-    offsetRef.current = 0;
-    setEndOfPages(false);
-    await fetchAndSync(0);
-    setRefreshing(false);
+    try {
+      offsetRef.current = 0;
+      setEndOfPages(false);
+      await fetchAndSync(0);
+    } finally {
+      setRefreshing(false);
+    }
   }, [fetchAndSync]);
 
   const fetchMore = useCallback(() => {
