@@ -5,27 +5,26 @@ import { settings } from "@/src/lib/storage";
 import { useApiKey } from "@/src/providers/keyProvider";
 
 import "@/app/global.css";
-import { useMMKVBoolean } from "react-native-mmkv";
+import { useMMKVBoolean, useMMKVString } from "react-native-mmkv";
 
 export default function Index() {
   const [developerSettings, setDeveloperSettings] = useMMKVBoolean(
     "user.developer_settings",
     settings,
   );
+  const [userName] = useMMKVString("user.name", settings);
+  const [userEmail] = useMMKVString("user.email", settings);
+  const [userRegion] = useMMKVString("user.default_region", settings);
   const { clearApiKey } = useApiKey();
 
   return (
     <View className="flex h-full gap-y-8 p-4">
       <View>
         <Text className="font-display-bold text-2xl">User Details</Text>
+        <Text className="font-display">Name: {userName ?? "Loading..."}</Text>
+        <Text className="font-display">Email: {userEmail ?? "Loading..."}</Text>
         <Text className="font-display">
-          Name: {settings.getString("user.name") ?? "Loading..."}
-        </Text>
-        <Text className="font-display">
-          Email: {settings.getString("user.email") ?? "Loading..."}
-        </Text>
-        <Text className="font-display">
-          Region: {settings.getString("user.default_region") ?? "Loading..."}
+          Region: {userRegion ?? "Loading..."}
         </Text>
       </View>
       <View>
