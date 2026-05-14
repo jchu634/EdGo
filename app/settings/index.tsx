@@ -2,6 +2,7 @@ import React from "react";
 import { View, Text, Pressable, Switch } from "react-native";
 import { clearCourseCache, clearThreadCache } from "@/src/lib/storage";
 import { settings } from "@/src/lib/storage";
+import { useApiKey } from "@/src/providers/keyProvider";
 
 import "@/app/global.css";
 import { useMMKVBoolean } from "react-native-mmkv";
@@ -11,6 +12,8 @@ export default function Index() {
     "user.developer_settings",
     settings,
   );
+  const { clearApiKey } = useApiKey();
+
   return (
     <View className="flex h-full gap-y-8 p-4">
       <View>
@@ -25,7 +28,22 @@ export default function Index() {
           Region: {settings.getString("user.default_region") ?? "Loading..."}
         </Text>
       </View>
-
+      <View>
+        <Pressable
+          className="w-30 rounded-lg bg-blue-800 px-3 py-1.5"
+          onPress={async () => {
+            try {
+              await clearApiKey();
+            } catch (e) {
+              console.error("Error clearing API key:", e);
+            }
+          }}
+        >
+          <Text className="font-display w-full text-center text-xs text-white">
+            Logout
+          </Text>
+        </Pressable>
+      </View>
       <View>
         <View className="flex flex-row">
           <Text className="font-display-bold text-2xl">Developer Settings</Text>
@@ -37,6 +55,7 @@ export default function Index() {
             value={developerSettings}
           />
         </View>
+
         {developerSettings && (
           <View className="flex w-full flex-col gap-y-2">
             <Pressable
