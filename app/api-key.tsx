@@ -19,6 +19,8 @@ import {
 import { Effect } from "effect";
 
 import { useApiKey } from "@/src/providers/keyProvider";
+import { RegionResponse } from "@/src/lib/schema";
+import { settings } from "@/src/lib/storage";
 import { EyeClosedIcon, EyeIcon } from "phosphor-react-native";
 
 import "@/app/global.css";
@@ -39,6 +41,37 @@ export default function ApiKeyScreen() {
 
       const response = yield* client.execute(request);
       if (response.status === 200) {
+        // Fetch and store the user's region, defaulting to "US" on failure
+        yield* Effect.gen(function* () {
+          const regionRequest = HttpClientRequest.get(
+            `https://edstem.org/api/region`,
+          ).pipe(
+            HttpClientRequest.bearerToken(apiKey),
+            HttpClientRequest.acceptJson,
+          );
+          const regionResponse = yield* client.execute(regionRequest);
+          const region =
+            yield* HttpClientResponse.schemaBodyJson(RegionResponse)(
+              regionResponse,
+            );
+          yield* Effect.sync(() => {
+            settings.set("user.default_region", region.default_region);
+            settings.set("user.country_code", region.country_code);
+          });
+        }).pipe(
+          Effect.matchEffect({
+            onSuccess: () => Effect.void,
+            onFailure: (error) =>
+              Effect.sync(() => {
+                console.warn(
+                  "Failed to fetch region, falling back to US:",
+                  error,
+                );
+                settings.set("user.default_region", "US");
+                settings.set("user.country_code", "US");
+              }),
+          }),
+        );
         return true;
       } else {
         return false;
