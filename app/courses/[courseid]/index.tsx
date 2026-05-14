@@ -56,8 +56,10 @@ export default function Index() {
     pinnedThreads,
     regularThreads,
     loading,
+    refreshing,
     error,
     fetchMore,
+    refresh,
     endOfPages,
   } = useCourseThreads(courseIdNum, currentCategory);
 
@@ -213,6 +215,8 @@ export default function Index() {
         keyExtractor={(item) => item.id.toString()}
         renderItem={renderThreadItem}
         onEndReached={fetchMore}
+        onRefresh={refresh}
+        refreshing={refreshing}
         className="h-full"
         contentContainerStyle={{ paddingHorizontal: 8, paddingBottom: 16 }}
         ListEmptyComponent={

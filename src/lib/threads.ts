@@ -145,6 +145,7 @@ export function useCourseThreads(courseId: number, category?: string) {
   );
 
   const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<Error | undefined>();
   const offsetRef = useRef(0);
   const [endOfPages, setEndOfPages] = useState(false);
@@ -179,6 +180,14 @@ export function useCourseThreads(courseId: number, category?: string) {
     fetchAndSync(0);
   }, [fetchAndSync]);
 
+  const refresh = useCallback(async () => {
+    setRefreshing(true);
+    offsetRef.current = 0;
+    setEndOfPages(false);
+    await fetchAndSync(0);
+    setRefreshing(false);
+  }, [fetchAndSync]);
+
   const fetchMore = useCallback(() => {
     console.log("Fetching more threads");
     console.log("Current Offset", offsetRef.current);
@@ -195,8 +204,10 @@ export function useCourseThreads(courseId: number, category?: string) {
     pinnedThreads,
     regularThreads,
     loading,
+    refreshing,
     error: error ?? queryError,
     fetchMore,
+    refresh,
     endOfPages,
     updatedAt,
   };
