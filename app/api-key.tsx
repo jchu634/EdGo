@@ -48,6 +48,7 @@ export default function ApiKeyScreen() {
           yield* HttpClientResponse.schemaBodyJson(UserResponse)(response);
         settings.set("user.name", user.user.name);
         settings.set("user.email", user.user.email);
+        settings.set("user.developer_settings", false);
         return true;
       }
     }).pipe(Effect.provide(FetchHttpClient.layer));
