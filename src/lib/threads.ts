@@ -194,9 +194,9 @@ export function useCourseThreads(courseId: number, category?: string) {
   const fetchMore = useCallback(() => {
     console.log("Fetching more threads");
     console.log("Current Offset", offsetRef.current);
-    if (endOfPages || loading) return;
+    if (endOfPages || loading || refreshing) return;
     fetchAndSync(offsetRef.current);
-  }, [endOfPages, loading, fetchAndSync]);
+  }, [endOfPages, loading, refreshing, fetchAndSync]);
 
   const allThreads = threads ?? [];
   const pinnedThreads = allThreads.filter((t) => t.isPinned);
