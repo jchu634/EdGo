@@ -5,7 +5,7 @@ import {
   HttpClientRequest,
   HttpClientResponse,
 } from "effect/unstable/http";
-import { eq, and, desc, sql } from "drizzle-orm";
+import { eq, and, desc, asc, sql } from "drizzle-orm";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { threadsTable, type ThreadUser, type NewThread } from "@/src/db/schema";
@@ -16,6 +16,10 @@ import { ThreadResponse, ThreadDetailResponse } from "@/src/lib/schema";
 import { getApiKey } from "@/src/lib/storage";
 
 const PAGE_SIZE = 100;
+
+function escapeLike(str: string): string {
+  return str.replace(/\\/g, "\\\\").replace(/%/g, "\\%").replace(/_/g, "\\_");
+}
 
 export function fetchThreadDetail(courseId: number, threadNumber: number) {
   return Effect.gen(function* () {
@@ -31,6 +35,33 @@ export function fetchThreadDetail(courseId: number, threadNumber: number) {
     return yield* HttpClientResponse.schemaBodyJson(ThreadDetailResponse)(
       response,
     );
+  }).pipe(Effect.provide(FetchHttpClient.layer));
+}
+
+export function searchThreadsFromApi(
+  courseId: number,
+  query: string,
+  options?: { sort: string; limit?: number },
+) {
+  const { sort = "relevance", limit = 20 } = options ?? {};
+  return Effect.gen(function* () {
+    const apiKey = yield* Effect.promise(() => getApiKey());
+    if (!apiKey) {
+      return yield* Effect.fail(new Error("Missing API Key"));
+    }
+    const client = yield* HttpClient.HttpClient;
+    const params = new URLSearchParams({
+      query,
+      sort,
+      limit: String(limit),
+    });
+
+    const request = HttpClientRequest.get(
+      `https://edstem.org/api/courses/${courseId}/threads/search?${params.toString()}`,
+    ).pipe(HttpClientRequest.bearerToken(apiKey), HttpClientRequest.acceptJson);
+    const response = yield* client.execute(request);
+
+    return yield* HttpClientResponse.schemaBodyJson(ThreadResponse)(response);
   }).pipe(Effect.provide(FetchHttpClient.layer));
 }
 
@@ -213,5 +244,77 @@ export function useCourseThreads(courseId: number, category?: string) {
     refresh,
     endOfPages,
     updatedAt,
+  };
+}
+
+export function useSearchResults(
+  courseId: number,
+  params: { query: string; sort: string } | null,
+) {
+  const db = useDb();
+  const [isSearching, setIsSearching] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const searchTokenRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const trimmed = (params?.query ?? "").trim();
+  const sort = params?.sort ?? "relevance";
+  const isActive = trimmed.length > 0;
+
+  const orderByClause =
+    sort === "oldest"
+      ? [desc(threadsTable.isPinned), asc(threadsTable.id)]
+      : [desc(threadsTable.isPinned), desc(threadsTable.id)];
+
+  const { data: searchResults } = useLiveQuery(
+    db
+      .select()
+      .from(threadsTable)
+      .where(
+        and(
+          eq(threadsTable.courseId, courseId),
+          sql`${threadsTable.title} LIKE ${"%" + escapeLike(trimmed) + "%"} ESCAPE '\\'`,
+        ),
+      )
+      .orderBy(...orderByClause)
+      .limit(50),
+    [courseId, trimmed, sort],
+  );
+
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+
+    if (!isActive) {
+      setIsSearching(false);
+      return;
+    }
+
+    setIsSearching(true);
+    debounceRef.current = setTimeout(async () => {
+      const requestToken = debounceRef.current;
+      searchTokenRef.current = requestToken;
+      try {
+        const response = await Effect.runPromise(
+          searchThreadsFromApi(courseId, trimmed, { sort }),
+        );
+        if (response?.threads?.length) {
+          await syncThreadsToDb(db, courseId, response.threads as any[]);
+        }
+      } catch (err) {
+        console.error("[search] API search failed:", err);
+      } finally {
+        if (searchTokenRef.current === requestToken) {
+          setIsSearching(false);
+        }
+      }
+    }, 400);
+
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [courseId, trimmed, sort, db, isActive]);
+
+  return {
+    searchResults: isActive ? (searchResults ?? []) : [],
+    isSearching: isActive && isSearching,
   };
 }

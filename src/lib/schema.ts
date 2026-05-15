@@ -134,17 +134,13 @@ export const ThreadDetail = Schema.Struct({
   answers: Schema.Array(EdComment),
 });
 
-export const ThreadDetailResponse = Schema.Struct({
-  thread: ThreadDetail,
-  users: Schema.Array(_baseUser),
-});
-
 const Role = Schema.Struct({
   user_id: Schema.Number,
   course_id: Schema.Number,
   role: Schema.Literals(["student", "mentor", "tutor", "staff", "admin"]),
 });
 
+// API Responses Schemas
 export const UserResponse = Schema.Struct({
   courses: Schema.Array(
     Schema.Struct({
@@ -159,6 +155,11 @@ export const UserResponse = Schema.Struct({
 
 export const ThreadResponse = Schema.Struct({
   threads: Schema.Array(Thread),
+  users: Schema.Array(_baseUser),
+});
+
+export const ThreadDetailResponse = Schema.Struct({
+  thread: ThreadDetail,
   users: Schema.Array(_baseUser),
 });
 

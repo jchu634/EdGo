@@ -1,5 +1,12 @@
 import React, { useState, useCallback, useMemo } from "react";
-import { View, Text, FlatList, Pressable, ScrollView } from "react-native";
+import {
+  View,
+  Text,
+  FlatList,
+  Pressable,
+  ScrollView,
+  ActivityIndicator,
+} from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import {
   EyeIcon,
@@ -9,12 +16,14 @@ import {
   CheckIcon,
   CheckFatIcon,
 } from "phosphor-react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { Schema } from "effect";
 
 import { CourseCategory } from "@/src/lib/schema";
 import { getCachedCourseCategory } from "@/src/lib/storage";
-import { useCourseThreads } from "@/src/lib/threads";
+import { useCourseThreads, useSearchResults } from "@/src/lib/threads";
 import { type ThreadUser } from "@/src/db/schema";
+import { useSearchQuery } from "@/src/providers/modalProvider";
 
 import "@/app/global.css";
 
@@ -62,6 +71,17 @@ export default function Index() {
     refresh,
     endOfPages,
   } = useCourseThreads(courseIdNum, currentCategory);
+
+  const { searchQuery, searchCourseId, searchSort, clearSearch } =
+    useSearchQuery();
+  const isSearchMode =
+    searchQuery !== null &&
+    searchQuery.trim().length > 0 &&
+    searchCourseId === courseIdNum;
+  const { searchResults, isSearching } = useSearchResults(
+    courseIdNum,
+    isSearchMode ? { query: searchQuery, sort: searchSort } : null,
+  );
 
   const navigateToThread = useCallback(
     (threadNumber: number) => {
@@ -156,7 +176,35 @@ export default function Index() {
 
   return (
     <View className="flex h-full">
-      {courseCategories && (
+      {/* Search results banner */}
+      {isSearchMode && (
+        <View
+          className="mx-4 mt-4 mb-3 flex-row items-center rounded-xl px-3 py-2.5"
+          style={{ backgroundColor: "#f3e8ff" }}
+        >
+          <Ionicons name="search" size={16} color="#70069e" />
+          <Text
+            className="font-display flex-1 px-2 text-sm"
+            style={{ color: "#581c87" }}
+            numberOfLines={1}
+          >
+            Results for "{searchQuery}"
+          </Text>
+          {isSearching && (
+            <ActivityIndicator
+              size="small"
+              color="#70069e"
+              style={{ marginRight: 8 }}
+            />
+          )}
+          <Pressable onPress={clearSearch}>
+            <Ionicons name="close-circle" size={20} color="#70069e" />
+          </Pressable>
+        </View>
+      )}
+
+      {/* Category chips — hidden in search mode */}
+      {!isSearchMode && courseCategories && (
         <ScrollView
           horizontal={true}
           className="mb-3 h-25 px-2 pt-4"
@@ -191,7 +239,8 @@ export default function Index() {
           })}
         </ScrollView>
       )}
-      {pinnedThreads.length > 0 && (
+      {/* Pinned threads — hidden in search mode */}
+      {!isSearchMode && pinnedThreads.length > 0 && (
         <View className="mt-2 mb-3">
           <Text className="font-display-bold mb-1.5 px-4 text-sm text-gray-600">
             Pinned
@@ -211,18 +260,24 @@ export default function Index() {
       )}
 
       <FlatList
-        data={regularThreads}
+        data={isSearchMode ? searchResults : regularThreads}
         keyExtractor={(item) => item.id.toString()}
         renderItem={renderThreadItem}
-        onEndReached={fetchMore}
-        onRefresh={refresh}
-        refreshing={refreshing}
+        onEndReached={isSearchMode ? undefined : fetchMore}
+        onRefresh={isSearchMode ? undefined : refresh}
+        refreshing={isSearchMode ? false : refreshing}
         className="h-full"
         contentContainerStyle={{ paddingHorizontal: 8, paddingBottom: 16 }}
         ListEmptyComponent={
           <View className="flex-1 items-center justify-center py-10">
             <Text className="text-gray-500">
-              {loading ? "Loading threads..." : "No threads found"}
+              {isSearchMode
+                ? isSearching
+                  ? "Searching..."
+                  : "No threads match your search"
+                : loading
+                  ? "Loading threads..."
+                  : "No threads found"}
             </Text>
           </View>
         }
