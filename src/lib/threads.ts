@@ -5,7 +5,7 @@ import {
   HttpClientRequest,
   HttpClientResponse,
 } from "effect/unstable/http";
-import { eq, and, desc, sql } from "drizzle-orm";
+import { eq, and, desc, asc, sql } from "drizzle-orm";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { threadsTable, type ThreadUser, type NewThread } from "@/src/db/schema";
@@ -247,14 +247,23 @@ export function useCourseThreads(courseId: number, category?: string) {
   };
 }
 
-export function useSearchResults(courseId: number, query: string | null) {
+export function useSearchResults(
+  courseId: number,
+  params: { query: string; sort: string } | null,
+) {
   const db = useDb();
   const [isSearching, setIsSearching] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const searchTokenRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const trimmed = (query ?? "").trim();
+  const trimmed = (params?.query ?? "").trim();
+  const sort = params?.sort ?? "relevance";
   const isActive = trimmed.length > 0;
+
+  const orderByClause =
+    sort === "oldest"
+      ? [desc(threadsTable.isPinned), asc(threadsTable.id)]
+      : [desc(threadsTable.isPinned), desc(threadsTable.id)];
 
   const { data: searchResults } = useLiveQuery(
     db
@@ -266,9 +275,9 @@ export function useSearchResults(courseId: number, query: string | null) {
           sql`${threadsTable.title} LIKE ${"%" + escapeLike(trimmed) + "%"} ESCAPE '\\'`,
         ),
       )
-      .orderBy(desc(threadsTable.isPinned), desc(threadsTable.id))
+      .orderBy(...orderByClause)
       .limit(50),
-    [courseId, trimmed],
+    [courseId, trimmed, sort],
   );
 
   useEffect(() => {
@@ -285,7 +294,7 @@ export function useSearchResults(courseId: number, query: string | null) {
       searchTokenRef.current = requestToken;
       try {
         const response = await Effect.runPromise(
-          searchThreadsFromApi(courseId, trimmed),
+          searchThreadsFromApi(courseId, trimmed, { sort }),
         );
         if (response?.threads?.length) {
           await syncThreadsToDb(db, courseId, response.threads as any[]);
@@ -302,7 +311,7 @@ export function useSearchResults(courseId: number, query: string | null) {
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [courseId, trimmed, db, isActive]);
+  }, [courseId, trimmed, sort, db, isActive]);
 
   return {
     searchResults: isActive ? (searchResults ?? []) : [],

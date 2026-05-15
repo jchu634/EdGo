@@ -61,13 +61,15 @@ export function useSearchModal() {
 interface SearchQueryContextValue {
   searchQuery: string | null;
   searchCourseId: number | null;
-  setSearchQuery: (courseId: number, q: string | null) => void;
+  searchSort: string;
+  setSearchQuery: (courseId: number, q: string | null, sort?: string) => void;
   clearSearch: () => void;
 }
 
 const SearchQueryContext = createContext<SearchQueryContextValue>({
   searchQuery: null,
   searchCourseId: null,
+  searchSort: "relevance",
   setSearchQuery: () => {},
   clearSearch: () => {},
 });
@@ -88,12 +90,13 @@ function SearchModal({
   const {
     searchQuery: contextQuery,
     searchCourseId: contextCourseId,
+    searchSort: contextSort,
     setSearchQuery: setContextQuery,
   } = useSearchQuery();
   const [query, setQuery] = useState(
     contextCourseId === courseId ? (contextQuery ?? "") : "",
   );
-  const [sort, setSort] = useState("relevance");
+  const [sort, setSort] = useState(contextSort ?? "relevance");
 
   const orderByClause =
     sort === "oldest"
@@ -174,10 +177,10 @@ function SearchModal({
 
   const handlePersistSearch = useCallback(() => {
     if (query.trim()) {
-      setContextQuery(courseId, query.trim());
+      setContextQuery(courseId, query.trim(), sort);
     }
     onClose();
-  }, [query, courseId, setContextQuery, onClose]);
+  }, [query, courseId, setContextQuery, onClose, sort]);
 
   const renderThread = useCallback(
     ({ item }: { item: ThreadUser }) => (
@@ -308,7 +311,6 @@ function SearchModal({
                     : "No matching threads found"
                   : "Start typing to search threads"}
               </Text>
-              </Text>
             </View>
           )}
         </Pressable>
@@ -337,11 +339,16 @@ export function ModalProvider({ children }: { children: React.ReactNode }) {
   const [searchQueryCourseId, setSearchQueryCourseId] = useState<number | null>(
     null,
   );
+  const [searchSort, setSearchSort] = useState<string>("relevance");
 
-  const setSearchQuery = useCallback((courseId: number, q: string | null) => {
-    setSearchQueryState(q);
-    setSearchQueryCourseId(q ? courseId : null);
-  }, []);
+  const setSearchQuery = useCallback(
+    (courseId: number, q: string | null, sort?: string) => {
+      setSearchQueryState(q);
+      setSearchQueryCourseId(q ? courseId : null);
+      if (sort) setSearchSort(sort);
+    },
+    [],
+  );
 
   const clearSearch = useCallback(() => {
     setSearchQueryState(null);
@@ -429,6 +436,7 @@ export function ModalProvider({ children }: { children: React.ReactNode }) {
           value={{
             searchQuery,
             searchCourseId: searchQueryCourseId,
+            searchSort,
             setSearchQuery,
             clearSearch,
           }}

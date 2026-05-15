@@ -72,14 +72,15 @@ export default function Index() {
     endOfPages,
   } = useCourseThreads(courseIdNum, currentCategory);
 
-  const { searchQuery, searchCourseId, clearSearch } = useSearchQuery();
+  const { searchQuery, searchCourseId, searchSort, clearSearch } =
+    useSearchQuery();
   const isSearchMode =
     searchQuery !== null &&
     searchQuery.trim().length > 0 &&
     searchCourseId === courseIdNum;
   const { searchResults, isSearching } = useSearchResults(
     courseIdNum,
-    isSearchMode ? searchQuery : null,
+    isSearchMode ? { query: searchQuery, sort: searchSort } : null,
   );
 
   const navigateToThread = useCallback(
