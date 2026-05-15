@@ -303,8 +303,11 @@ function SearchModal({
             <View style={{ paddingVertical: 32, alignItems: "center" }}>
               <Text className="font-display text-sm text-gray-400">
                 {query.trim().length > 0
-                  ? "No matching threads found"
+                  ? isSearchingApi
+                    ? "Searching..."
+                    : "No matching threads found"
                   : "Start typing to search threads"}
+              </Text>
               </Text>
             </View>
           )}
