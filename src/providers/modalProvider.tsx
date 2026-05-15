@@ -18,6 +18,7 @@ import {
 } from "react-native";
 import * as Clipboard from "expo-clipboard";
 import * as Linking from "expo-linking";
+import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { eq, like, and, desc } from "drizzle-orm";
 import { useLiveQuery } from "drizzle-orm/expo-sqlite";
@@ -53,6 +54,24 @@ export function useSearchModal() {
   return useContext(SearchModalContext);
 }
 
+interface SearchQueryContextValue {
+  searchQuery: string | null;
+  searchCourseId: number | null;
+  setSearchQuery: (courseId: number, q: string | null) => void;
+  clearSearch: () => void;
+}
+
+const SearchQueryContext = createContext<SearchQueryContextValue>({
+  searchQuery: null,
+  searchCourseId: null,
+  setSearchQuery: () => {},
+  clearSearch: () => {},
+});
+
+export function useSearchQuery() {
+  return useContext(SearchQueryContext);
+}
+
 function SearchModal({
   courseId,
   onClose,
@@ -62,7 +81,9 @@ function SearchModal({
 }) {
   const router = useRouter();
   const db = useDb();
-  const [query, setQuery] = useState("");
+  const { searchQuery: contextQuery, setSearchQuery: setContextQuery } =
+    useSearchQuery();
+  const [query, setQuery] = useState(contextQuery ?? "");
   const [isSearchingApi, setIsSearchingApi] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -128,6 +149,13 @@ function SearchModal({
     },
     [courseId, onClose, router],
   );
+
+  const handlePersistSearch = useCallback(() => {
+    if (query.trim()) {
+      setContextQuery(courseId, query.trim());
+    }
+    onClose();
+  }, [query, courseId, setContextQuery, onClose]);
 
   const renderThread = useCallback(
     ({ item }: { item: ThreadUser }) => (
@@ -199,10 +227,15 @@ function SearchModal({
               autoFocus
               returnKeyType="search"
               clearButtonMode="while-editing"
+              onSubmitEditing={handlePersistSearch}
             />
-            {isSearchingApi && (
+            {isSearchingApi ? (
               <ActivityIndicator size="small" color="#70069e" />
-            )}
+            ) : query.trim().length > 0 ? (
+              <Pressable onPress={handlePersistSearch}>
+                <Ionicons name="arrow-forward" size={22} color="#70069e" />
+              </Pressable>
+            ) : null}
           </View>
 
           {/* Results list */}
@@ -243,6 +276,22 @@ export function ModalProvider({ children }: { children: React.ReactNode }) {
 
   // Search modal state
   const [searchCourseId, setSearchCourseId] = useState<number | null>(null);
+
+  // Search query state (persisted for threads page)
+  const [searchQuery, setSearchQueryState] = useState<string | null>(null);
+  const [searchQueryCourseId, setSearchQueryCourseId] = useState<number | null>(
+    null,
+  );
+
+  const setSearchQuery = useCallback((courseId: number, q: string | null) => {
+    setSearchQueryState(q);
+    setSearchQueryCourseId(q ? courseId : null);
+  }, []);
+
+  const clearSearch = useCallback(() => {
+    setSearchQueryState(null);
+    setSearchQueryCourseId(null);
+  }, []);
 
   // Link-text helpers
 
@@ -321,83 +370,92 @@ export function ModalProvider({ children }: { children: React.ReactNode }) {
   return (
     <LinkTextContext.Provider value={{ openLink, showMenu }}>
       <SearchModalContext.Provider value={{ openSearch }}>
-        {children}
-
-        {/* Link-text context menu modal */}
-        <Modal
-          visible={activeHref !== null}
-          transparent
-          animationType="fade"
-          statusBarTranslucent={true}
-          onRequestClose={dismissMenu}
+        <SearchQueryContext.Provider
+          value={{
+            searchQuery,
+            searchCourseId: searchQueryCourseId,
+            setSearchQuery,
+            clearSearch,
+          }}
         >
-          <Pressable
-            onPress={dismissMenu}
-            style={{
-              width,
-              height,
-              backgroundColor: "rgba(0,0,0,0.4)",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
+          {children}
+
+          {/* Link-text context menu modal */}
+          <Modal
+            visible={activeHref !== null}
+            transparent
+            animationType="fade"
+            statusBarTranslucent={true}
+            onRequestClose={dismissMenu}
           >
             <Pressable
+              onPress={dismissMenu}
               style={{
-                width: "90%",
-                borderRadius: 12,
-                backgroundColor: "white",
-                padding: 16,
-                alignSelf: "center",
+                width,
+                height,
+                backgroundColor: "rgba(0,0,0,0.4)",
+                alignItems: "center",
+                justifyContent: "center",
               }}
             >
-              <Text
-                className="font-display mb-3 text-sm text-wrap text-gray-700"
-                numberOfLines={2}
-                ellipsizeMode="middle"
+              <Pressable
+                style={{
+                  width: "90%",
+                  borderRadius: 12,
+                  backgroundColor: "white",
+                  padding: 16,
+                  alignSelf: "center",
+                }}
               >
-                {activeHref}
-              </Text>
-
-              {copied ? (
-                <Text className="font-display text-center text-sm text-green-600">
-                  Copied!
+                <Text
+                  className="font-display mb-3 text-sm text-wrap text-gray-700"
+                  numberOfLines={2}
+                  ellipsizeMode="middle"
+                >
+                  {activeHref}
                 </Text>
-              ) : (
-                <View style={{ gap: 12 }}>
-                  <Pressable
-                    onPress={handleCopy}
-                    className="items-center rounded-lg bg-gray-300 py-3 active:bg-gray-200"
-                    style={{
-                      width: 200,
-                      alignSelf: "center",
-                    }}
-                  >
-                    <Text className="font-display text-md text-center text-gray-800">
-                      Copy Link
-                    </Text>
-                  </Pressable>
-                  <Pressable
-                    onPress={handleOpen}
-                    className="items-center rounded-lg bg-gray-300 py-3 active:bg-gray-200"
-                    style={{
-                      width: 200,
-                      alignSelf: "center",
-                    }}
-                  >
-                    <Text className="font-display text-md text-center text-gray-800">
-                      Open Link
-                    </Text>
-                  </Pressable>
-                </View>
-              )}
-            </Pressable>
-          </Pressable>
-        </Modal>
 
-        {/* Search modal — only mounted when active */}
-        {searchCourseId !== null && (
-          <SearchModal courseId={searchCourseId} onClose={closeSearch} />
-        )}
+                {copied ? (
+                  <Text className="font-display text-center text-sm text-green-600">
+                    Copied!
+                  </Text>
+                ) : (
+                  <View style={{ gap: 12 }}>
+                    <Pressable
+                      onPress={handleCopy}
+                      className="items-center rounded-lg bg-gray-300 py-3 active:bg-gray-200"
+                      style={{
+                        width: 200,
+                        alignSelf: "center",
+                      }}
+                    >
+                      <Text className="font-display text-md text-center text-gray-800">
+                        Copy Link
+                      </Text>
+                    </Pressable>
+                    <Pressable
+                      onPress={handleOpen}
+                      className="items-center rounded-lg bg-gray-300 py-3 active:bg-gray-200"
+                      style={{
+                        width: 200,
+                        alignSelf: "center",
+                      }}
+                    >
+                      <Text className="font-display text-md text-center text-gray-800">
+                        Open Link
+                      </Text>
+                    </Pressable>
+                  </View>
+                )}
+              </Pressable>
+            </Pressable>
+          </Modal>
+
+          {/* Search modal — only mounted when active */}
+          {searchCourseId !== null && (
+            <SearchModal courseId={searchCourseId} onClose={closeSearch} />
+          )}
+        </SearchQueryContext.Provider>
       </SearchModalContext.Provider>
     </LinkTextContext.Provider>
   );

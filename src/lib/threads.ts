@@ -5,7 +5,7 @@ import {
   HttpClientRequest,
   HttpClientResponse,
 } from "effect/unstable/http";
-import { eq, and, desc, sql } from "drizzle-orm";
+import { eq, and, desc, sql, like } from "drizzle-orm";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { threadsTable, type ThreadUser, type NewThread } from "@/src/db/schema";
@@ -241,5 +241,63 @@ export function useCourseThreads(courseId: number, category?: string) {
     refresh,
     endOfPages,
     updatedAt,
+  };
+}
+
+export function useSearchResults(courseId: number, query: string | null) {
+  const db = useDb();
+  const [isSearching, setIsSearching] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const trimmed = (query ?? "").trim();
+  const isActive = trimmed.length > 0;
+
+  const { data: searchResults } = useLiveQuery(
+    db
+      .select()
+      .from(threadsTable)
+      .where(
+        and(
+          eq(threadsTable.courseId, courseId),
+          like(threadsTable.title, `%${trimmed}%`),
+        ),
+      )
+      .orderBy(desc(threadsTable.isPinned), desc(threadsTable.id))
+      .limit(50),
+    [courseId, trimmed],
+  );
+
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+
+    if (!isActive) {
+      setIsSearching(false);
+      return;
+    }
+
+    setIsSearching(true);
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const response = await Effect.runPromise(
+          searchThreadsFromApi(courseId, trimmed),
+        );
+        if (response?.threads?.length) {
+          await syncThreadsToDb(db, courseId, response.threads as any[]);
+        }
+      } catch (err) {
+        console.error("[search] API search failed:", err);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 400);
+
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [courseId, trimmed, db, isActive]);
+
+  return {
+    searchResults: isActive ? (searchResults ?? []) : [],
+    isSearching: isActive && isSearching,
   };
 }
