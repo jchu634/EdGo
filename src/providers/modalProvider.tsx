@@ -85,9 +85,14 @@ function SearchModal({
 }) {
   const router = useRouter();
   const db = useDb();
-  const { searchQuery: contextQuery, setSearchQuery: setContextQuery } =
-    useSearchQuery();
-  const [query, setQuery] = useState(contextQuery ?? "");
+  const {
+    searchQuery: contextQuery,
+    searchCourseId: contextCourseId,
+    setSearchQuery: setContextQuery,
+  } = useSearchQuery();
+  const [query, setQuery] = useState(
+    contextCourseId === courseId ? (contextQuery ?? "") : "",
+  );
   const [sort, setSort] = useState("relevance");
 
   const orderByClause =

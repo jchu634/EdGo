@@ -73,7 +73,10 @@ export default function Index() {
   } = useCourseThreads(courseIdNum, currentCategory);
 
   const { searchQuery, searchCourseId, clearSearch } = useSearchQuery();
-  const isSearchMode = searchQuery !== null && searchQuery.trim().length > 0 && searchCourseId === courseIdNum;
+  const isSearchMode =
+    searchQuery !== null &&
+    searchQuery.trim().length > 0 &&
+    searchCourseId === courseIdNum;
   const { searchResults, isSearching } = useSearchResults(
     courseIdNum,
     isSearchMode ? searchQuery : null,
@@ -184,7 +187,7 @@ export default function Index() {
             style={{ color: "#581c87" }}
             numberOfLines={1}
           >
-            Results for &ldquo;{searchQuery}&rdquo;
+            Results for "{searchQuery}"
           </Text>
           {isSearching && (
             <ActivityIndicator
