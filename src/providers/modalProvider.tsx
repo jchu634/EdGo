@@ -20,7 +20,7 @@ import * as Clipboard from "expo-clipboard";
 import * as Linking from "expo-linking";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { eq, and, desc, sql } from "drizzle-orm";
+import { eq, and, desc, asc, sql } from "drizzle-orm";
 import { useLiveQuery } from "drizzle-orm/expo-sqlite";
 import { Effect } from "effect";
 
@@ -88,6 +88,13 @@ function SearchModal({
   const { searchQuery: contextQuery, setSearchQuery: setContextQuery } =
     useSearchQuery();
   const [query, setQuery] = useState(contextQuery ?? "");
+  const [sort, setSort] = useState("relevance");
+
+  const orderByClause =
+    sort === "oldest"
+      ? [desc(threadsTable.isPinned), asc(threadsTable.id)]
+      : [desc(threadsTable.isPinned), desc(threadsTable.id)];
+
   const [isSearchingApi, setIsSearchingApi] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -103,14 +110,15 @@ function SearchModal({
               sql`${threadsTable.title} LIKE ${"%" + escapeLike(query.trim()) + "%"} ESCAPE '\\'`,
             ),
           )
+          .orderBy(...orderByClause)
           .limit(50)
       : db
           .select()
           .from(threadsTable)
           .where(eq(threadsTable.courseId, courseId))
-          .orderBy(desc(threadsTable.isPinned), desc(threadsTable.id))
+          .orderBy(...orderByClause)
           .limit(50),
-    [courseId, query],
+    [courseId, query, sort],
   );
 
   // Debounced API search — syncs results to local DB so useLiveQuery picks them up
@@ -128,7 +136,7 @@ function SearchModal({
     debounceRef.current = setTimeout(async () => {
       try {
         const response = await Effect.runPromise(
-          searchThreadsFromApi(courseId, query.trim()),
+          searchThreadsFromApi(courseId, query.trim(), { sort }),
         );
         if (!isCurrent) return;
         if (response?.threads?.length) {
@@ -147,7 +155,7 @@ function SearchModal({
       isCurrent = false;
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [courseId, query, db]);
+  }, [courseId, query, sort, db]);
 
   const results = localResults ?? [];
 
@@ -245,6 +253,36 @@ function SearchModal({
                 <Ionicons name="arrow-forward" size={22} color="#70069e" />
               </Pressable>
             ) : null}
+          </View>
+          <View
+            style={{ paddingHorizontal: 16, paddingBottom: 8 }}
+            className="flex-row items-center gap-x-2"
+          >
+            <Text className="font-display-bold">Sort By: </Text>
+            <Pressable
+              className={`rounded-lg px-2 ${
+                sort === "relevance" ? "border border-black" : "bg-gray-200"
+              }`}
+              onPress={() => setSort("relevance")}
+            >
+              <Text className="font-display">Relevance</Text>
+            </Pressable>
+            <Pressable
+              className={`rounded-lg px-2 ${
+                sort === "newest" ? "border border-black" : "bg-gray-200"
+              }`}
+              onPress={() => setSort("newest")}
+            >
+              <Text className="font-display">Newest</Text>
+            </Pressable>
+            <Pressable
+              className={`rounded-lg px-2 ${
+                sort === "oldest" ? "border border-black" : "bg-gray-200"
+              }`}
+              onPress={() => setSort("oldest")}
+            >
+              <Text className="font-display">Oldest</Text>
+            </Pressable>
           </View>
 
           {/* Results list */}

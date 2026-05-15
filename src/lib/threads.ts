@@ -41,7 +41,7 @@ export function fetchThreadDetail(courseId: number, threadNumber: number) {
 export function searchThreadsFromApi(
   courseId: number,
   query: string,
-  options?: { sort?: string; limit?: number },
+  options?: { sort: string; limit?: number },
 ) {
   const { sort = "relevance", limit = 20 } = options ?? {};
   return Effect.gen(function* () {
