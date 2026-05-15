@@ -73,7 +73,7 @@ export default function Index() {
   } = useCourseThreads(courseIdNum, currentCategory);
 
   const { searchQuery, searchCourseId, clearSearch } = useSearchQuery();
-  const isSearchMode = searchQuery !== null && searchCourseId === courseIdNum;
+  const isSearchMode = searchQuery !== null && searchQuery.trim().length > 0 && searchCourseId === courseIdNum;
   const { searchResults, isSearching } = useSearchResults(
     courseIdNum,
     isSearchMode ? searchQuery : null,

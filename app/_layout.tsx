@@ -13,13 +13,16 @@ function HeaderRight() {
   const { courseid } = useGlobalSearchParams();
   const { openSearch } = useSearchModal();
 
-  const isInCourse = !!courseid;
+  const normalizedCourseId = courseid && (!Array.isArray(courseid) || courseid.length > 0)
+    ? Number(Array.isArray(courseid) ? courseid[0] : courseid)
+    : NaN;
+  const isInCourse = !isNaN(normalizedCourseId);
 
   return (
     <>
       {isInCourse && (
         <Pressable
-          onPress={() => openSearch(Number(courseid))}
+          onPress={() => openSearch(normalizedCourseId)}
           style={{ marginRight: 16 }}
         >
           <Ionicons name="search" size={24} color="white" />

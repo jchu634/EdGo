@@ -20,13 +20,17 @@ import * as Clipboard from "expo-clipboard";
 import * as Linking from "expo-linking";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { eq, like, and, desc } from "drizzle-orm";
+import { eq, and, desc, sql } from "drizzle-orm";
 import { useLiveQuery } from "drizzle-orm/expo-sqlite";
 import { Effect } from "effect";
 
 import { useDb } from "@/src/providers/dbProvider";
 import { threadsTable, type ThreadUser } from "@/src/db/schema";
 import { searchThreadsFromApi, syncThreadsToDb } from "@/src/lib/threads";
+
+function escapeLike(str: string): string {
+  return str.replace(/\\/g, "\\\\").replace(/%/g, "\\%").replace(/_/g, "\\_");
+}
 
 interface LinkTextContextValue {
   openLink: (url: string) => void;
@@ -96,7 +100,7 @@ function SearchModal({
           .where(
             and(
               eq(threadsTable.courseId, courseId),
-              like(threadsTable.title, `%${query.trim()}%`),
+              sql`${threadsTable.title} LIKE ${"%" + escapeLike(query.trim()) + "%"} ESCAPE '\\'`,
             ),
           )
           .limit(50)
@@ -118,24 +122,29 @@ function SearchModal({
       return;
     }
 
+    let isCurrent = true;
+
     setIsSearchingApi(true);
     debounceRef.current = setTimeout(async () => {
       try {
-        console.log("DEBUG COURSE ID", courseId, "QUERY", query);
         const response = await Effect.runPromise(
           searchThreadsFromApi(courseId, query.trim()),
         );
+        if (!isCurrent) return;
         if (response?.threads?.length) {
           await syncThreadsToDb(db, courseId, response.threads as any[]);
         }
       } catch (err) {
         console.error("[search] API search failed:", err);
       } finally {
-        setIsSearchingApi(false);
+        if (isCurrent) {
+          setIsSearchingApi(false);
+        }
       }
     }, 400);
 
     return () => {
+      isCurrent = false;
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
   }, [courseId, query, db]);

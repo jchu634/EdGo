@@ -5,7 +5,7 @@ import {
   HttpClientRequest,
   HttpClientResponse,
 } from "effect/unstable/http";
-import { eq, and, desc, sql, like } from "drizzle-orm";
+import { eq, and, desc, sql } from "drizzle-orm";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { threadsTable, type ThreadUser, type NewThread } from "@/src/db/schema";
@@ -16,6 +16,10 @@ import { ThreadResponse, ThreadDetailResponse } from "@/src/lib/schema";
 import { getApiKey } from "@/src/lib/storage";
 
 const PAGE_SIZE = 100;
+
+function escapeLike(str: string): string {
+  return str.replace(/\\/g, "\\\\").replace(/%/g, "\\%").replace(/_/g, "\\_");
+}
 
 export function fetchThreadDetail(courseId: number, threadNumber: number) {
   return Effect.gen(function* () {
@@ -56,7 +60,6 @@ export function searchThreadsFromApi(
       `https://edstem.org/api/courses/${courseId}/threads/search?${params.toString()}`,
     ).pipe(HttpClientRequest.bearerToken(apiKey), HttpClientRequest.acceptJson);
     const response = yield* client.execute(request);
-    console.log(response);
 
     return yield* HttpClientResponse.schemaBodyJson(ThreadResponse)(response);
   }).pipe(Effect.provide(FetchHttpClient.layer));
@@ -248,6 +251,7 @@ export function useSearchResults(courseId: number, query: string | null) {
   const db = useDb();
   const [isSearching, setIsSearching] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const searchTokenRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const trimmed = (query ?? "").trim();
   const isActive = trimmed.length > 0;
@@ -259,7 +263,7 @@ export function useSearchResults(courseId: number, query: string | null) {
       .where(
         and(
           eq(threadsTable.courseId, courseId),
-          like(threadsTable.title, `%${trimmed}%`),
+          sql`${threadsTable.title} LIKE ${"%" + escapeLike(trimmed) + "%"} ESCAPE '\\'`,
         ),
       )
       .orderBy(desc(threadsTable.isPinned), desc(threadsTable.id))
@@ -277,6 +281,8 @@ export function useSearchResults(courseId: number, query: string | null) {
 
     setIsSearching(true);
     debounceRef.current = setTimeout(async () => {
+      const requestToken = debounceRef.current;
+      searchTokenRef.current = requestToken;
       try {
         const response = await Effect.runPromise(
           searchThreadsFromApi(courseId, trimmed),
@@ -287,7 +293,9 @@ export function useSearchResults(courseId: number, query: string | null) {
       } catch (err) {
         console.error("[search] API search failed:", err);
       } finally {
-        setIsSearching(false);
+        if (searchTokenRef.current === requestToken) {
+          setIsSearching(false);
+        }
       }
     }, 400);
 
