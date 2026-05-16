@@ -22,6 +22,13 @@
       "when": 1777395951904,
       "tag": "0002_real_jigsaw",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1778950630554,
+      "tag": "0003_puzzling_robin_chapel",
+      "breakpoints": true
     }
   ]
 }

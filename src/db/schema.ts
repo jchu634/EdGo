@@ -44,6 +44,8 @@ export const threadsTable = sqliteTable(
       name: string;
       avatar: string | null;
     } | null>(),
+    createdAt: text("created_at").notNull(),
+    updatedAt: text("updated_at"),
   },
   (table) => [index("threads_course_id_idx").on(table.courseId)],
 );
