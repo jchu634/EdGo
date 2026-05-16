@@ -141,15 +141,24 @@ const NOTIFICATION_DEFAULTS: NotificationSettings = {
   sleepHoursEnd: 6,
 };
 
+const NOTIFICATION_FREQUENCIES: NotificationFrequency[] = [
+  "hourly",
+  "every_4_hours",
+  "daily_6pm",
+];
+
 export function getNotificationSettings(): NotificationSettings {
+  const rawFrequency = settings.getString("notifications.frequency");
+  const frequency: NotificationFrequency = NOTIFICATION_FREQUENCIES.includes(
+    rawFrequency as NotificationFrequency,
+  )
+    ? (rawFrequency as NotificationFrequency)
+    : NOTIFICATION_DEFAULTS.frequency;
   return {
     enabled:
       settings.getBoolean("notifications.enabled") ??
       NOTIFICATION_DEFAULTS.enabled,
-    frequency:
-      (settings.getString(
-        "notifications.frequency",
-      ) as NotificationFrequency) ?? NOTIFICATION_DEFAULTS.frequency,
+    frequency,
     sleepHoursEnabled:
       settings.getBoolean("notifications.sleep_hours_enabled") ??
       NOTIFICATION_DEFAULTS.sleepHoursEnabled,
