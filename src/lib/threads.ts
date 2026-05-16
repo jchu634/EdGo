@@ -49,7 +49,7 @@ export function sendThreadViewed(threadNumber: number) {
     ).pipe(HttpClientRequest.bearerToken(apiKey), HttpClientRequest.acceptJson);
     const response = yield* client.execute(request);
     console.log(`SEND VIEWED`, { threadNumber, status: response.status });
-    return response.status === 200;
+    return response.status >= 200 && response.status < 300;
   }).pipe(Effect.provide(FetchHttpClient.layer));
 }
 
