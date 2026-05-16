@@ -68,7 +68,7 @@ function defineBackgroundTask() {
       if (!courses || courses.length === 0)
         return BackgroundTask.BackgroundTaskResult.Success;
 
-      const canNotify = shouldSendNotification() && !isInSleepHours();
+      let canNotify = shouldSendNotification() && !isInSleepHours();
 
       for (const course of courses) {
         try {
@@ -102,6 +102,7 @@ function defineBackgroundTask() {
               newThreads.length,
               course.id,
             );
+            canNotify = false;
           }
         } catch (err) {
           console.error(
