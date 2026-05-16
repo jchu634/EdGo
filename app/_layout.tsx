@@ -7,15 +7,17 @@ import { Ionicons } from "@expo/vector-icons";
 import { KeyProvider } from "@/src/providers/keyProvider";
 import { DbProvider } from "@/src/providers/dbProvider";
 import { ModalProvider, useSearchModal } from "@/src/providers/modalProvider";
+import { NotificationProvider } from "@/src/providers/notificationProvider";
 
 function HeaderRight() {
   const router = useRouter();
   const { courseid } = useGlobalSearchParams();
   const { openSearch } = useSearchModal();
 
-  const normalizedCourseId = courseid && (!Array.isArray(courseid) || courseid.length > 0)
-    ? Number(Array.isArray(courseid) ? courseid[0] : courseid)
-    : NaN;
+  const normalizedCourseId =
+    courseid && (!Array.isArray(courseid) || courseid.length > 0)
+      ? Number(Array.isArray(courseid) ? courseid[0] : courseid)
+      : NaN;
   const isInCourse = !isNaN(normalizedCourseId);
 
   return (
@@ -42,21 +44,24 @@ export default function RootLayout() {
     <Suspense fallback={<ActivityIndicator size="large" />}>
       <KeyProvider>
         <DbProvider>
-          <ModalProvider>
-            <Stack
-              screenOptions={{
-                headerStyle: {
-                  backgroundColor: "#70069e",
-                },
-                headerTintColor: "white",
-                headerTitle: "",
-                headerRight: () => <HeaderRight />,
-                contentStyle: {
-                  paddingBottom: Platform.OS === "android" ? insets.bottom : 0,
-                },
-              }}
-            />
-          </ModalProvider>
+          <NotificationProvider>
+            <ModalProvider>
+              <Stack
+                screenOptions={{
+                  headerStyle: {
+                    backgroundColor: "#70069e",
+                  },
+                  headerTintColor: "white",
+                  headerTitle: "",
+                  headerRight: () => <HeaderRight />,
+                  contentStyle: {
+                    paddingBottom:
+                      Platform.OS === "android" ? insets.bottom : 0,
+                  },
+                }}
+              />
+            </ModalProvider>
+          </NotificationProvider>
         </DbProvider>
       </KeyProvider>
     </Suspense>
