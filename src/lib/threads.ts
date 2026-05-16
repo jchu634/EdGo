@@ -67,16 +67,21 @@ export function searchThreadsFromApi(
 
 export function fetchThreadsFromApi(
   courseId: number,
-  options?: { category?: string; offset?: number; sort?: string },
+  options?: {
+    category?: string;
+    offset?: number;
+    sort?: string;
+    limit?: number;
+  },
 ) {
-  const { category, offset, sort = "new" } = options ?? {};
+  const { category, offset, sort = "new", limit = PAGE_SIZE } = options ?? {};
   return Effect.gen(function* () {
     const apiKey = yield* Effect.promise(() => getApiKey());
     if (!apiKey) {
       return yield* Effect.fail(new Error("Missing API Key"));
     }
     const client = yield* HttpClient.HttpClient;
-    const params = new URLSearchParams({ sort, limit: String(PAGE_SIZE) });
+    const params = new URLSearchParams({ sort, limit: String(limit) });
     if (category) params.set("category", category);
     if (offset !== undefined) params.set("offset", String(offset));
 
@@ -115,6 +120,8 @@ function toDbThread(
     isStaffAnswered: t.is_staff_answered,
     isAnonymous: t.is_anonymous,
     user: t.user,
+    createdAt: t.created_at,
+    updatedAt: t.updated_at ?? null,
   };
 }
 
@@ -152,6 +159,8 @@ export async function syncThreadsToDb(
         isStaffAnswered: sql`excluded.is_staff_answered`,
         isAnonymous: sql`excluded.is_anonymous`,
         user: sql`excluded.user`,
+        createdAt: sql`excluded.created_at`,
+        updatedAt: sql`excluded.updated_at`,
       },
     });
 }
@@ -316,5 +325,54 @@ export function useSearchResults(
   return {
     searchResults: isActive ? (searchResults ?? []) : [],
     isSearching: isActive && isSearching,
+  };
+}
+
+export function useRecentThreads(courses: { id: number }[] | undefined) {
+  const db = useDb();
+  const [loading, setLoading] = useState(false);
+
+  const { data: threads } = useLiveQuery(
+    db
+      .select()
+      .from(threadsTable)
+      .orderBy(
+        desc(
+          sql`COALESCE(${threadsTable.updatedAt}, ${threadsTable.createdAt})`,
+        ),
+      )
+      .limit(5),
+    [],
+  );
+
+  useEffect(() => {
+    if (!courses || courses.length === 0) return;
+    let cancelled = false;
+    setLoading(true);
+
+    Promise.all(
+      courses.map((course) =>
+        Effect.runPromise(
+          fetchThreadsFromApi(course.id, { sort: "new", limit: 5 }),
+        )
+          .then((response) => {
+            if (response?.threads?.length) {
+              return syncThreadsToDb(db, course.id, response.threads as any[]);
+            }
+          })
+          .catch(() => {}),
+      ),
+    ).finally(() => {
+      if (!cancelled) setLoading(false);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [db, courses]);
+
+  return {
+    threads: threads ?? [],
+    loading,
   };
 }
