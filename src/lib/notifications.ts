@@ -16,8 +16,8 @@ Notifications.setNotificationHandler({
 });
 
 export async function requestNotificationPermissions(): Promise<boolean> {
-  const { status } = await Notifications.requestPermissionsAsync();
-  return status === "granted";
+  const result = await Notifications.requestPermissionsAsync();
+  return result.granted;
 }
 
 export function isInSleepHours(): boolean {
@@ -81,6 +81,17 @@ export async function sendNewThreadNotification(
     trigger: null,
   });
   setLastNotifiedTimestamp(Date.now());
+}
+
+export async function sendTestNotification(): Promise<void> {
+  await Notifications.scheduleNotificationAsync({
+    content: {
+      title: "EdGo Test",
+      body: "This is a test notification from EdGo.",
+      data: { type: "test" },
+    },
+    trigger: null,
+  });
 }
 
 export function addNotificationResponseListener(
