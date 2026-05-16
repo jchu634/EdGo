@@ -122,3 +122,73 @@ export function getCachedParsedXml(
     return null;
   }
 }
+
+export type NotificationFrequency = "hourly" | "every_4_hours" | "daily_6pm";
+
+interface NotificationSettings {
+  enabled: boolean;
+  frequency: NotificationFrequency;
+  sleepHoursEnabled: boolean;
+  sleepHoursStart: number;
+  sleepHoursEnd: number;
+}
+
+const NOTIFICATION_DEFAULTS: NotificationSettings = {
+  enabled: true,
+  frequency: "hourly",
+  sleepHoursEnabled: true,
+  sleepHoursStart: 23,
+  sleepHoursEnd: 6,
+};
+
+const NOTIFICATION_FREQUENCIES: NotificationFrequency[] = [
+  "hourly",
+  "every_4_hours",
+  "daily_6pm",
+];
+
+export function getNotificationSettings(): NotificationSettings {
+  const rawFrequency = settings.getString("notifications.frequency");
+  const frequency: NotificationFrequency = NOTIFICATION_FREQUENCIES.includes(
+    rawFrequency as NotificationFrequency,
+  )
+    ? (rawFrequency as NotificationFrequency)
+    : NOTIFICATION_DEFAULTS.frequency;
+  return {
+    enabled:
+      settings.getBoolean("notifications.enabled") ??
+      NOTIFICATION_DEFAULTS.enabled,
+    frequency,
+    sleepHoursEnabled:
+      settings.getBoolean("notifications.sleep_hours_enabled") ??
+      NOTIFICATION_DEFAULTS.sleepHoursEnabled,
+    sleepHoursStart:
+      settings.getNumber("notifications.sleep_hours_start") ??
+      NOTIFICATION_DEFAULTS.sleepHoursStart,
+    sleepHoursEnd:
+      settings.getNumber("notifications.sleep_hours_end") ??
+      NOTIFICATION_DEFAULTS.sleepHoursEnd,
+  };
+}
+
+export function setNotificationSetting<K extends keyof NotificationSettings>(
+  key: K,
+  value: NotificationSettings[K],
+): void {
+  const storageKey = `notifications.${key === "sleepHoursEnabled" ? "sleep_hours_enabled" : key === "sleepHoursStart" ? "sleep_hours_start" : key === "sleepHoursEnd" ? "sleep_hours_end" : key}`;
+  if (typeof value === "boolean") {
+    settings.set(storageKey, value);
+  } else if (typeof value === "number") {
+    settings.set(storageKey, value);
+  } else {
+    settings.set(storageKey, value as string);
+  }
+}
+
+export function getLastNotifiedTimestamp(): number {
+  return settings.getNumber("notifications.last_notified") ?? 0;
+}
+
+export function setLastNotifiedTimestamp(ts: number): void {
+  settings.set("notifications.last_notified", ts);
+}
