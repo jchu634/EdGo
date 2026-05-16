@@ -162,7 +162,11 @@ export default function Index() {
                     : "flex gap-y-2 pl-2"
                 }
               >
-                <View className={Platform.OS === "android" ? "gap-y-1 flex-1" : "gap-y-1"}>
+                <View
+                  className={
+                    Platform.OS === "android" ? "flex-1 gap-y-1" : "gap-y-1"
+                  }
+                >
                   <Text className="font-display text-sm text-gray-600">
                     From:
                   </Text>
@@ -192,7 +196,11 @@ export default function Index() {
                     />
                   )}
                 </View>
-                <View className={Platform.OS === "android" ? "gap-y-1 flex-1" : "gap-y-1"}>
+                <View
+                  className={
+                    Platform.OS === "android" ? "flex-1 gap-y-1" : "gap-y-1"
+                  }
+                >
                   <Text className="font-display text-sm text-gray-600">
                     To:
                   </Text>
