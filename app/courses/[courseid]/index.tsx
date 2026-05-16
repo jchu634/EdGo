@@ -14,7 +14,6 @@ import {
   HeartIcon,
   ChatsIcon,
   CheckIcon,
-  CheckFatIcon,
 } from "phosphor-react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Schema } from "effect";
