@@ -37,6 +37,21 @@ export function fetchThreadDetail(courseId: number, threadNumber: number) {
     );
   }).pipe(Effect.provide(FetchHttpClient.layer));
 }
+export function sendThreadViewed(threadNumber: number) {
+  return Effect.gen(function* () {
+    const apiKey = yield* Effect.promise(() => getApiKey());
+    if (!apiKey) {
+      return yield* Effect.fail(new Error("Missing API Key"));
+    }
+    const client = yield* HttpClient.HttpClient;
+    const request = HttpClientRequest.get(
+      `https://edstem.org/api/threads/${threadNumber}?view=1`,
+    ).pipe(HttpClientRequest.bearerToken(apiKey), HttpClientRequest.acceptJson);
+    const response = yield* client.execute(request);
+    console.log(`SEND VIEWED`, { threadNumber, status: response.status });
+    return response.status === 200;
+  }).pipe(Effect.provide(FetchHttpClient.layer));
+}
 
 export function searchThreadsFromApi(
   courseId: number,

@@ -27,7 +27,7 @@ import {
   EdComment as CommentSchema,
   ThreadDetailResponse,
 } from "@/src/lib/schema";
-import { fetchThreadDetail } from "@/src/lib/threads";
+import { fetchThreadDetail, sendThreadViewed } from "@/src/lib/threads";
 import {
   getCachedThreadDetail,
   cacheThreadDetail,
@@ -284,6 +284,18 @@ export default function ThreadPage() {
       cancelled = true;
     };
   }, [courseIdNum, threadNumber, parseAndCacheXml]);
+
+  useEffect(() => {
+    if (!threadData) return;
+
+    Effect.runFork(
+      sendThreadViewed(threadData.thread.id) as Effect.Effect<
+        boolean,
+        Error,
+        never
+      >,
+    );
+  }, [threadData?.thread.id]);
 
   if (loading && !threadData) {
     return (
