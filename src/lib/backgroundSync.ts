@@ -120,9 +120,8 @@ function defineBackgroundTask() {
   });
 }
 
+defineBackgroundTask();
 export async function registerBackgroundSyncTask(): Promise<void> {
-  defineBackgroundTask();
-
   const apiKey = await getApiKey();
   if (!apiKey) return;
 
