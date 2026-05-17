@@ -121,6 +121,7 @@ const Thread = Schema.Struct({
   is_anonymous: Schema.Boolean,
   created_at: Schema.String,
   updated_at: Schema.NullOr(Schema.String),
+  is_starred: Schema.Boolean,
 });
 
 export const ThreadUser = Schema.Struct({

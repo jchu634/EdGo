@@ -137,6 +137,7 @@ function toDbThread(
     user: t.user,
     createdAt: t.created_at,
     updatedAt: t.updated_at ?? null,
+    isStarred: t.is_starred,
   };
 }
 
@@ -176,6 +177,7 @@ export async function syncThreadsToDb(
         user: sql`excluded.user`,
         createdAt: sql`excluded.created_at`,
         updatedAt: sql`excluded.updated_at`,
+        isStarred: sql`excluded.is_starred`,
       },
     });
 }
@@ -218,9 +220,13 @@ export function useCourseThreads(courseId: number, category?: string) {
           setEndOfPages(true);
           return;
         }
+        console.log(
+          `Fetched ${response.threads.length} threads from API (offset: ${offset})`,
+        );
         await syncThreadsToDb(db, courseId, [...response.threads]);
         offsetRef.current = (offset ?? 0) + PAGE_SIZE;
       } catch (err) {
+        console.error("[threads] Failed to sync threads:", err);
         setError(err instanceof Error ? err : new Error(String(err)));
       } finally {
         setLoading(false);
@@ -375,7 +381,7 @@ export function useRecentThreads(courses: { id: number }[] | undefined) {
               return syncThreadsToDb(db, course.id, response.threads as any[]);
             }
           })
-          .catch(() => {}),
+          .catch((err) => { console.error("[recentThreads] Failed to sync course:", course.id, err); }),
       ),
     ).finally(() => {
       if (!cancelled) setLoading(false);
