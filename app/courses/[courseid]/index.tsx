@@ -142,10 +142,7 @@ export default function Index() {
             </Text>
             {item.isStarred && (
               <View className="flex flex-row items-center">
-                <StarIcon
-                  color={item.isVoted ? "#f59e0b" : "#9ca3af"}
-                  weight={item.isVoted ? "fill" : "regular"}
-                />
+                <StarIcon color="#f59e0b" weight="fill" />
               </View>
             )}
             {item.isAnswered && <CheckIcon color="#3f6212" />}
