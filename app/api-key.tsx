@@ -22,6 +22,7 @@ import { useApiKey } from "@/src/providers/keyProvider";
 import { RegionResponse, UserResponse } from "@/src/lib/schema";
 import { settings } from "@/src/lib/storage";
 import { EyeClosedIcon, EyeIcon } from "phosphor-react-native";
+import LinkText from "@/src/components/LinkText";
 
 import "@/app/global.css";
 
@@ -141,31 +142,30 @@ export default function ApiKeyScreen() {
           Enter your EdSTEM API key to get started. {"\n"}
           You can find your API key at this link below.
         </Text>
-        <Text
-          className="mb-8 text-center font-mono text-lg text-blue-500"
-          onPress={() =>
-            Linking.openURL("https://edstem.org/us/settings/api-tokens")
-          }
-        >
-          https://edstem.org/us/settings/api-tokens
-        </Text>
+        <LinkText href="https://edstem.org/us/settings/api-tokens">
+          <Text className="text-md mb-8 text-center font-mono text-blue-500">
+            https://edstem.org/us/settings/api-tokens
+          </Text>
+        </LinkText>
 
-        <View className="relative mb-4 flex flex-row items-center gap-x-4">
-          <TextInput
-            className="w-full rounded-xl border border-gray-300 p-4 font-mono text-base"
-            placeholder="Enter your API key here"
-            value={inputKey}
-            onChangeText={setInputKey}
-            autoCapitalize="none"
-            autoCorrect={false}
-            secureTextEntry={showKey}
-            editable={!saving && !isLoading}
-            returnKeyType="done"
-            onSubmitEditing={handleSave}
-          />
+        <View className="mb-4 flex flex-row items-center">
+          <View className="relative flex flex-row items-center gap-x-4">
+            <TextInput
+              className="w-100 rounded-xl border border-gray-300 p-4 font-mono text-base"
+              placeholder="Enter your API key here"
+              value={inputKey}
+              onChangeText={setInputKey}
+              autoCapitalize="none"
+              autoCorrect={false}
+              secureTextEntry={showKey}
+              editable={!saving && !isLoading}
+              returnKeyType="done"
+              onSubmitEditing={handleSave}
+            />
+          </View>
           <TouchableOpacity
             onPress={() => setShowKey(!showKey)}
-            className="absolute right-3 size-12 items-center justify-center rounded-lg"
+            className="size-12 items-center justify-center rounded-lg"
           >
             {showKey ? <EyeClosedIcon /> : <EyeIcon />}
           </TouchableOpacity>
