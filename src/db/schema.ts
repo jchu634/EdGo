@@ -39,6 +39,12 @@ export const threadsTable = sqliteTable(
     isAnonymous: integer("is_anonymous", { mode: "boolean" })
       .default(false)
       .notNull(),
+    isStarred: integer("is_starred", { mode: "boolean" })
+      .default(false)
+      .notNull(),
+    isVoted: integer("is_voted", { mode: "boolean" })
+      .default(false)
+      .notNull(),
     user: text("user", { mode: "json" }).$type<{
       id: number;
       name: string;
