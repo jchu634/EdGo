@@ -236,6 +236,7 @@ export async function syncThreadsToDb(
 }
 
 export function useCourseThreads(courseId: number, category?: string) {
+  console.log("[useCourseThreads] called", { courseId, category });
   const db = useDb();
 
   const conditions = [eq(threadsTable.courseId, courseId)];
@@ -262,24 +263,33 @@ export function useCourseThreads(courseId: number, category?: string) {
 
   const fetchAndSync = useCallback(
     async (offset?: number) => {
+      console.log("[useCourseThreads] fetchAndSync start", { courseId, category, offset });
       setLoading(true);
       setError(undefined);
       try {
         const response = await Effect.runPromise(
           fetchThreadsFromApi(courseId, { category, offset }),
         );
-        if (!response) return;
+        if (!response) {
+          console.log("[useCourseThreads] fetchAndSync got no response");
+          return;
+        }
         if (response.threads.length === 0) {
+          console.log("[useCourseThreads] fetchAndSync reached end of pages", { offset });
           setEndOfPages(true);
           return;
         }
         console.log(
-          `Fetched ${response.threads.length} threads from API (offset: ${offset})`,
+          `[useCourseThreads] Fetched ${response.threads.length} threads from API (offset: ${offset})`,
         );
         await syncThreadsToDb(db, courseId, [...response.threads]);
         offsetRef.current = (offset ?? 0) + PAGE_SIZE;
+        console.log("[useCourseThreads] fetchAndSync done", {
+          threadCount: response.threads.length,
+          nextOffset: offsetRef.current,
+        });
       } catch (err) {
-        console.error("[threads] Failed to sync threads:", err);
+        console.error("[useCourseThreads] Failed to sync threads:", err);
         setError(err instanceof Error ? err : new Error(String(err)));
       } finally {
         setLoading(false);
@@ -289,12 +299,14 @@ export function useCourseThreads(courseId: number, category?: string) {
   );
 
   useEffect(() => {
+    console.log("[useCourseThreads] initial fetch effect", { courseId, category });
     offsetRef.current = 0;
     setEndOfPages(false);
     fetchAndSync(0);
   }, [fetchAndSync]);
 
   const refresh = useCallback(async () => {
+    console.log("[useCourseThreads] refresh", { courseId, category });
     setRefreshing(true);
     try {
       offsetRef.current = 0;
@@ -306,8 +318,12 @@ export function useCourseThreads(courseId: number, category?: string) {
   }, [fetchAndSync]);
 
   const fetchMore = useCallback(() => {
-    console.log("Fetching more threads");
-    console.log("Current Offset", offsetRef.current);
+    console.log("[useCourseThreads] fetchMore", {
+      offset: offsetRef.current,
+      endOfPages,
+      loading,
+      refreshing,
+    });
     if (endOfPages || loading || refreshing) return;
     fetchAndSync(offsetRef.current);
   }, [endOfPages, loading, refreshing, fetchAndSync]);
@@ -315,6 +331,18 @@ export function useCourseThreads(courseId: number, category?: string) {
   const allThreads = threads ?? [];
   const pinnedThreads = allThreads.filter((t) => t.isPinned);
   const regularThreads = allThreads.filter((t) => !t.isPinned);
+
+  console.log("[useCourseThreads] render", {
+    courseId,
+    category,
+    totalThreads: allThreads.length,
+    pinnedCount: pinnedThreads.length,
+    regularCount: regularThreads.length,
+    loading,
+    refreshing,
+    endOfPages,
+    error: error?.message ?? queryError?.message ?? null,
+  });
 
   return {
     threads: allThreads,
@@ -334,6 +362,7 @@ export function useSearchResults(
   courseId: number,
   params: { query: string; sort: string } | null,
 ) {
+  console.log("[useSearchResults] called", { courseId, params });
   const db = useDb();
   const [isSearching, setIsSearching] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -371,19 +400,27 @@ export function useSearchResults(
       return;
     }
 
+    console.log("[useSearchResults] debouncing search", { trimmed, sort });
     setIsSearching(true);
     debounceRef.current = setTimeout(async () => {
       const requestToken = debounceRef.current;
       searchTokenRef.current = requestToken;
+      console.log("[useSearchResults] executing search", { trimmed, sort });
       try {
         const response = await Effect.runPromise(
           searchThreadsFromApi(courseId, trimmed, { sort }),
         );
         if (response?.threads?.length) {
+          console.log("[useSearchResults] API returned results", {
+            query: trimmed,
+            count: response.threads.length,
+          });
           await syncThreadsToDb(db, courseId, response.threads as any[]);
+        } else {
+          console.log("[useSearchResults] API returned no results", { query: trimmed });
         }
       } catch (err) {
-        console.error("[search] API search failed:", err);
+        console.error("[useSearchResults] API search failed:", err);
       } finally {
         if (searchTokenRef.current === requestToken) {
           setIsSearching(false);
@@ -396,13 +433,23 @@ export function useSearchResults(
     };
   }, [courseId, trimmed, sort, db, isActive]);
 
+  const results = isActive ? (searchResults ?? []) : [];
+  console.log("[useSearchResults] render", {
+    courseId,
+    query: trimmed,
+    isActive,
+    isSearching: isActive && isSearching,
+    resultCount: results.length,
+  });
+
   return {
-    searchResults: isActive ? (searchResults ?? []) : [],
+    searchResults: results,
     isSearching: isActive && isSearching,
   };
 }
 
 export function useRecentThreads(courses: { id: number }[] | undefined) {
+  console.log("[useRecentThreads] called", { courseCount: courses?.length });
   const db = useDb();
   const [loading, setLoading] = useState(false);
 
@@ -420,9 +467,15 @@ export function useRecentThreads(courses: { id: number }[] | undefined) {
   );
 
   useEffect(() => {
-    if (!courses || courses.length === 0) return;
+    if (!courses || courses.length === 0) {
+      console.log("[useRecentThreads] no courses, skipping fetch");
+      return;
+    }
     let cancelled = false;
     setLoading(true);
+    console.log("[useRecentThreads] fetching for courses", {
+      courseIds: courses.map((c) => c.id),
+    });
 
     Promise.all(
       courses.map((course) =>
@@ -431,12 +484,19 @@ export function useRecentThreads(courses: { id: number }[] | undefined) {
         )
           .then((response) => {
             if (response?.threads?.length) {
+              console.log("[useRecentThreads] synced course", {
+                courseId: course.id,
+                threadCount: response.threads.length,
+              });
               return syncThreadsToDb(db, course.id, response.threads as any[]);
             }
+            console.log("[useRecentThreads] no threads for course", {
+              courseId: course.id,
+            });
           })
           .catch((err) => {
             console.error(
-              "[recentThreads] Failed to sync course:",
+              "[useRecentThreads] Failed to sync course:",
               course.id,
               err,
             );
@@ -444,12 +504,19 @@ export function useRecentThreads(courses: { id: number }[] | undefined) {
       ),
     ).finally(() => {
       if (!cancelled) setLoading(false);
+      console.log("[useRecentThreads] all fetches complete", { cancelled });
     });
 
     return () => {
       cancelled = true;
     };
   }, [db, courses]);
+
+  console.log("[useRecentThreads] render", {
+    courseCount: courses?.length,
+    threadCount: (threads ?? []).length,
+    loading,
+  });
 
   return {
     threads: threads ?? [],
