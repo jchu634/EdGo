@@ -129,7 +129,7 @@ const renderComment = (
         {!comment.is_anonymous && author?.avatar ? (
           <Image
             source={{
-              uri: `https://static.${settings.getString("user.default_region")}.edusercontent.com/avatars/${author.avatar}?s=128&fallback=1`,
+              uri: `https://static.${settings!.getString("user.default_region")}.edusercontent.com/avatars/${author.avatar}?s=128&fallback=1`,
             }}
             className="size-6 rounded-full"
           />
@@ -521,7 +521,7 @@ export default function ThreadPage() {
           {!t.is_anonymous && author?.avatar ? (
             <Image
               source={{
-                uri: `https://static.${settings.getString("user.default_region")}.edusercontent.com/avatars/${author.avatar}?s=128&fallback=1`,
+              uri: `https://static.${settings!.getString("user.default_region")}.edusercontent.com/avatars/${author.avatar}?s=128&fallback=1`,
               }}
               className="size-8 rounded-full"
             />
@@ -545,7 +545,7 @@ export default function ThreadPage() {
             <Pressable
               onPress={() =>
                 Linking.openURL(
-                  `https://edstem.org/${settings.getString("user.default_region")}/courses/${courseIdNum}/discussion/${t.id}`,
+                  `https://edstem.org/${settings!.getString("user.default_region")}/courses/${courseIdNum}/discussion/${t.id}`,
                 )
               }
             >

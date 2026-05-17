@@ -11,7 +11,7 @@ import { openDatabaseSync } from "expo-sqlite";
 import { drizzle } from "drizzle-orm/expo-sqlite";
 import { inArray, sql } from "drizzle-orm";
 import * as schema from "@/src/db/schema";
-import { getApiKey, getCachedCourses, cacheCourses } from "@/src/lib/storage";
+import { getApiKey, getCachedCourses, cacheCourses, initStorage } from "@/src/lib/storage";
 import { fetchThreadsFromApi, syncThreadsToDb } from "@/src/lib/threads";
 import { UserResponse } from "@/src/lib/schema";
 import {
@@ -50,6 +50,7 @@ function defineBackgroundTask() {
 
   TaskManager.defineTask(TASK_NAME, async () => {
     try {
+      await initStorage();
       const apiKey = await getApiKey();
       if (!apiKey) return BackgroundTask.BackgroundTaskResult.Failed;
 

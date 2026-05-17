@@ -1,13 +1,45 @@
 import { Schema } from "effect";
-import { createMMKV } from "react-native-mmkv";
+import { createMMKV, type MMKV } from "react-native-mmkv";
 import * as SecureStore from "expo-secure-store";
 import { Course, CourseCategory, ThreadDetailResponse } from "@/src/lib/schema";
+import * as Crypto from "expo-crypto";
 
-const courseCache = createMMKV({ id: "courseCache" });
-const threadCache = createMMKV({ id: "threadCache" });
-export const settings = createMMKV({ id: "settings" });
+let courseCache: MMKV | null = null;
+let threadCache: MMKV | null = null;
+export let settings: MMKV | null = null;
 
 const API_KEY_KEY = "edstem_bearer_token";
+const ENCRYPTION_KEY_STORE_KEY = "mmkv_encryption_key";
+
+function requireStore(store: MMKV | null, name: string): MMKV {
+  if (!store) {
+    throw new Error(
+      `Storage not initialized: ${name}. Call initStorage() first.`,
+    );
+  }
+  return store;
+}
+
+async function getOrCreateEncryptionKey(): Promise<string> {
+  let key = await SecureStore.getItemAsync(ENCRYPTION_KEY_STORE_KEY);
+  if (!key) {
+    const bytes = Crypto.getRandomBytes(16);
+    key = Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+    await SecureStore.setItemAsync(ENCRYPTION_KEY_STORE_KEY, key, {
+      keychainAccessible: SecureStore.AFTER_FIRST_UNLOCK_THIS_DEVICE_ONLY,
+    });
+  }
+  return key;
+}
+
+export async function initStorage(): Promise<void> {
+  if (courseCache && threadCache && settings) return;
+
+  const encryptionKey = await getOrCreateEncryptionKey();
+  courseCache = createMMKV({ id: "courseCache", encryptionKey });
+  threadCache = createMMKV({ id: "threadCache", encryptionKey });
+  settings = createMMKV({ id: "settings", encryptionKey });
+}
 
 export async function getApiKey(): Promise<string | null> {
   return SecureStore.getItemAsync(API_KEY_KEY);
@@ -24,21 +56,25 @@ export async function clearApiKey(): Promise<void> {
 }
 
 export function clearCourseCache(): void {
-  courseCache.clearAll();
+  requireStore(courseCache, "courseCache").clearAll();
 }
 
 export function clearThreadCache(): void {
-  threadCache.clearAll();
+  requireStore(threadCache, "threadCache").clearAll();
 }
 
 export function cacheCourses(
   courses: Schema.Schema.Type<typeof Course>[],
 ): void {
-  courseCache.set("courses", JSON.stringify(courses));
+  requireStore(courseCache, "courseCache").set(
+    "courses",
+    JSON.stringify(courses),
+  );
 }
 
 export function getCachedCourses(): Schema.Schema.Type<typeof Course>[] | null {
-  const raw = courseCache.getString("courses");
+  const cache = requireStore(courseCache, "courseCache");
+  const raw = cache.getString("courses");
   if (!raw) return null;
   try {
     const parsed = JSON.parse(raw);
@@ -47,7 +83,7 @@ export function getCachedCourses(): Schema.Schema.Type<typeof Course>[] | null {
     ) as readonly Schema.Schema.Type<typeof Course>[];
     return [...validated];
   } catch {
-    courseCache.remove("courses");
+    cache.remove("courses");
     return null;
   }
 }
@@ -55,7 +91,8 @@ export function getCachedCourses(): Schema.Schema.Type<typeof Course>[] | null {
 export function getCachedCourseCategory(
   course_id: number,
 ): readonly Schema.Schema.Type<typeof CourseCategory>[] | null {
-  const raw = courseCache.getString("courses");
+  const cache = requireStore(courseCache, "courseCache");
+  const raw = cache.getString("courses");
   if (!raw) return null;
   try {
     const parsed = JSON.parse(raw);
@@ -65,7 +102,7 @@ export function getCachedCourseCategory(
     const course = validated.find((c) => c.id === course_id);
     return course?.settings.discussion.categories ?? null;
   } catch {
-    courseCache.remove("courses");
+    cache.remove("courses");
     return null;
   }
 }
@@ -76,15 +113,16 @@ export function cacheThreadDetail(
   data: Schema.Schema.Type<typeof ThreadDetailResponse>,
 ): void {
   const key = `thread-detail-${courseId}-${threadNumber}`;
-  threadCache.set(key, JSON.stringify(data));
+  requireStore(threadCache, "threadCache").set(key, JSON.stringify(data));
 }
 
 export function getCachedThreadDetail(
   courseId: number,
   threadNumber: number,
 ): Schema.Schema.Type<typeof ThreadDetailResponse> | null {
+  const cache = requireStore(threadCache, "threadCache");
   const key = `thread-detail-${courseId}-${threadNumber}`;
-  const raw = threadCache.getString(key);
+  const raw = cache.getString(key);
   if (!raw) return null;
   try {
     const parsed = JSON.parse(raw);
@@ -93,7 +131,7 @@ export function getCachedThreadDetail(
     ) as Schema.Schema.Type<typeof ThreadDetailResponse>;
     return validated;
   } catch {
-    threadCache.remove(key);
+    cache.remove(key);
     return null;
   }
 }
@@ -105,7 +143,7 @@ export function cacheParsedXml(
   ast: unknown,
 ): void {
   const key = `parsed-xml-${courseId}-${threadNumber}-${xmlKey}`;
-  threadCache.set(key, JSON.stringify(ast));
+  requireStore(threadCache, "threadCache").set(key, JSON.stringify(ast));
 }
 
 export function getCachedParsedXml(
@@ -113,8 +151,9 @@ export function getCachedParsedXml(
   threadNumber: number,
   xmlKey: string,
 ): unknown | null {
+  const cache = requireStore(threadCache, "threadCache");
   const key = `parsed-xml-${courseId}-${threadNumber}-${xmlKey}`;
-  const raw = threadCache.getString(key);
+  const raw = cache.getString(key);
   if (!raw) return null;
   try {
     return JSON.parse(raw);
@@ -148,7 +187,8 @@ const NOTIFICATION_FREQUENCIES: NotificationFrequency[] = [
 ];
 
 export function getNotificationSettings(): NotificationSettings {
-  const rawFrequency = settings.getString("notifications.frequency");
+  const s = requireStore(settings, "settings");
+  const rawFrequency = s.getString("notifications.frequency");
   const frequency: NotificationFrequency = NOTIFICATION_FREQUENCIES.includes(
     rawFrequency as NotificationFrequency,
   )
@@ -156,17 +196,16 @@ export function getNotificationSettings(): NotificationSettings {
     : NOTIFICATION_DEFAULTS.frequency;
   return {
     enabled:
-      settings.getBoolean("notifications.enabled") ??
-      NOTIFICATION_DEFAULTS.enabled,
+      s.getBoolean("notifications.enabled") ?? NOTIFICATION_DEFAULTS.enabled,
     frequency,
     sleepHoursEnabled:
-      settings.getBoolean("notifications.sleep_hours_enabled") ??
+      s.getBoolean("notifications.sleep_hours_enabled") ??
       NOTIFICATION_DEFAULTS.sleepHoursEnabled,
     sleepHoursStart:
-      settings.getNumber("notifications.sleep_hours_start") ??
+      s.getNumber("notifications.sleep_hours_start") ??
       NOTIFICATION_DEFAULTS.sleepHoursStart,
     sleepHoursEnd:
-      settings.getNumber("notifications.sleep_hours_end") ??
+      s.getNumber("notifications.sleep_hours_end") ??
       NOTIFICATION_DEFAULTS.sleepHoursEnd,
   };
 }
@@ -175,20 +214,25 @@ export function setNotificationSetting<K extends keyof NotificationSettings>(
   key: K,
   value: NotificationSettings[K],
 ): void {
+  const s = requireStore(settings, "settings");
   const storageKey = `notifications.${key === "sleepHoursEnabled" ? "sleep_hours_enabled" : key === "sleepHoursStart" ? "sleep_hours_start" : key === "sleepHoursEnd" ? "sleep_hours_end" : key}`;
   if (typeof value === "boolean") {
-    settings.set(storageKey, value);
+    s.set(storageKey, value);
   } else if (typeof value === "number") {
-    settings.set(storageKey, value);
+    s.set(storageKey, value);
   } else {
-    settings.set(storageKey, value as string);
+    s.set(storageKey, value as string);
   }
 }
 
 export function getLastNotifiedTimestamp(): number {
-  return settings.getNumber("notifications.last_notified") ?? 0;
+  return (
+    requireStore(settings, "settings").getNumber(
+      "notifications.last_notified",
+    ) ?? 0
+  );
 }
 
 export function setLastNotifiedTimestamp(ts: number): void {
-  settings.set("notifications.last_notified", ts);
+  requireStore(settings, "settings").set("notifications.last_notified", ts);
 }

@@ -38,11 +38,11 @@ function formatHour(hour: number): string {
 export default function Index() {
   const [developerSettings, setDeveloperSettings] = useMMKVBoolean(
     "user.developer_settings",
-    settings,
+    settings!,
   );
-  const [userName] = useMMKVString("user.name", settings);
-  const [userEmail] = useMMKVString("user.email", settings);
-  const [userRegion] = useMMKVString("user.default_region", settings);
+  const [userName] = useMMKVString("user.name", settings!);
+  const [userEmail] = useMMKVString("user.email", settings!);
+  const [userRegion] = useMMKVString("user.default_region", settings!);
   const { clearApiKey } = useApiKey();
   const { updateSyncSettings } = useNotificationSync();
 
