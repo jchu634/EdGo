@@ -13,6 +13,13 @@ import { parseXml } from "react-native-turboxml";
 import { XmlNode, renderXmlNode, isXmlNode } from "@/src/lib/renderXML";
 import * as Linking from "expo-linking";
 import { settings } from "@/src/lib/storage";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withSequence,
+} from "react-native-reanimated";
+import * as Haptics from "expo-haptics";
 
 import {
   EyeIcon,
@@ -27,17 +34,74 @@ import {
   EdComment as CommentSchema,
   ThreadDetailResponse,
 } from "@/src/lib/schema";
-import { fetchThreadDetail, sendThreadViewed } from "@/src/lib/threads";
+import {
+  fetchThreadDetail,
+  sendThreadViewed,
+  starThread,
+  unstarThread,
+  upvoteThread,
+  unvoteThread,
+  upvoteComment,
+  unvoteComment,
+} from "@/src/lib/threads";
 import {
   getCachedThreadDetail,
   cacheThreadDetail,
   getCachedParsedXml,
   cacheParsedXml,
 } from "@/src/lib/storage";
+import { threadsTable } from "@/src/db/schema";
+import { useDb } from "@/src/providers/dbProvider";
+import { eq } from "drizzle-orm";
 
 import "@/app/global.css";
 
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
 type CommentType = Schema.Schema.Type<typeof CommentSchema>;
+
+function AnimatedToggleIcon({
+  isOn,
+  onPress,
+  IconComponent,
+  onColor,
+  offColor,
+  count,
+  size = 18,
+}: {
+  isOn: boolean;
+  onPress: () => void;
+  IconComponent: typeof HeartIcon;
+  onColor: string;
+  offColor: string;
+  count: number;
+  size?: number;
+}) {
+  const scale = useSharedValue(1);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  const handlePress = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    scale.value = withSequence(withSpring(1.35), withSpring(1));
+    onPress();
+  };
+
+  return (
+    <View className="flex-row items-center gap-x-1">
+      <AnimatedPressable onPress={handlePress} style={animatedStyle}>
+        <IconComponent
+          size={size}
+          color={isOn ? onColor : offColor}
+          weight={isOn ? "fill" : "regular"}
+        />
+      </AnimatedPressable>
+      <Text className="text-sm text-gray-500">{count}</Text>
+    </View>
+  );
+}
 
 const renderComment = (
   comment: CommentType,
@@ -45,11 +109,17 @@ const renderComment = (
   parsedXmlMap: Map<string, XmlNode>,
   courseId: number,
   threadNumber: number,
-  depth = 0,
+  depth: number,
+  commentVotes: Map<number, boolean>,
+  commentVoteCounts: Map<number, number>,
+  onVoteToggle: (commentId: number, currentVoted: boolean) => void,
 ): React.ReactNode => {
   const author = usersMap.get(comment.user_id);
   const xmlKey = `comment-${comment.id}`;
   const parsedXml = parsedXmlMap.get(xmlKey);
+  const isVoted = commentVotes.get(comment.id) ?? false;
+  const voteCount = commentVoteCounts.get(comment.id) ?? comment.vote_count;
+
   return (
     <View
       key={`comment-${comment.id}`}
@@ -58,9 +128,6 @@ const renderComment = (
       <View className="mb-2 flex-row items-center gap-x-2">
         {!comment.is_anonymous && author?.avatar ? (
           <Image
-            /*
-            Note: No idea what s=128 and fallback=1 does, but the official api uses it
-            */
             source={{
               uri: `https://static.${settings.getString("user.default_region")}.edusercontent.com/avatars/${author.avatar}?s=128&fallback=1`,
             }}
@@ -99,10 +166,15 @@ const renderComment = (
       )}
 
       <View className="flex-row items-center gap-x-3">
-        <View className="flex-row items-center gap-x-1">
-          <HeartIcon size={12} color="#9ca3af" />
-          <Text className="text-xs text-gray-500">{comment.vote_count}</Text>
-        </View>
+        <AnimatedToggleIcon
+          isOn={isVoted}
+          onPress={() => onVoteToggle(comment.id, isVoted)}
+          IconComponent={HeartIcon}
+          onColor="#ef4444"
+          offColor="#9ca3af"
+          count={voteCount}
+          size={16}
+        />
         <Text className="text-xs text-gray-400">
           {new Date(comment.created_at).toLocaleDateString()}
         </Text>
@@ -117,6 +189,9 @@ const renderComment = (
             courseId,
             threadNumber,
             depth + 1,
+            commentVotes,
+            commentVoteCounts,
+            onVoteToggle,
           ),
         )}
     </View>
@@ -135,6 +210,42 @@ export default function ThreadPage() {
     new Map(),
   );
   const [loading, setLoading] = useState(true);
+  const db = useDb();
+
+  const [isStarred, setIsStarred] = useState(false);
+  const [starCount, setStarCount] = useState(0);
+  const [isVoted, setIsVoted] = useState(false);
+  const [voteCount, setVoteCount] = useState(0);
+  const [commentVotes, setCommentVotes] = useState<Map<number, boolean>>(
+    new Map(),
+  );
+  const [commentVoteCounts, setCommentVoteCounts] = useState<
+    Map<number, number>
+  >(new Map());
+
+  const initVoteState = useCallback(
+    (data: Schema.Schema.Type<typeof ThreadDetailResponse>) => {
+      setIsStarred(data.thread.is_starred);
+      setStarCount(data.thread.star_count);
+      setIsVoted((data.thread.vote ?? 0) === 1);
+      setVoteCount(data.thread.vote_count);
+
+      const votes = new Map<number, boolean>();
+      const counts = new Map<number, number>();
+      const process = (comments: readonly CommentType[]) => {
+        for (const c of comments) {
+          votes.set(c.id, c.vote === 1);
+          counts.set(c.id, c.vote_count);
+          if (c.comments.length > 0) process(c.comments);
+        }
+      };
+      process(data.thread.comments);
+      process(data.thread.answers);
+      setCommentVotes(votes);
+      setCommentVoteCounts(counts);
+    },
+    [],
+  );
 
   const usersMap = useMemo(() => {
     const map = new Map<number, { name: string; avatar: string | null }>();
@@ -181,6 +292,7 @@ export default function ThreadPage() {
         setThreadData(null);
       } else {
         setThreadData(cached);
+        initVoteState(cached);
 
         const xmlMap = new Map<string, XmlNode>();
         const mainCached = getCachedParsedXml(
@@ -222,6 +334,7 @@ export default function ThreadPage() {
 
         setThreadData(response);
         cacheThreadDetail(courseIdNum, threadNumber, response);
+        initVoteState(response);
 
         const newXmlMap = new Map<string, XmlNode>();
 
@@ -283,7 +396,7 @@ export default function ThreadPage() {
     return () => {
       cancelled = true;
     };
-  }, [courseIdNum, threadNumber, parseAndCacheXml]);
+  }, [courseIdNum, threadNumber, parseAndCacheXml, initVoteState]);
 
   useEffect(() => {
     if (!threadData) return;
@@ -295,7 +408,79 @@ export default function ThreadPage() {
         never
       >,
     );
-  }, [threadData?.thread.id]);
+  }, [threadData]);
+
+  const handleStar = useCallback(async () => {
+    if (!threadData) return;
+    const next = !isStarred;
+    setIsStarred(next);
+    setStarCount((c) => (next ? c + 1 : c - 1));
+    try {
+      const fn = next ? starThread : unstarThread;
+      await Effect.runPromise(
+        fn(threadData.thread.id) as Effect.Effect<boolean, unknown, never>,
+      );
+      await db
+        .update(threadsTable)
+        .set({ isStarred: next, starCount: next ? starCount + 1 : starCount - 1 })
+        .where(eq(threadsTable.id, threadData.thread.id));
+    } catch (err) {
+      console.error(`[Star] Failed to ${next ? "star" : "unstar"} thread ${threadData.thread.id}:`, err);
+      setIsStarred(!next);
+      setStarCount((c) => (next ? c - 1 : c + 1));
+    }
+  }, [threadData, isStarred, db, starCount]);
+
+  const handleVote = useCallback(async () => {
+    if (!threadData) return;
+    const next = !isVoted;
+    setIsVoted(next);
+    setVoteCount((c) => (next ? c + 1 : c - 1));
+    try {
+      const fn = next ? upvoteThread : unvoteThread;
+      await Effect.runPromise(
+        fn(threadData.thread.id) as Effect.Effect<boolean, unknown, never>,
+      );
+      await db
+        .update(threadsTable)
+        .set({ isVoted: next, voteCount: next ? voteCount + 1 : voteCount - 1 })
+        .where(eq(threadsTable.id, threadData.thread.id));
+    } catch (err) {
+      console.error(`[Vote] Failed to ${next ? "upvote" : "unvote"} thread ${threadData.thread.id}:`, err);
+      setIsVoted(!next);
+      setVoteCount((c) => (next ? c - 1 : c + 1));
+    }
+  }, [threadData, isVoted, db, voteCount]);
+
+  const handleCommentVote = useCallback(
+    async (commentId: number, currentVoted: boolean) => {
+      const next = !currentVoted;
+      setCommentVotes((prev) => new Map(prev).set(commentId, next));
+      setCommentVoteCounts((prev) => {
+        const nextMap = new Map(prev);
+        nextMap.set(commentId, (nextMap.get(commentId) ?? 0) + (next ? 1 : -1));
+        return nextMap;
+      });
+      try {
+        const fn = next ? upvoteComment : unvoteComment;
+        await Effect.runPromise(
+          fn(commentId) as Effect.Effect<boolean, unknown, never>,
+        );
+      } catch (err) {
+        console.error(`[Vote] Failed to ${next ? "upvote" : "unvote"} comment ${commentId}:`, err);
+        setCommentVotes((prev) => new Map(prev).set(commentId, !next));
+        setCommentVoteCounts((prev) => {
+          const nextMap = new Map(prev);
+          nextMap.set(
+            commentId,
+            (nextMap.get(commentId) ?? 0) + (next ? -1 : 1),
+          );
+          return nextMap;
+        });
+      }
+    },
+    [],
+  );
 
   if (loading && !threadData) {
     return (
@@ -334,9 +519,7 @@ export default function ThreadPage() {
 
         <View className="mb-3 flex-row items-center gap-x-2">
           {!t.is_anonymous && author?.avatar ? (
-            /*
-            Note: No idea what s=128 and fallback=1 does, but the official api uses it
-            */ <Image
+            <Image
               source={{
                 uri: `https://static.${settings.getString("user.default_region")}.edusercontent.com/avatars/${author.avatar}?s=128&fallback=1`,
               }}
@@ -391,14 +574,22 @@ export default function ThreadPage() {
             <EyeIcon size={14} color="#9ca3af" />
             <Text className="text-sm text-gray-500">{t.view_count}</Text>
           </View>
-          <View className="flex-row items-center gap-x-1">
-            <HeartIcon size={14} color="#9ca3af" />
-            <Text className="text-sm text-gray-500">{t.vote_count}</Text>
-          </View>
-          <View className="flex-row items-center gap-x-1">
-            <StarIcon size={14} color="#9ca3af" />
-            <Text className="text-sm text-gray-500">{t.star_count}</Text>
-          </View>
+          <AnimatedToggleIcon
+            isOn={isVoted}
+            onPress={handleVote}
+            IconComponent={HeartIcon}
+            onColor="#ef4444"
+            offColor="#9ca3af"
+            count={voteCount}
+          />
+          <AnimatedToggleIcon
+            isOn={isStarred}
+            onPress={handleStar}
+            IconComponent={StarIcon}
+            onColor="#f59e0b"
+            offColor="#9ca3af"
+            count={starCount}
+          />
           {t.is_answered && (
             <View className="flex-row items-center gap-x-1">
               <CheckCircleIcon size={14} color="#22c55e" weight="fill" />
@@ -427,6 +618,10 @@ export default function ThreadPage() {
                 parsedXmlMap,
                 courseIdNum,
                 threadNumber,
+                0,
+                commentVotes,
+                commentVoteCounts,
+                handleCommentVote,
               ),
             )}
           </View>
@@ -444,6 +639,10 @@ export default function ThreadPage() {
                 parsedXmlMap,
                 courseIdNum,
                 threadNumber,
+                0,
+                commentVotes,
+                commentVoteCounts,
+                handleCommentVote,
               ),
             )}
           </View>

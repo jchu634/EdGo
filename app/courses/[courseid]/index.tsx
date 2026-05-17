@@ -14,6 +14,7 @@ import {
   HeartIcon,
   ChatsIcon,
   CheckIcon,
+  StarIcon,
 } from "phosphor-react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Schema } from "effect";
@@ -139,6 +140,14 @@ export default function Index() {
             <Text className="font-display-bold max-h-30 w-100 truncate">
               {item.title}
             </Text>
+            {item.isStarred && (
+              <View className="flex flex-row items-center">
+                <StarIcon
+                  color={item.isVoted ? "#f59e0b" : "#9ca3af"}
+                  weight={item.isVoted ? "fill" : "regular"}
+                />
+              </View>
+            )}
             {item.isAnswered && <CheckIcon color="#3f6212" />}
             {item.isPinned && <PushPinIcon />}
           </View>
@@ -157,13 +166,18 @@ export default function Index() {
                   <ChatsIcon />
                 </View>
               )}
+
               <View className="flex min-w-10 flex-row items-center">
                 <Text className="font-display pl-2">{item.viewCount}</Text>
                 <EyeIcon />
               </View>
               <View className="flex min-w-10 flex-row items-center">
                 <Text className="font-display pl-2">{item.voteCount}</Text>
-                <HeartIcon />
+
+                <HeartIcon
+                  color={item.isVoted ? "#ef4444" : "#9ca3af"}
+                  weight={item.isVoted ? "fill" : "regular"}
+                />
               </View>
             </View>
           </View>

@@ -1,4 +1,4 @@
-import { Effect, Schema } from "effect";
+import { Effect, Schema, Schedule } from "effect";
 import {
   FetchHttpClient,
   HttpClient,
@@ -16,6 +16,7 @@ import { ThreadResponse, ThreadDetailResponse } from "@/src/lib/schema";
 import { getApiKey } from "@/src/lib/storage";
 
 const PAGE_SIZE = 100;
+const MAX_RETRIES = 5;
 
 function escapeLike(str: string): string {
   return str.replace(/\\/g, "\\\\").replace(/%/g, "\\%").replace(/_/g, "\\_");
@@ -51,6 +52,56 @@ export function sendThreadViewed(threadNumber: number) {
     console.log(`SEND VIEWED`, { threadNumber, status: response.status });
     return response.status === 200;
   }).pipe(Effect.provide(FetchHttpClient.layer));
+}
+
+function threadPostWithRetry(url: string) {
+  return Effect.gen(function* () {
+    const apiKey = yield* Effect.promise(() => getApiKey());
+    if (!apiKey) return yield* Effect.fail(new Error("Missing API Key"));
+    const client = yield* HttpClient.HttpClient;
+    const request = HttpClientRequest.post(url).pipe(
+      HttpClientRequest.bearerToken(apiKey),
+    );
+    const response = yield* client.execute(request);
+    return response.status === 204;
+  }).pipe(
+    Effect.retry(Schedule.recurs(MAX_RETRIES)),
+    Effect.provide(FetchHttpClient.layer),
+  );
+}
+
+export function starThread(threadId: number) {
+  return threadPostWithRetry(`https://edstem.org/api/threads/${threadId}/star`);
+}
+
+export function unstarThread(threadId: number) {
+  return threadPostWithRetry(
+    `https://edstem.org/api/threads/${threadId}/unstar`,
+  );
+}
+
+export function upvoteThread(threadId: number) {
+  return threadPostWithRetry(
+    `https://edstem.org/api/threads/${threadId}/upvote`,
+  );
+}
+
+export function unvoteThread(threadId: number) {
+  return threadPostWithRetry(
+    `https://edstem.org/api/threads/${threadId}/unvote`,
+  );
+}
+
+export function upvoteComment(commentId: number) {
+  return threadPostWithRetry(
+    `https://edstem.org/api/comments/${commentId}/upvote`,
+  );
+}
+
+export function unvoteComment(commentId: number) {
+  return threadPostWithRetry(
+    `https://edstem.org/api/comments/${commentId}/unvote`,
+  );
 }
 
 export function searchThreadsFromApi(
@@ -138,6 +189,7 @@ function toDbThread(
     createdAt: t.created_at,
     updatedAt: t.updated_at ?? null,
     isStarred: t.is_starred,
+    isVoted: (t.vote ?? 0) === 1,
   };
 }
 
@@ -178,6 +230,7 @@ export async function syncThreadsToDb(
         createdAt: sql`excluded.created_at`,
         updatedAt: sql`excluded.updated_at`,
         isStarred: sql`excluded.is_starred`,
+        isVoted: sql`excluded.is_voted`,
       },
     });
 }
@@ -381,7 +434,13 @@ export function useRecentThreads(courses: { id: number }[] | undefined) {
               return syncThreadsToDb(db, course.id, response.threads as any[]);
             }
           })
-          .catch((err) => { console.error("[recentThreads] Failed to sync course:", course.id, err); }),
+          .catch((err) => {
+            console.error(
+              "[recentThreads] Failed to sync course:",
+              course.id,
+              err,
+            );
+          }),
       ),
     ).finally(() => {
       if (!cancelled) setLoading(false);
