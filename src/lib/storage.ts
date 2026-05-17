@@ -36,9 +36,21 @@ export async function initStorage(): Promise<void> {
   if (courseCache && threadCache && settings) return;
 
   const encryptionKey = await getOrCreateEncryptionKey();
-  courseCache = createMMKV({ id: "courseCache", encryptionKey });
-  threadCache = createMMKV({ id: "threadCache", encryptionKey });
-  settings = createMMKV({ id: "settings", encryptionKey });
+  courseCache = createMMKV({
+    id: "courseCache",
+    encryptionKey: encryptionKey,
+    encryptionType: "AES-128",
+  });
+  threadCache = createMMKV({
+    id: "threadCache",
+    encryptionKey: encryptionKey,
+    encryptionType: "AES-128",
+  });
+  settings = createMMKV({
+    id: "settings",
+    encryptionKey: encryptionKey,
+    encryptionType: "AES-128",
+  });
 }
 
 export async function getApiKey(): Promise<string | null> {
