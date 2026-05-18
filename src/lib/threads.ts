@@ -263,7 +263,11 @@ export function useCourseThreads(courseId: number, category?: string) {
 
   const fetchAndSync = useCallback(
     async (offset?: number) => {
-      console.log("[useCourseThreads] fetchAndSync start", { courseId, category, offset });
+      console.log("[useCourseThreads] fetchAndSync start", {
+        courseId,
+        category,
+        offset,
+      });
       setLoading(true);
       setError(undefined);
       try {
@@ -275,7 +279,9 @@ export function useCourseThreads(courseId: number, category?: string) {
           return;
         }
         if (response.threads.length === 0) {
-          console.log("[useCourseThreads] fetchAndSync reached end of pages", { offset });
+          console.log("[useCourseThreads] fetchAndSync reached end of pages", {
+            offset,
+          });
           setEndOfPages(true);
           return;
         }
@@ -299,14 +305,14 @@ export function useCourseThreads(courseId: number, category?: string) {
   );
 
   useEffect(() => {
-    console.log("[useCourseThreads] initial fetch effect", { courseId, category });
+    console.log("[useCourseThreads] initial fetch effect");
     offsetRef.current = 0;
     setEndOfPages(false);
     fetchAndSync(0);
   }, [fetchAndSync]);
 
   const refresh = useCallback(async () => {
-    console.log("[useCourseThreads] refresh", { courseId, category });
+    console.log("[useCourseThreads] refresh");
     setRefreshing(true);
     try {
       offsetRef.current = 0;
@@ -334,13 +340,11 @@ export function useCourseThreads(courseId: number, category?: string) {
 
   console.log("[useCourseThreads] render", {
     courseId,
-    category,
     totalThreads: allThreads.length,
     pinnedCount: pinnedThreads.length,
     regularCount: regularThreads.length,
     loading,
     refreshing,
-    endOfPages,
     error: error?.message ?? queryError?.message ?? null,
   });
 
@@ -417,7 +421,9 @@ export function useSearchResults(
           });
           await syncThreadsToDb(db, courseId, response.threads as any[]);
         } else {
-          console.log("[useSearchResults] API returned no results", { query: trimmed });
+          console.log("[useSearchResults] API returned no results", {
+            query: trimmed,
+          });
         }
       } catch (err) {
         console.error("[useSearchResults] API search failed:", err);
