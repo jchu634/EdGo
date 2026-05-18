@@ -101,8 +101,8 @@ export default function Index() {
       );
 
       yield* Effect.sync(() => {
-        settings.set("user.default_region", region.default_region);
-        settings.set("user.country_code", region.country_code);
+        settings!.set("user.default_region", region.default_region);
+        settings!.set("user.country_code", region.country_code);
       });
     }).pipe(
       Effect.provide(FetchHttpClient.layer),
@@ -240,7 +240,10 @@ export default function Index() {
             </Text>
           </View>
           <View className="flex flex-row items-center justify-between">
-            <Text className="font-display text-xs" style={{ color: colour }}>
+            <Text
+              className="font-display line-clamp-1 w-80 truncate text-xs"
+              style={{ color: colour }}
+            >
               {courseInfo?.code}
             </Text>
             <View className="flex flex-row">
@@ -289,7 +292,7 @@ export default function Index() {
         />
       </View>
 
-      <View className="flex-[4]">
+      <View className="flex-4">
         <Text className="font-display-bold px-4 pb-1 text-sm text-gray-600">
           Recent Messages
         </Text>

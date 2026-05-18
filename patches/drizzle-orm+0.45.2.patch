@@ -1,0 +1,322 @@
+diff --git a/node_modules/drizzle-orm/expo-sqlite/driver.d.ts b/node_modules/drizzle-orm/expo-sqlite/driver.d.ts
+index f5a2e45..78523b1 100644
+--- a/node_modules/drizzle-orm/expo-sqlite/driver.d.ts
++++ b/node_modules/drizzle-orm/expo-sqlite/driver.d.ts
+@@ -2,7 +2,7 @@ import type { SQLiteDatabase, SQLiteRunResult } from 'expo-sqlite';
+ import { entityKind } from "../entity.js";
+ import { BaseSQLiteDatabase } from "../sqlite-core/db.js";
+ import type { DrizzleConfig } from "../utils.js";
+-export declare class ExpoSQLiteDatabase<TSchema extends Record<string, unknown> = Record<string, never>> extends BaseSQLiteDatabase<'sync', SQLiteRunResult, TSchema> {
++export declare class ExpoSQLiteDatabase<TSchema extends Record<string, unknown> = Record<string, never>> extends BaseSQLiteDatabase<'async', SQLiteRunResult, TSchema> {
+     static readonly [entityKind]: string;
+ }
+ export declare function drizzle<TSchema extends Record<string, unknown> = Record<string, never>>(client: SQLiteDatabase, config?: DrizzleConfig<TSchema>): ExpoSQLiteDatabase<TSchema> & {
+diff --git a/node_modules/drizzle-orm/expo-sqlite/driver.js b/node_modules/drizzle-orm/expo-sqlite/driver.js
+index aeb49cd..0af9867 100644
+--- a/node_modules/drizzle-orm/expo-sqlite/driver.js
++++ b/node_modules/drizzle-orm/expo-sqlite/driver.js
+@@ -5,13 +5,13 @@ import {
+   extractTablesRelationalConfig
+ } from "../relations.js";
+ import { BaseSQLiteDatabase } from "../sqlite-core/db.js";
+-import { SQLiteSyncDialect } from "../sqlite-core/dialect.js";
++import { SQLiteAsyncDialect } from "../sqlite-core/dialect.js";
+ import { ExpoSQLiteSession } from "./session.js";
+ class ExpoSQLiteDatabase extends BaseSQLiteDatabase {
+   static [entityKind] = "ExpoSQLiteDatabase";
+ }
+ function drizzle(client, config = {}) {
+-  const dialect = new SQLiteSyncDialect({ casing: config.casing });
++  const dialect = new SQLiteAsyncDialect({ casing: config.casing });
+   let logger;
+   if (config.logger === true) {
+     logger = new DefaultLogger();
+@@ -30,9 +30,13 @@ function drizzle(client, config = {}) {
+       tableNamesMap: tablesConfig.tableNamesMap
+     };
+   }
+-  const session = new ExpoSQLiteSession(client, dialect, schema, { logger });
+-  const db = new ExpoSQLiteDatabase("sync", dialect, session, schema);
++  const session = new ExpoSQLiteSession(client, dialect, schema, { logger, cache: config.cache });
++  const db = new ExpoSQLiteDatabase("async", dialect, session, schema);
+   db.$client = client;
++  db.$cache = config.cache;
++  if (db.$cache) {
++    db.$cache["invalidate"] = config.cache?.onMutate;
++  }
+   return db;
+ }
+ export {
+diff --git a/node_modules/drizzle-orm/expo-sqlite/query.d.ts b/node_modules/drizzle-orm/expo-sqlite/query.d.ts
+index 73ae3ad..a17dcd3 100644
+--- a/node_modules/drizzle-orm/expo-sqlite/query.d.ts
++++ b/node_modules/drizzle-orm/expo-sqlite/query.d.ts
+@@ -1,6 +1,6 @@
+ import type { AnySQLiteSelect } from "../sqlite-core/index.js";
+ import { SQLiteRelationalQuery } from "../sqlite-core/query-builders/query.js";
+-export declare const useLiveQuery: <T extends Pick<AnySQLiteSelect, "_" | "then"> | SQLiteRelationalQuery<"sync", unknown>>(query: T, deps?: unknown[]) => {
++export declare const useLiveQuery: <T extends Pick<AnySQLiteSelect, "_" | "then"> | SQLiteRelationalQuery<"sync" | "async", unknown>>(query: T, deps?: unknown[]) => {
+     readonly data: Awaited<T>;
+     readonly error: Error | undefined;
+     readonly updatedAt: Date | undefined;
+diff --git a/node_modules/drizzle-orm/expo-sqlite/session.d.ts b/node_modules/drizzle-orm/expo-sqlite/session.d.ts
+index 830f45c..6e3e332 100644
+--- a/node_modules/drizzle-orm/expo-sqlite/session.d.ts
++++ b/node_modules/drizzle-orm/expo-sqlite/session.d.ts
+@@ -1,47 +1,58 @@
+-import type { SQLiteDatabase, SQLiteRunResult, SQLiteStatement } from 'expo-sqlite';
++import type { SQLiteDatabase, SQLiteRunResult } from 'expo-sqlite';
++import { type Cache } from "../cache/core/index.js";
++import type { WithCacheConfig } from "../cache/core/types.js";
+ import { entityKind } from "../entity.js";
+ import type { Logger } from "../logger.js";
+ import type { RelationalSchemaConfig, TablesRelationalConfig } from "../relations.js";
+ import { type Query } from "../sql/sql.js";
+-import type { SQLiteSyncDialect } from "../sqlite-core/dialect.js";
++import type { SQLiteAsyncDialect } from "../sqlite-core/dialect.js";
+ import { SQLiteTransaction } from "../sqlite-core/index.js";
+ import type { SelectedFieldsOrdered } from "../sqlite-core/query-builders/select.types.js";
+ import { type PreparedQueryConfig as PreparedQueryConfigBase, type SQLiteExecuteMethod, SQLitePreparedQuery, SQLiteSession, type SQLiteTransactionConfig } from "../sqlite-core/session.js";
+ export interface ExpoSQLiteSessionOptions {
+     logger?: Logger;
++    cache?: Cache;
+ }
+ type PreparedQueryConfig = Omit<PreparedQueryConfigBase, 'statement' | 'run'>;
+-export declare class ExpoSQLiteSession<TFullSchema extends Record<string, unknown>, TSchema extends TablesRelationalConfig> extends SQLiteSession<'sync', SQLiteRunResult, TFullSchema, TSchema> {
++export declare class ExpoSQLiteSession<TFullSchema extends Record<string, unknown>, TSchema extends TablesRelationalConfig> extends SQLiteSession<'async', SQLiteRunResult, TFullSchema, TSchema> {
+     private client;
+     private schema;
+     static readonly [entityKind]: string;
+     private logger;
+-    constructor(client: SQLiteDatabase, dialect: SQLiteSyncDialect, schema: RelationalSchemaConfig<TSchema> | undefined, options?: ExpoSQLiteSessionOptions);
+-    prepareQuery<T extends Omit<PreparedQueryConfig, 'run'>>(query: Query, fields: SelectedFieldsOrdered | undefined, executeMethod: SQLiteExecuteMethod, isResponseInArrayMode: boolean, customResultMapper?: (rows: unknown[][]) => unknown): ExpoSQLitePreparedQuery<T>;
+-    transaction<T>(transaction: (tx: ExpoSQLiteTransaction<TFullSchema, TSchema>) => T, config?: SQLiteTransactionConfig): T;
++    private cache;
++    constructor(client: SQLiteDatabase, dialect: SQLiteAsyncDialect, schema: RelationalSchemaConfig<TSchema> | undefined, options?: ExpoSQLiteSessionOptions);
++    prepareQuery<T extends Omit<PreparedQueryConfig, 'run'>>(query: Query, fields: SelectedFieldsOrdered | undefined, executeMethod: SQLiteExecuteMethod, isResponseInArrayMode: boolean, customResultMapper?: (rows: unknown[][]) => unknown, queryMetadata?: {
++        type: 'select' | 'update' | 'delete' | 'insert';
++        tables: string[];
++    }, cacheConfig?: WithCacheConfig): ExpoSQLitePreparedQuery<T>;
++    transaction<T>(transaction: (tx: ExpoSQLiteTransaction<TFullSchema, TSchema>) => T | Promise<T>, config?: SQLiteTransactionConfig): Promise<T>;
+ }
+-export declare class ExpoSQLiteTransaction<TFullSchema extends Record<string, unknown>, TSchema extends TablesRelationalConfig> extends SQLiteTransaction<'sync', SQLiteRunResult, TFullSchema, TSchema> {
++export declare class ExpoSQLiteTransaction<TFullSchema extends Record<string, unknown>, TSchema extends TablesRelationalConfig> extends SQLiteTransaction<'async', SQLiteRunResult, TFullSchema, TSchema> {
+     static readonly [entityKind]: string;
+-    transaction<T>(transaction: (tx: ExpoSQLiteTransaction<TFullSchema, TSchema>) => T): T;
++    transaction<T>(transaction: (tx: ExpoSQLiteTransaction<TFullSchema, TSchema>) => T | Promise<T>): Promise<T>;
+ }
+ export declare class ExpoSQLitePreparedQuery<T extends PreparedQueryConfig = PreparedQueryConfig> extends SQLitePreparedQuery<{
+-    type: 'sync';
++    type: 'async';
+     run: SQLiteRunResult;
+     all: T['all'];
+     get: T['get'];
+     values: T['values'];
+     execute: T['execute'];
+ }> {
+-    private stmt;
++    private client;
++    private query;
+     private logger;
+     private fields;
+     private _isResponseInArrayMode;
+     private customResultMapper?;
+     static readonly [entityKind]: string;
+-    constructor(stmt: SQLiteStatement, query: Query, logger: Logger, fields: SelectedFieldsOrdered | undefined, executeMethod: SQLiteExecuteMethod, _isResponseInArrayMode: boolean, customResultMapper?: ((rows: unknown[][]) => unknown) | undefined);
+-    run(placeholderValues?: Record<string, unknown>): SQLiteRunResult;
+-    all(placeholderValues?: Record<string, unknown>): T['all'];
+-    get(placeholderValues?: Record<string, unknown>): T['get'];
+-    values(placeholderValues?: Record<string, unknown>): T['values'];
++    constructor(client: SQLiteDatabase, query: Query, logger: Logger, cache: Cache, queryMetadata: {
++        type: 'select' | 'update' | 'delete' | 'insert';
++        tables: string[];
++    } | undefined, cacheConfig: WithCacheConfig | undefined, fields: SelectedFieldsOrdered | undefined, executeMethod: SQLiteExecuteMethod, _isResponseInArrayMode: boolean, customResultMapper?: ((rows: unknown[][]) => unknown) | undefined);
++    run(placeholderValues?: Record<string, unknown>): Promise<SQLiteRunResult>;
++    all(placeholderValues?: Record<string, unknown>): Promise<T['all']>;
++    get(placeholderValues?: Record<string, unknown>): Promise<T['get']>;
++    values(placeholderValues?: Record<string, unknown>): Promise<T['values']>;
+ }
+ export {};
+diff --git a/node_modules/drizzle-orm/expo-sqlite/session.js b/node_modules/drizzle-orm/expo-sqlite/session.js
+index 23dcc2a..d47e3e7 100644
+--- a/node_modules/drizzle-orm/expo-sqlite/session.js
++++ b/node_modules/drizzle-orm/expo-sqlite/session.js
+@@ -1,3 +1,4 @@
++import { NoopCache } from "../cache/core/index.js";
+ import { entityKind } from "../entity.js";
+ import { NoopLogger } from "../logger.js";
+ import { fillPlaceholders, sql } from "../sql/sql.js";
+@@ -13,90 +14,118 @@ class ExpoSQLiteSession extends SQLiteSession {
+     this.client = client;
+     this.schema = schema;
+     this.logger = options.logger ?? new NoopLogger();
++    this.cache = options.cache ?? new NoopCache();
+   }
+   static [entityKind] = "ExpoSQLiteSession";
+   logger;
+-  prepareQuery(query, fields, executeMethod, isResponseInArrayMode, customResultMapper) {
+-    const stmt = this.client.prepareSync(query.sql);
++  cache;
++  prepareQuery(query, fields, executeMethod, isResponseInArrayMode, customResultMapper, queryMetadata, cacheConfig) {
+     return new ExpoSQLitePreparedQuery(
+-      stmt,
++      this.client,
+       query,
+       this.logger,
++      this.cache,
++      queryMetadata,
++      cacheConfig,
+       fields,
+       executeMethod,
+       isResponseInArrayMode,
+       customResultMapper
+     );
+   }
+-  transaction(transaction, config = {}) {
+-    const tx = new ExpoSQLiteTransaction("sync", this.dialect, this, this.schema);
+-    this.run(sql.raw(`begin${config?.behavior ? " " + config.behavior : ""}`));
++  async transaction(transaction, config = {}) {
++    const tx = new ExpoSQLiteTransaction("async", this.dialect, this, this.schema);
++    await this.run(sql.raw(`begin${config?.behavior ? " " + config.behavior : ""}`));
+     try {
+-      const result = transaction(tx);
+-      this.run(sql`commit`);
++      const result = await transaction(tx);
++      await this.run(sql`commit`);
+       return result;
+     } catch (err) {
+-      this.run(sql`rollback`);
++      await this.run(sql`rollback`);
+       throw err;
+     }
+   }
+ }
+ class ExpoSQLiteTransaction extends SQLiteTransaction {
+   static [entityKind] = "ExpoSQLiteTransaction";
+-  transaction(transaction) {
++  async transaction(transaction) {
+     const savepointName = `sp${this.nestedIndex}`;
+-    const tx = new ExpoSQLiteTransaction("sync", this.dialect, this.session, this.schema, this.nestedIndex + 1);
+-    this.session.run(sql.raw(`savepoint ${savepointName}`));
++    const tx = new ExpoSQLiteTransaction("async", this.dialect, this.session, this.schema, this.nestedIndex + 1);
++    await this.session.run(sql.raw(`savepoint ${savepointName}`));
+     try {
+-      const result = transaction(tx);
+-      this.session.run(sql.raw(`release savepoint ${savepointName}`));
++      const result = await transaction(tx);
++      await this.session.run(sql.raw(`release savepoint ${savepointName}`));
+       return result;
+     } catch (err) {
+-      this.session.run(sql.raw(`rollback to savepoint ${savepointName}`));
++      await this.session.run(sql.raw(`rollback to savepoint ${savepointName}`));
+       throw err;
+     }
+   }
+ }
+ class ExpoSQLitePreparedQuery extends SQLitePreparedQuery {
+-  constructor(stmt, query, logger, fields, executeMethod, _isResponseInArrayMode, customResultMapper) {
+-    super("sync", executeMethod, query);
+-    this.stmt = stmt;
++  constructor(client, query, logger, cache, queryMetadata, cacheConfig, fields, executeMethod, _isResponseInArrayMode, customResultMapper) {
++    super("async", executeMethod, query, cache, queryMetadata, cacheConfig);
++    this.client = client;
++    this.query = query;
+     this.logger = logger;
+     this.fields = fields;
+     this._isResponseInArrayMode = _isResponseInArrayMode;
+     this.customResultMapper = customResultMapper;
+   }
+   static [entityKind] = "ExpoSQLitePreparedQuery";
+-  run(placeholderValues) {
++  async run(placeholderValues) {
+     const params = fillPlaceholders(this.query.params, placeholderValues ?? {});
+     this.logger.logQuery(this.query.sql, params);
+-    const { changes, lastInsertRowId } = this.stmt.executeSync(params);
+-    return {
+-      changes,
+-      lastInsertRowId
+-    };
++    return await this.queryWithCache(this.query.sql, params, async () => {
++      const stmt = await this.client.prepareAsync(this.query.sql);
++      try {
++        const result = await stmt.executeAsync(...params);
++        return {
++          changes: result.changes,
++          lastInsertRowId: result.lastInsertRowId
++        };
++      } finally {
++        await stmt.finalizeAsync();
++      }
++    });
+   }
+-  all(placeholderValues) {
+-    const { fields, joinsNotNullableMap, query, logger, stmt, customResultMapper } = this;
++  async all(placeholderValues) {
++    const { fields, joinsNotNullableMap, query, logger, client, customResultMapper } = this;
+     if (!fields && !customResultMapper) {
+       const params = fillPlaceholders(query.params, placeholderValues ?? {});
+       logger.logQuery(query.sql, params);
+-      return stmt.executeSync(params).getAllSync();
++      return await this.queryWithCache(query.sql, params, async () => {
++        const stmt = await client.prepareAsync(query.sql);
++        try {
++          const result = await stmt.executeAsync(...params);
++          return await result.getAllAsync();
++        } finally {
++          await stmt.finalizeAsync();
++        }
++      });
+     }
+-    const rows = this.values(placeholderValues);
++    const rows = await this.values(placeholderValues);
+     if (customResultMapper) {
+       return customResultMapper(rows);
+     }
+     return rows.map((row) => mapResultRow(fields, row, joinsNotNullableMap));
+   }
+-  get(placeholderValues) {
+-    const params = fillPlaceholders(this.query.params, placeholderValues ?? {});
+-    this.logger.logQuery(this.query.sql, params);
+-    const { fields, stmt, joinsNotNullableMap, customResultMapper } = this;
++  async get(placeholderValues) {
++    const { fields, joinsNotNullableMap, query, logger, client, customResultMapper } = this;
+     if (!fields && !customResultMapper) {
+-      return stmt.executeSync(params).getFirstSync();
++      const params = fillPlaceholders(query.params, placeholderValues ?? {});
++      logger.logQuery(query.sql, params);
++      return await this.queryWithCache(query.sql, params, async () => {
++        const stmt = await client.prepareAsync(query.sql);
++        try {
++          const result = await stmt.executeAsync(...params);
++          return (await result.getFirstAsync()) ?? undefined;
++        } finally {
++          await stmt.finalizeAsync();
++        }
++      });
+     }
+-    const rows = this.values(placeholderValues);
++    const rows = await this.values(placeholderValues);
+     const row = rows[0];
+     if (!row) {
+       return void 0;
+@@ -106,10 +135,18 @@ class ExpoSQLitePreparedQuery extends SQLitePreparedQuery {
+     }
+     return mapResultRow(fields, row, joinsNotNullableMap);
+   }
+-  values(placeholderValues) {
++  async values(placeholderValues) {
+     const params = fillPlaceholders(this.query.params, placeholderValues ?? {});
+     this.logger.logQuery(this.query.sql, params);
+-    return this.stmt.executeForRawResultSync(params).getAllSync();
++    return await this.queryWithCache(this.query.sql, params, async () => {
++      const stmt = await this.client.prepareAsync(this.query.sql);
++      try {
++        const result = await stmt.executeForRawResultAsync(...params);
++        return await result.getAllAsync();
++      } finally {
++        await stmt.finalizeAsync();
++      }
++    });
+   }
+   /** @internal */
+   isResponseInArrayMode() {

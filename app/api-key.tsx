@@ -47,10 +47,10 @@ export default function ApiKeyScreen() {
       } else {
         const user =
           yield* HttpClientResponse.schemaBodyJson(UserResponse)(response);
-        settings.set("user.name", user.user.name);
-        settings.set("user.email", user.user.email);
-        if (!settings.contains("user.developer_settings")) {
-          settings.set("user.developer_settings", false);
+        settings!.set("user.name", user.user.name);
+        settings!.set("user.email", user.user.email);
+        if (!settings!.contains("user.developer_settings")) {
+          settings!.set("user.developer_settings", false);
         }
         return true;
       }
@@ -72,8 +72,8 @@ export default function ApiKeyScreen() {
         );
 
       yield* Effect.sync(() => {
-        settings.set("user.default_region", region.default_region);
-        settings.set("user.country_code", region.country_code);
+        settings!.set("user.default_region", region.default_region);
+        settings!.set("user.country_code", region.country_code);
       });
     }).pipe(
       Effect.matchEffect({
@@ -81,8 +81,8 @@ export default function ApiKeyScreen() {
         onFailure: (error) =>
           Effect.sync(() => {
             console.warn("Failed to fetch region, falling back to US:", error);
-            settings.set("user.default_region", "US");
-            settings.set("user.country_code", "US");
+            settings!.set("user.default_region", "US");
+            settings!.set("user.country_code", "US");
           }),
       }),
       Effect.provide(FetchHttpClient.layer),

@@ -10,6 +10,7 @@ import {
   getApiKey as getStoredApiKey,
   setApiKey as setStoredApiKey,
   clearApiKey as clearStoredApiKey,
+  initStorage,
 } from "@/src/lib/storage";
 import { useFonts } from "expo-font";
 import { IntelOneMono_300Light } from "@expo-google-fonts/intel-one-mono/300Light";
@@ -68,6 +69,7 @@ export function useApiKey() {
 export function KeyProvider({ children }: { children: React.ReactNode }) {
   const [apiKey, setApiKeyState] = useState<string | null>(null);
   const [keyLoaded, setKeyLoaded] = useState(false);
+  const [storageLoaded, setStorageLoaded] = useState(false);
   const router = useRouter();
   const segments = useSegments();
 
@@ -113,7 +115,8 @@ export function KeyProvider({ children }: { children: React.ReactNode }) {
   });
 
   useEffect(() => {
-    getStoredApiKey().then((key) => {
+    Promise.all([initStorage(), getStoredApiKey()]).then(([_, key]) => {
+      setStorageLoaded(true);
       setApiKeyState(key);
       setKeyLoaded(true);
     });
@@ -124,7 +127,7 @@ export function KeyProvider({ children }: { children: React.ReactNode }) {
   const shouldRedirectHome = !!apiKey && inApiKeyRoute;
 
   useEffect(() => {
-    if (!fontsLoaded || !keyLoaded) return;
+    if (!fontsLoaded || !keyLoaded || !storageLoaded) return;
 
     if (shouldRedirectToApiKey) {
       router.replace("/api-key");
@@ -137,6 +140,7 @@ export function KeyProvider({ children }: { children: React.ReactNode }) {
     router,
     fontsLoaded,
     keyLoaded,
+    storageLoaded,
     shouldRedirectToApiKey,
     shouldRedirectHome,
   ]);
@@ -155,7 +159,8 @@ export function KeyProvider({ children }: { children: React.ReactNode }) {
     !fontsLoaded ||
     !keyLoaded ||
     shouldRedirectToApiKey ||
-    shouldRedirectHome
+    shouldRedirectHome ||
+    !storageLoaded
   ) {
     return null;
   }
@@ -166,7 +171,7 @@ export function KeyProvider({ children }: { children: React.ReactNode }) {
         apiKey,
         setApiKey: handleSetApiKey,
         clearApiKey: handleClearApiKey,
-        isLoading: !fontsLoaded || !keyLoaded,
+        isLoading: !fontsLoaded || !keyLoaded || !storageLoaded,
       }}
     >
       {children}

@@ -156,7 +156,7 @@ export const UserResponse = Schema.Struct({
 });
 
 export const ThreadResponse = Schema.Struct({
-  threads: Schema.Array(Thread),
+  threads: Schema.Array(ThreadUser),
   users: Schema.Array(_baseUser),
 });
 
