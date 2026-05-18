@@ -220,7 +220,9 @@ export default function CommentThreadPage() {
   if (!threadData) {
     return (
       <View className="flex h-full items-center justify-center">
-        <Text className="font-display text-gray-500">Thread not found</Text>
+        <Text className="font-display text-gray-500">
+          Thread not found, You may be offline
+        </Text>
       </View>
     );
   }
