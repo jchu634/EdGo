@@ -235,6 +235,8 @@ export async function syncThreadsToDb(
 
   if (USE_ASYNC_DRIZZLE) {
     const BATCH_SIZE = 39;
+    // SQLite limits variables per statement to ~999. With ~25 columns per row,
+    // batch size of 39 stays safely under this limit (39 * 25 = 975).
     for (let i = 0; i < rows.length; i += BATCH_SIZE) {
       const batch = rows.slice(i, i + BATCH_SIZE);
       await db
