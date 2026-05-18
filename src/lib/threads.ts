@@ -193,6 +193,36 @@ function toDbThread(
   };
 }
 
+const USE_ASYNC_DRIZZLE = true;
+
+const upsertConflict = {
+  target: threadsTable.id,
+  set: {
+    title: sql`excluded.title`,
+    number: sql`excluded.number`,
+    type: sql`excluded.type`,
+    content: sql`excluded.content`,
+    document: sql`excluded.document`,
+    category: sql`excluded.category`,
+    subcategory: sql`excluded.subcategory`,
+    subsubcategory: sql`excluded.subsubcategory`,
+    starCount: sql`excluded.star_count`,
+    viewCount: sql`excluded.view_count`,
+    voteCount: sql`excluded.vote_count`,
+    replyCount: sql`excluded.reply_count`,
+    isPinned: sql`excluded.is_pinned`,
+    isAnswered: sql`excluded.is_answered`,
+    isStudentAnswered: sql`excluded.is_student_answered`,
+    isStaffAnswered: sql`excluded.is_staff_answered`,
+    isAnonymous: sql`excluded.is_anonymous`,
+    user: sql`excluded.user`,
+    createdAt: sql`excluded.created_at`,
+    updatedAt: sql`excluded.updated_at`,
+    isStarred: sql`excluded.is_starred`,
+    isVoted: sql`excluded.is_voted`,
+  },
+} as const;
+
 export async function syncThreadsToDb(
   db: Db,
   courseId: number,
@@ -203,36 +233,21 @@ export async function syncThreadsToDb(
   const rows = apiThreads.map((t) => toDbThread(courseId, t));
   if (rows.length === 0) return;
 
-  await db
-    .insert(threadsTable)
-    .values(rows as NewThread[])
-    .onConflictDoUpdate({
-      target: threadsTable.id,
-      set: {
-        title: sql`excluded.title`,
-        number: sql`excluded.number`,
-        type: sql`excluded.type`,
-        content: sql`excluded.content`,
-        document: sql`excluded.document`,
-        category: sql`excluded.category`,
-        subcategory: sql`excluded.subcategory`,
-        subsubcategory: sql`excluded.subsubcategory`,
-        starCount: sql`excluded.star_count`,
-        viewCount: sql`excluded.view_count`,
-        voteCount: sql`excluded.vote_count`,
-        replyCount: sql`excluded.reply_count`,
-        isPinned: sql`excluded.is_pinned`,
-        isAnswered: sql`excluded.is_answered`,
-        isStudentAnswered: sql`excluded.is_student_answered`,
-        isStaffAnswered: sql`excluded.is_staff_answered`,
-        isAnonymous: sql`excluded.is_anonymous`,
-        user: sql`excluded.user`,
-        createdAt: sql`excluded.created_at`,
-        updatedAt: sql`excluded.updated_at`,
-        isStarred: sql`excluded.is_starred`,
-        isVoted: sql`excluded.is_voted`,
-      },
-    });
+  if (USE_ASYNC_DRIZZLE) {
+    const BATCH_SIZE = 39;
+    for (let i = 0; i < rows.length; i += BATCH_SIZE) {
+      const batch = rows.slice(i, i + BATCH_SIZE);
+      await db
+        .insert(threadsTable)
+        .values(batch as NewThread[])
+        .onConflictDoUpdate(upsertConflict);
+    }
+  } else {
+    await db
+      .insert(threadsTable)
+      .values(rows as NewThread[])
+      .onConflictDoUpdate(upsertConflict);
+  }
 }
 
 export function useCourseThreads(courseId: number, category?: string) {
