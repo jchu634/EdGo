@@ -13,13 +13,6 @@ import { parseXml } from "react-native-turboxml";
 import { XmlNode, renderXmlNode, isXmlNode } from "@/src/lib/renderXML";
 import * as Linking from "expo-linking";
 import { settings } from "@/src/lib/storage";
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-  withSequence,
-} from "react-native-reanimated";
-import * as Haptics from "expo-haptics";
 
 import {
   EyeIcon,
@@ -30,10 +23,7 @@ import {
   ArrowSquareOutIcon,
 } from "phosphor-react-native";
 
-import {
-  EdComment as CommentSchema,
-  ThreadDetailResponse,
-} from "@/src/lib/schema";
+import { ThreadDetailResponse } from "@/src/lib/schema";
 import {
   fetchThreadDetail,
   sendThreadViewed,
@@ -53,150 +43,13 @@ import {
 import { threadsTable } from "@/src/db/schema";
 import { useDb } from "@/src/providers/dbProvider";
 import { eq } from "drizzle-orm";
+import {
+  AnimatedToggleIcon,
+  renderComment,
+  type CommentType,
+} from "@/src/components/thread-comments";
 
 import "@/app/global.css";
-
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
-
-type CommentType = Schema.Schema.Type<typeof CommentSchema>;
-
-function AnimatedToggleIcon({
-  isOn,
-  onPress,
-  IconComponent,
-  onColor,
-  offColor,
-  count,
-  size = 18,
-}: {
-  isOn: boolean;
-  onPress: () => void;
-  IconComponent: typeof HeartIcon;
-  onColor: string;
-  offColor: string;
-  count: number;
-  size?: number;
-}) {
-  const scale = useSharedValue(1);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
-
-  const handlePress = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    scale.value = withSequence(withSpring(1.35), withSpring(1));
-    onPress();
-  };
-
-  return (
-    <View className="flex-row items-center gap-x-1">
-      <AnimatedPressable onPress={handlePress} style={animatedStyle}>
-        <IconComponent
-          size={size}
-          color={isOn ? onColor : offColor}
-          weight={isOn ? "fill" : "regular"}
-        />
-      </AnimatedPressable>
-      <Text className="text-sm text-gray-500">{count}</Text>
-    </View>
-  );
-}
-
-const renderComment = (
-  comment: CommentType,
-  usersMap: Map<number, { name: string; avatar: string | null }>,
-  parsedXmlMap: Map<string, XmlNode>,
-  courseId: number,
-  threadNumber: number,
-  depth: number,
-  commentVotes: Map<number, boolean>,
-  commentVoteCounts: Map<number, number>,
-  onVoteToggle: (commentId: number, currentVoted: boolean) => void,
-): React.ReactNode => {
-  const author = usersMap.get(comment.user_id);
-  const xmlKey = `comment-${comment.id}`;
-  const parsedXml = parsedXmlMap.get(xmlKey);
-  const isVoted = commentVotes.get(comment.id) ?? false;
-  const voteCount = commentVoteCounts.get(comment.id) ?? comment.vote_count;
-
-  return (
-    <View
-      key={`comment-${comment.id}`}
-      className={`mb-3 rounded-xl bg-gray-100 p-3 ${depth > 0 ? "ml-4 border-l-2 border-gray-300" : ""}`}
-    >
-      <View className="mb-2 flex-row items-center gap-x-2">
-        {!comment.is_anonymous && author?.avatar ? (
-          <Image
-            source={{
-              uri: `https://static.${settings!.getString("user.default_region")}.edusercontent.com/avatars/${author.avatar}?s=128&fallback=1`,
-            }}
-            className="size-6 rounded-full"
-          />
-        ) : (
-          <View className="size-6 items-center justify-center rounded-full bg-gray-400">
-            <Text className="text-xs font-semibold text-white">
-              {comment.is_anonymous
-                ? "?"
-                : (author?.name?.charAt(0)?.toUpperCase() ?? "?")}
-            </Text>
-          </View>
-        )}
-        <Text className="font-display-semibold text-sm">
-          {author?.name ?? "Anonymous"}
-        </Text>
-        {comment.type === "answer" && (
-          <View className="rounded bg-blue-100 px-1.5 py-0.5">
-            <Text className="text-xs text-blue-700">Answer</Text>
-          </View>
-        )}
-        {comment.is_endorsed && (
-          <CheckCircleIcon size={14} color="#22c55e" weight="fill" />
-        )}
-      </View>
-
-      {parsedXml ? (
-        <View className="mb-2">
-          {renderXmlNode(parsedXml, `cxml-${comment.id}`)}
-        </View>
-      ) : (
-        <Text className="font-display mb-2 text-sm text-gray-700">
-          {comment.content}
-        </Text>
-      )}
-
-      <View className="flex-row items-center gap-x-3">
-        <AnimatedToggleIcon
-          isOn={isVoted}
-          onPress={() => onVoteToggle(comment.id, isVoted)}
-          IconComponent={HeartIcon}
-          onColor="#ef4444"
-          offColor="#9ca3af"
-          count={voteCount}
-          size={16}
-        />
-        <Text className="text-xs text-gray-400">
-          {new Date(comment.created_at).toLocaleDateString()}
-        </Text>
-      </View>
-
-      {comment.comments.length > 0 &&
-        comment.comments.map((reply) =>
-          renderComment(
-            reply,
-            usersMap,
-            parsedXmlMap,
-            courseId,
-            threadNumber,
-            depth + 1,
-            commentVotes,
-            commentVoteCounts,
-            onVoteToggle,
-          ),
-        )}
-    </View>
-  );
-};
 
 export default function ThreadPage() {
   const { courseid, thread } = useLocalSearchParams();
@@ -422,10 +275,16 @@ export default function ThreadPage() {
       );
       await db
         .update(threadsTable)
-        .set({ isStarred: next, starCount: next ? starCount + 1 : starCount - 1 })
+        .set({
+          isStarred: next,
+          starCount: next ? starCount + 1 : starCount - 1,
+        })
         .where(eq(threadsTable.id, threadData.thread.id));
     } catch (err) {
-      console.error(`[Star] Failed to ${next ? "star" : "unstar"} thread ${threadData.thread.id}:`, err);
+      console.error(
+        `[Star] Failed to ${next ? "star" : "unstar"} thread ${threadData.thread.id}:`,
+        err,
+      );
       setIsStarred(!next);
       setStarCount((c) => (next ? c - 1 : c + 1));
     }
@@ -446,7 +305,10 @@ export default function ThreadPage() {
         .set({ isVoted: next, voteCount: next ? voteCount + 1 : voteCount - 1 })
         .where(eq(threadsTable.id, threadData.thread.id));
     } catch (err) {
-      console.error(`[Vote] Failed to ${next ? "upvote" : "unvote"} thread ${threadData.thread.id}:`, err);
+      console.error(
+        `[Vote] Failed to ${next ? "upvote" : "unvote"} thread ${threadData.thread.id}:`,
+        err,
+      );
       setIsVoted(!next);
       setVoteCount((c) => (next ? c - 1 : c + 1));
     }
@@ -467,7 +329,10 @@ export default function ThreadPage() {
           fn(commentId) as Effect.Effect<boolean, unknown, never>,
         );
       } catch (err) {
-        console.error(`[Vote] Failed to ${next ? "upvote" : "unvote"} comment ${commentId}:`, err);
+        console.error(
+          `[Vote] Failed to ${next ? "upvote" : "unvote"} comment ${commentId}:`,
+          err,
+        );
         setCommentVotes((prev) => new Map(prev).set(commentId, !next));
         setCommentVoteCounts((prev) => {
           const nextMap = new Map(prev);
@@ -521,7 +386,7 @@ export default function ThreadPage() {
           {!t.is_anonymous && author?.avatar ? (
             <Image
               source={{
-              uri: `https://static.${settings!.getString("user.default_region")}.edusercontent.com/avatars/${author.avatar}?s=128&fallback=1`,
+                uri: `https://static.${settings!.getString("user.default_region")}.edusercontent.com/avatars/${author.avatar}?s=128&fallback=1`,
               }}
               className="size-8 rounded-full"
             />
