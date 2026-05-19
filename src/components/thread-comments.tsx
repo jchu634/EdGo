@@ -116,7 +116,9 @@ export function renderComment(
           </View>
         )}
         <Text className="font-display-semibold text-sm dark:text-slate-100">
-          {author?.name ?? "Anonymous"}
+          {comment.is_anonymous
+            ? "Anonymous"
+            : (author?.name ?? "Unknown")}{" "}
         </Text>
         {comment.type === "answer" && (
           <View className="rounded-lg bg-blue-100 px-4 py-0.5">

@@ -274,7 +274,7 @@ function SearchModal({
                 className={
                   sort === "relevance"
                     ? "font-display dark:text-slate-100"
-                    : "font-display dark:text-black"
+                    : "font-display dark:text-slate-100"
                 }
               >
                 Relevance
@@ -292,7 +292,7 @@ function SearchModal({
                 className={
                   sort === "newest"
                     ? "font-display dark:text-slate-100"
-                    : "font-display dark:text-black"
+                    : "font-display dark:text-slate-100"
                 }
               >
                 Newest
@@ -310,7 +310,7 @@ function SearchModal({
                 className={
                   sort === "oldest"
                     ? "font-display dark:text-slate-100"
-                    : "font-display dark:text-black"
+                    : "font-display dark:text-slate-100"
                 }
               >
                 Oldest
