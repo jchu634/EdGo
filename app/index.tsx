@@ -9,6 +9,7 @@ import { Effect, Schedule, Schema, Duration, Fiber } from "effect";
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { View, Text, Pressable, Dimensions, FlatList } from "react-native";
 import { EyeIcon, HeartIcon, ChatsIcon } from "phosphor-react-native";
+import { useUniwind } from "uniwind";
 
 import { useRouter } from "expo-router";
 import { Course, UserResponse, RegionResponse } from "@/src/lib/schema";
@@ -23,11 +24,13 @@ import { useRecentThreads } from "@/src/lib/threads";
 
 import "@/app/global.css";
 
-const courseColours = ["#16DB93", "#F72585", "#00241B", "#6A66A3", "#FF7F11"];
+const courseColours = ["#16DB93", "#F72585", "#014d3a", "#6A66A3", "#FF7F11"];
 const windowDimensions = Dimensions.get("window");
 const screenDimensions = Dimensions.get("screen");
 
 export default function Index() {
+  const { theme } = useUniwind();
+
   const router = useRouter();
   const [courses, setCourses] = useState<
     Schema.Schema.Type<typeof Course>[] | undefined
@@ -175,7 +178,7 @@ export default function Index() {
       index: number;
     }) => (
       <Pressable
-        className="ml-1.5 flex h-24 w-max flex-row justify-between gap-x-2 rounded-2xl bg-gray-300 p-3 px-2.5"
+        className="ml-1.5 flex h-24 w-max flex-row justify-between gap-x-2 rounded-2xl bg-gray-300 p-3 px-2.5 dark:bg-neutral-800"
         onPress={() => router.navigate(`/courses/${course.id}`)}
       >
         <View
@@ -190,12 +193,15 @@ export default function Index() {
             style={{ width: dimensions.window.width * 0.8 - 32 }}
           >
             <Text
-              className="font-display-bold text-lg text-ellipsis"
+              className="font-display-bold text-lg text-ellipsis dark:text-slate-100"
               numberOfLines={1}
             >
               {course.code}
             </Text>
-            <Text numberOfLines={1} className="font-display text-sm">
+            <Text
+              numberOfLines={1}
+              className="font-display text-sm dark:text-slate-100"
+            >
               {course.name}
             </Text>
           </View>
@@ -222,10 +228,9 @@ export default function Index() {
         : "#d1d5db";
       return (
         <Pressable
-          className="mx-1.5 mb-2 rounded-2xl border-l p-3 pl-2.5"
+          className="mx-1.5 mb-2 rounded-2xl border-l bg-slate-200 p-3 pl-2.5 dark:bg-neutral-800"
           style={{
             borderLeftColor: colour,
-            backgroundColor: "#e5e5e5",
           }}
           onPress={() =>
             router.navigate(`/courses/${thread.courseId}/${thread.number}`)
@@ -233,7 +238,7 @@ export default function Index() {
         >
           <View className="flex w-max flex-row justify-between">
             <Text
-              className="font-display-bold max-h-30 w-100 truncate"
+              className="font-display-bold max-h-30 w-100 truncate dark:text-white"
               numberOfLines={1}
             >
               {thread.title}
@@ -249,24 +254,39 @@ export default function Index() {
             <View className="flex flex-row">
               {thread.replyCount !== 0 && (
                 <View className="flex min-w-10 flex-row items-center">
-                  <Text className="font-display pl-2">{thread.replyCount}</Text>
-                  <ChatsIcon size={14} />
+                  <Text className="font-display pl-2 dark:text-white">
+                    {thread.replyCount}
+                  </Text>
+                  <ChatsIcon
+                    size={14}
+                    color={theme === "dark" ? "white" : "black"}
+                  />
                 </View>
               )}
               <View className="flex min-w-10 flex-row items-center">
-                <Text className="font-display pl-2">{thread.viewCount}</Text>
-                <EyeIcon size={14} />
+                <Text className="font-display pl-2 dark:text-white">
+                  {thread.viewCount}
+                </Text>
+                <EyeIcon
+                  size={14}
+                  color={theme === "dark" ? "white" : "black"}
+                />
               </View>
               <View className="flex min-w-10 flex-row items-center">
-                <Text className="font-display pl-2">{thread.voteCount}</Text>
-                <HeartIcon size={14} />
+                <Text className="font-display pl-2 dark:text-white">
+                  {thread.voteCount}
+                </Text>
+                <HeartIcon
+                  size={14}
+                  color={theme === "dark" ? "white" : "black"}
+                />
               </View>
             </View>
           </View>
         </Pressable>
       );
     },
-    [courseMap, router],
+    [courseMap, router, theme],
   );
 
   if (!courses) {
@@ -278,8 +298,8 @@ export default function Index() {
   }
 
   return (
-    <View className="flex-1">
-      <View className="flex-[5]">
+    <View className="flex-1 dark:bg-black">
+      <View className="flex-5">
         <FlatList
           data={sortedCourses}
           keyExtractor={(item) => item.id.toString()}
@@ -293,7 +313,7 @@ export default function Index() {
       </View>
 
       <View className="flex-4">
-        <Text className="font-display-bold px-4 pb-1 text-sm text-gray-600">
+        <Text className="font-display-bold px-4 pb-1 text-sm text-gray-600 dark:text-slate-100">
           Recent Messages
         </Text>
         {recentLoading && recentThreads.length === 0 ? (

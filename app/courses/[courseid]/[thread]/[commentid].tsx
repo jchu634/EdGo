@@ -242,7 +242,7 @@ export default function CommentThreadPage() {
   }
 
   return (
-    <ScrollView className="flex h-full bg-white">
+    <ScrollView className="flex h-full bg-white dark:bg-black">
       <View className="p-4">
         {renderComment(
           targetComment,

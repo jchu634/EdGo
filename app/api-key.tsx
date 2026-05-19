@@ -6,7 +6,6 @@ import {
   Pressable,
   Alert,
   TouchableOpacity,
-  Linking,
 } from "react-native";
 import { Image } from "expo-image";
 
@@ -17,6 +16,7 @@ import {
   HttpClientResponse,
 } from "effect/unstable/http";
 import { Effect } from "effect";
+import { useUniwind } from "uniwind";
 
 import { useApiKey } from "@/src/providers/keyProvider";
 import { RegionResponse, UserResponse } from "@/src/lib/schema";
@@ -31,6 +31,7 @@ export default function ApiKeyScreen() {
   const [inputKey, setInputKey] = useState("");
   const [saving, setSaving] = useState(false);
   const [showKey, setShowKey] = useState(true);
+  const { theme } = useUniwind();
 
   const validateApiKey = (apiKey: string) =>
     Effect.gen(function* () {
@@ -126,7 +127,7 @@ export default function ApiKeyScreen() {
   };
 
   return (
-    <View className="flex-1 items-center justify-center bg-white p-6">
+    <View className="flex-1 items-center justify-center bg-white p-6 dark:bg-slate-950">
       <View className="w-full max-w-md">
         <Image
           source={require("@/assets/images/icon.png")}
@@ -135,10 +136,10 @@ export default function ApiKeyScreen() {
           style={{ width: 200, height: 200, alignSelf: "center" }}
         />
 
-        <Text className="font-display-black mb-2 text-center text-5xl">
+        <Text className="font-display-black mb-2 text-center text-5xl dark:text-neutral-50">
           Welcome to EdGo
         </Text>
-        <Text className="font-display-medium mb-2 text-center text-black">
+        <Text className="font-display-medium mb-2 text-center text-black dark:text-neutral-50">
           Enter your EdSTEM API key to get started. {"\n"}
           You can find your API key at this link below.
         </Text>
@@ -151,7 +152,7 @@ export default function ApiKeyScreen() {
         <View className="mb-4 flex flex-row items-center">
           <View className="relative flex flex-row items-center gap-x-4">
             <TextInput
-              className="w-100 rounded-xl border border-gray-300 p-4 font-mono text-base"
+              className="w-100 rounded-xl border border-gray-300 p-4 font-mono text-base dark:text-white"
               placeholder="Enter your API key here"
               value={inputKey}
               onChangeText={setInputKey}
@@ -167,7 +168,11 @@ export default function ApiKeyScreen() {
             onPress={() => setShowKey(!showKey)}
             className="size-12 items-center justify-center rounded-lg"
           >
-            {showKey ? <EyeClosedIcon /> : <EyeIcon />}
+            {showKey ? (
+              <EyeClosedIcon color={theme === "dark" ? "white" : "black"} />
+            ) : (
+              <EyeIcon color={theme === "dark" ? "white" : "black"} />
+            )}
           </TouchableOpacity>
         </View>
 

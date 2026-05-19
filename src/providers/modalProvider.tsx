@@ -189,12 +189,12 @@ function SearchModal({
         className="border-b border-gray-100 px-4 py-3 active:bg-gray-50 dark:border-neutral-700 dark:active:bg-neutral-800"
       >
         <Text
-          className="font-display text-sm text-gray-800 dark:text-neutral-100"
+          className="font-display text-sm text-gray-800 dark:text-slate-100"
           numberOfLines={1}
         >
           {item.title}
         </Text>
-        <Text className="font-display text-xs text-gray-400">
+        <Text className="font-display text-xs text-gray-500">
           #{item.number}
         </Text>
       </Pressable>
@@ -241,7 +241,7 @@ function SearchModal({
               onChangeText={setQuery}
               placeholder="Search threads..."
               placeholderTextColor="#9ca3af"
-              className="font-display flex-1 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm text-gray-800 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
+              className="font-display flex-1 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm text-gray-800 dark:border-neutral-700 dark:bg-neutral-800 dark:text-slate-100"
               autoFocus
               returnKeyType="search"
               clearButtonMode="while-editing"
@@ -259,7 +259,7 @@ function SearchModal({
             style={{ paddingHorizontal: 16, paddingBottom: 8 }}
             className="flex-row items-center gap-x-2"
           >
-            <Text className="font-display-bold dark:text-neutral-200">
+            <Text className="font-display-bold dark:text-slate-100">
               Sort By:{" "}
             </Text>
             <Pressable
@@ -270,7 +270,13 @@ function SearchModal({
               }`}
               onPress={() => setSort("relevance")}
             >
-              <Text className="font-display dark:text-neutral-200">
+              <Text
+                className={
+                  sort === "relevance"
+                    ? "font-display dark:text-slate-100"
+                    : "font-display dark:text-black"
+                }
+              >
                 Relevance
               </Text>
             </Pressable>
@@ -282,7 +288,15 @@ function SearchModal({
               }`}
               onPress={() => setSort("newest")}
             >
-              <Text className="font-display dark:text-neutral-200">Newest</Text>
+              <Text
+                className={
+                  sort === "newest"
+                    ? "font-display dark:text-slate-100"
+                    : "font-display dark:text-black"
+                }
+              >
+                Newest
+              </Text>
             </Pressable>
             <Pressable
               className={`rounded-lg px-2 ${
@@ -292,7 +306,15 @@ function SearchModal({
               }`}
               onPress={() => setSort("oldest")}
             >
-              <Text className="font-display dark:text-neutral-200">Oldest</Text>
+              <Text
+                className={
+                  sort === "oldest"
+                    ? "font-display dark:text-slate-100"
+                    : "font-display dark:text-black"
+                }
+              >
+                Oldest
+              </Text>
             </Pressable>
           </View>
 

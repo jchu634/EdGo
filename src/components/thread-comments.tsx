@@ -115,7 +115,7 @@ export function renderComment(
             </Text>
           </View>
         )}
-        <Text className="font-display-semibold text-sm">
+        <Text className="font-display-semibold text-sm dark:text-slate-100">
           {author?.name ?? "Anonymous"}
         </Text>
         {comment.type === "answer" && (
@@ -160,7 +160,7 @@ export function renderComment(
         >
           <Pressable className="mt-2">
             <View className="ml-4 items-start">
-              <Text className="font-display-semibold text-sm text-blue-600">
+              <Text className="font-display-semibold text-sm text-blue-500">
                 Continue thread →
               </Text>
             </View>

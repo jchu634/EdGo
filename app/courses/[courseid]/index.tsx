@@ -18,6 +18,7 @@ import {
 } from "phosphor-react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Schema } from "effect";
+import { useUniwind } from "uniwind";
 
 import { CourseCategory } from "@/src/lib/schema";
 import { getCachedCourseCategory } from "@/src/lib/storage";
@@ -50,6 +51,7 @@ const getCategoryColourMap = (
 };
 
 export default function Index() {
+  const { theme } = useUniwind();
   const { courseid } = useLocalSearchParams();
   const router = useRouter();
   const courseIdNum = Number(Array.isArray(courseid) ? courseid[0] : courseid);
@@ -66,10 +68,8 @@ export default function Index() {
     regularThreads,
     loading,
     refreshing,
-    error,
     fetchMore,
     refresh,
-    endOfPages,
   } = useCourseThreads(courseIdNum, currentCategory);
 
   const { searchQuery, searchCourseId, searchSort, clearSearch } =
@@ -95,33 +95,37 @@ export default function Index() {
       const colour = categoryColourMap.get(item.category);
       return (
         <Pressable
-          className="mx-2 w-56 rounded-2xl border-l p-3 pl-2.5"
+          className="mx-2 w-56 rounded-2xl border-l p-3 pl-2.5 dark:bg-neutral-800"
           style={{
             borderLeftColor: colour || "#d1d5db",
-            backgroundColor: "#e5e5e5",
           }}
           onPress={() => navigateToThread(item.number)}
         >
           <View className="flex w-full flex-row items-start justify-between">
             <Text
-              className="font-display-bold max-h-20 w-44 text-sm"
+              className="font-display-bold max-h-20 w-44 text-sm dark:text-slate-100"
               numberOfLines={2}
             >
               {item.title}
             </Text>
-            <PushPinIcon size={14} />
+            <PushPinIcon
+              size={14}
+              color={theme === "dark" ? "white" : "black"}
+            />
           </View>
           <View className="mt-1 flex flex-row items-center">
             <View
               className="size-4 rounded-full"
               style={{ backgroundColor: colour || "#6b7280" }}
             />
-            <Text className="font-display pl-1.5 text-xs">{item.category}</Text>
+            <Text className="font-display pl-1.5 text-xs dark:text-slate-100">
+              {item.category}
+            </Text>
           </View>
         </Pressable>
       );
     },
-    [categoryColourMap, navigateToThread],
+    [categoryColourMap, navigateToThread, theme],
   );
 
   const renderThreadItem = useCallback(
@@ -129,15 +133,14 @@ export default function Index() {
       const colour = categoryColourMap.get(item.category);
       return (
         <Pressable
-          className="w-80% mx-1.5 mb-3 rounded-2xl border-l p-4 px-4 pl-2.5"
+          className="w-80% mx-1.5 mb-3 rounded-2xl border-l bg-gray-300 p-4 px-4 pl-2.5 dark:bg-neutral-800"
           style={{
             borderLeftColor: colour || "#d1d5db",
-            backgroundColor: "#e5e5e5",
           }}
           onPress={() => navigateToThread(item.number)}
         >
           <View className="flex w-max flex-row justify-between">
-            <Text className="font-display-bold max-h-30 w-100 truncate">
+            <Text className="font-display-bold max-h-30 w-100 truncate dark:text-slate-100">
               {item.title}
             </Text>
             {item.isStarred && (
@@ -146,7 +149,9 @@ export default function Index() {
               </View>
             )}
             {item.isAnswered && <CheckIcon color="#3f6212" />}
-            {item.isPinned && <PushPinIcon />}
+            {item.isPinned && (
+              <PushPinIcon color={theme === "dark" ? "white" : "black"} />
+            )}
           </View>
           <View className="flex flex-row justify-between">
             <View className="flex flex-row items-center">
@@ -154,22 +159,30 @@ export default function Index() {
                 className="size-6 rounded-full"
                 style={{ backgroundColor: colour || "#6b7280" }}
               />
-              <Text className="font-display pl-2">{item.category}</Text>
+              <Text className="font-display pl-2 dark:text-slate-100">
+                {item.category}
+              </Text>
             </View>
             <View className="flex flex-row">
               {item.replyCount !== 0 && (
                 <View className="flex min-w-10 flex-row items-center">
-                  <Text className="font-display pl-2">{item.replyCount}</Text>
-                  <ChatsIcon />
+                  <Text className="font-display pl-2 dark:text-slate-100">
+                    {item.replyCount}
+                  </Text>
+                  <ChatsIcon color={theme === "dark" ? "white" : "black"} />
                 </View>
               )}
 
               <View className="flex min-w-10 flex-row items-center">
-                <Text className="font-display pl-2">{item.viewCount}</Text>
-                <EyeIcon />
+                <Text className="font-display pl-2 dark:text-slate-100">
+                  {item.viewCount}
+                </Text>
+                <EyeIcon color={theme === "dark" ? "white" : "black"} />
               </View>
               <View className="flex min-w-10 flex-row items-center">
-                <Text className="font-display pl-2">{item.voteCount}</Text>
+                <Text className="font-display pl-2 dark:text-slate-100">
+                  {item.voteCount}
+                </Text>
 
                 <HeartIcon
                   color={item.isVoted ? "#ef4444" : "#9ca3af"}
@@ -181,11 +194,11 @@ export default function Index() {
         </Pressable>
       );
     },
-    [categoryColourMap, navigateToThread],
+    [categoryColourMap, navigateToThread, theme],
   );
 
   return (
-    <View className="flex h-full">
+    <View className="flex h-full dark:bg-black">
       {/* Search results banner */}
       {isSearchMode && (
         <View
@@ -194,8 +207,7 @@ export default function Index() {
         >
           <Ionicons name="search" size={16} color="#70069e" />
           <Text
-            className="font-display flex-1 px-2 text-sm"
-            style={{ color: "#581c87" }}
+            className="font-display flex-1 px-2 text-sm text-purple-900"
             numberOfLines={1}
           >
             Results for "{searchQuery}"
@@ -252,7 +264,7 @@ export default function Index() {
       {/* Pinned threads — hidden in search mode */}
       {!isSearchMode && pinnedThreads.length > 0 && (
         <View className="mt-2 mb-3">
-          <Text className="font-display-bold mb-1.5 px-4 text-sm text-gray-600">
+          <Text className="font-display-bold mb-1.5 px-4 text-sm text-gray-600 dark:text-slate-100">
             Pinned
           </Text>
           <FlatList
@@ -280,7 +292,7 @@ export default function Index() {
         contentContainerStyle={{ paddingHorizontal: 8, paddingBottom: 16 }}
         ListEmptyComponent={
           <View className="flex-1 items-center justify-center py-10">
-            <Text className="text-gray-500">
+            <Text className="text-gray-500 dark:text-slate-100">
               {isSearchMode
                 ? isSearching
                   ? "Searching..."
