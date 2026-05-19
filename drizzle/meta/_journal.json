@@ -43,6 +43,13 @@
       "when": 1779038342535,
       "tag": "0005_chubby_miek",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1779201923913,
+      "tag": "0006_supreme_oracle",
+      "breakpoints": true
     }
   ]
 }

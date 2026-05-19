@@ -375,10 +375,10 @@ export default function ThreadPage() {
   const comments = t.comments.filter((c) => c.type === "comment");
 
   return (
-    <ScrollView className="flex h-full bg-white">
+    <ScrollView className="flex h-full bg-white dark:bg-black">
       <View className="p-4">
         <View className="mb-3 flex-row items-start justify-between">
-          <Text className="font-display-bold mr-2 flex-1 text-xl">
+          <Text className="font-display-bold mr-2 flex-1 text-xl dark:text-slate-100">
             {t.title}
           </Text>
           {t.is_pinned && <PushPinIcon size={18} color="#70069e" />}
@@ -400,11 +400,11 @@ export default function ThreadPage() {
             </View>
           )}
 
-          <Text className="font-display-semibold">
+          <Text className="font-display-semibold dark:text-slate-100">
             {t.is_anonymous ? "Anonymous" : (author?.name ?? "Unknown")}
           </Text>
           <View className="flex flex-row items-center gap-x-4">
-            <Text className="font-display">
+            <Text className="font-display dark:text-slate-100">
               {t.updated_at
                 ? `Updated: ${new Date(t.updated_at).toLocaleDateString()}`
                 : `Created: ${new Date(t.created_at).toLocaleDateString()}`}
@@ -465,7 +465,7 @@ export default function ThreadPage() {
           )}
         </View>
 
-        <View className="mb-4 rounded-xl bg-gray-50 p-3">
+        <View className="mb-4 rounded-xl bg-gray-50 p-3 dark:bg-black">
           {mainXml ? (
             renderXmlNode(mainXml, "thread-body")
           ) : (

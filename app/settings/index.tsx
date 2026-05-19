@@ -63,12 +63,18 @@ export default function Index() {
   );
 
   return (
-    <View className="flex h-full gap-y-8 p-4">
+    <View className="flex h-full gap-y-8 p-4 dark:bg-black">
       <View>
-        <Text className="font-display-bold text-2xl">User Details</Text>
-        <Text className="font-display">Name: {userName ?? "Loading..."}</Text>
-        <Text className="font-display">Email: {userEmail ?? "Loading..."}</Text>
-        <Text className="font-display">
+        <Text className="font-display-bold text-2xl dark:text-slate-100">
+          User Details
+        </Text>
+        <Text className="font-display dark:text-slate-100">
+          Name: {userName ?? "Loading..."}
+        </Text>
+        <Text className="font-display dark:text-slate-100">
+          Email: {userEmail ?? "Loading..."}
+        </Text>
+        <Text className="font-display dark:text-slate-100">
           Region: {userRegion ?? "Loading..."}
         </Text>
       </View>
@@ -90,10 +96,14 @@ export default function Index() {
       </View>
 
       <View className="gap-y-3">
-        <Text className="font-display-bold text-2xl">Notifications</Text>
+        <Text className="font-display-bold text-2xl dark:text-slate-100">
+          Notifications
+        </Text>
 
         <View className="flex flex-row items-center justify-between">
-          <Text className="font-display">Enable notifications</Text>
+          <Text className="font-display dark:text-slate-100">
+            Enable notifications
+          </Text>
           <Switch
             trackColor={{ false: "#767577", true: "#81b0ff" }}
             thumbColor={notifSettings.enabled ? "#f5dd4b" : "#f4f3f4"}
@@ -106,7 +116,9 @@ export default function Index() {
         {notifSettings.enabled && (
           <>
             <View className="gap-y-1.5">
-              <Text className="font-display-semibold">Sync frequency</Text>
+              <Text className="font-display-semibold dark:text-slate-100">
+                Sync frequency
+              </Text>
               <View className="flex flex-row gap-x-2">
                 {FREQUENCY_OPTIONS.map((opt) => (
                   <Pressable
@@ -136,7 +148,9 @@ export default function Index() {
 
             <View className="gap-y-1.5">
               <View className="flex flex-row items-center justify-between">
-                <Text className="font-display-semibold">Sleep hours</Text>
+                <Text className="font-display-semibold dark:text-slate-100">
+                  Sleep hours
+                </Text>
                 <Switch
                   trackColor={{ false: "#767577", true: "#81b0ff" }}
                   thumbColor={
@@ -167,7 +181,7 @@ export default function Index() {
                     Platform.OS === "android" ? "flex-1 gap-y-1" : "gap-y-1"
                   }
                 >
-                  <Text className="font-display text-sm text-gray-600">
+                  <Text className="font-display text-sm text-gray-600 dark:text-slate-400">
                     From:
                   </Text>
                   <Pressable
@@ -201,7 +215,7 @@ export default function Index() {
                     Platform.OS === "android" ? "flex-1 gap-y-1" : "gap-y-1"
                   }
                 >
-                  <Text className="font-display text-sm text-gray-600">
+                  <Text className="font-display text-sm text-gray-600 dark:text-slate-400">
                     To:
                   </Text>
                   <Pressable
@@ -238,7 +252,9 @@ export default function Index() {
 
       <View>
         <View className="flex flex-row">
-          <Text className="font-display-bold text-2xl">Developer Settings</Text>
+          <Text className="font-display-bold text-2xl dark:text-slate-100">
+            Developer Settings
+          </Text>
           <Switch
             trackColor={{ false: "#767577", true: "#81b0ff" }}
             thumbColor={developerSettings ? "#f5dd4b" : "#f4f3f4"}

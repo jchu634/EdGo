@@ -276,7 +276,7 @@ export function renderXmlNode(
           fragments.push(
             <Text
               key={`${keyPrefix}-pg-${groupIdx}`}
-              className="font-display mb-2"
+              className="font-display mb-2 dark:text-slate-100"
               selectable
             >
               {renderInlineRuns(runs, `${keyPrefix}-pg-${groupIdx}`)}
@@ -310,7 +310,11 @@ export function renderXmlNode(
       case "p": {
         const runs = collectInlineRuns(node.children);
         return (
-          <Text key={keyPrefix} className="font-display mb-2" selectable>
+          <Text
+            key={keyPrefix}
+            className="font-display mb-2 dark:text-slate-100"
+            selectable
+          >
             {renderInlineRuns(runs, keyPrefix)}
           </Text>
         );

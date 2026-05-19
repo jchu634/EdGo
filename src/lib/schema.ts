@@ -123,6 +123,7 @@ const Thread = Schema.Struct({
   updated_at: Schema.NullOr(Schema.String),
   is_starred: Schema.Boolean,
   vote: Schema.NullOr(Schema.Number),
+  is_seen: Schema.Boolean,
 });
 
 export const ThreadUser = Schema.Struct({
