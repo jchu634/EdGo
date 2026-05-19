@@ -186,9 +186,12 @@ function SearchModal({
     ({ item }: { item: ThreadUser }) => (
       <Pressable
         onPress={() => handlePressThread(item)}
-        className="border-b border-gray-100 px-4 py-3 active:bg-gray-50"
+        className="border-b border-gray-100 px-4 py-3 active:bg-gray-50 dark:border-neutral-700 dark:active:bg-neutral-800"
       >
-        <Text className="font-display text-sm text-gray-800" numberOfLines={1}>
+        <Text
+          className="font-display text-sm text-gray-800 dark:text-neutral-100"
+          numberOfLines={1}
+        >
           {item.title}
         </Text>
         <Text className="font-display text-xs text-gray-400">
@@ -217,26 +220,16 @@ function SearchModal({
       >
         <Pressable
           onPress={(e) => e.stopPropagation()}
+          className="w-full bg-white dark:bg-slate-950"
           style={{
-            width: "100%",
             maxHeight: "85%",
-            backgroundColor: "white",
             borderTopLeftRadius: 16,
             borderTopRightRadius: 16,
             paddingTop: 8,
           }}
         >
           {/* Drag handle */}
-          <View
-            style={{
-              width: 40,
-              height: 4,
-              borderRadius: 2,
-              backgroundColor: "#d1d5db",
-              alignSelf: "center",
-              marginBottom: 8,
-            }}
-          />
+          <View className="mb-2 h-1 w-10 self-center rounded-sm bg-gray-300 dark:bg-neutral-600" />
 
           {/* Search input */}
           <View
@@ -248,7 +241,7 @@ function SearchModal({
               onChangeText={setQuery}
               placeholder="Search threads..."
               placeholderTextColor="#9ca3af"
-              className="font-display flex-1 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm text-gray-800"
+              className="font-display flex-1 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm text-gray-800 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
               autoFocus
               returnKeyType="search"
               clearButtonMode="while-editing"
@@ -266,30 +259,40 @@ function SearchModal({
             style={{ paddingHorizontal: 16, paddingBottom: 8 }}
             className="flex-row items-center gap-x-2"
           >
-            <Text className="font-display-bold">Sort By: </Text>
+            <Text className="font-display-bold dark:text-neutral-200">
+              Sort By:{" "}
+            </Text>
             <Pressable
               className={`rounded-lg px-2 ${
-                sort === "relevance" ? "border border-black" : "bg-gray-200"
+                sort === "relevance"
+                  ? "border border-black dark:border-neutral-50"
+                  : "bg-gray-200 dark:bg-neutral-700"
               }`}
               onPress={() => setSort("relevance")}
             >
-              <Text className="font-display">Relevance</Text>
+              <Text className="font-display dark:text-neutral-200">
+                Relevance
+              </Text>
             </Pressable>
             <Pressable
               className={`rounded-lg px-2 ${
-                sort === "newest" ? "border border-black" : "bg-gray-200"
+                sort === "newest"
+                  ? "border border-black dark:border-neutral-50"
+                  : "bg-gray-200 dark:bg-neutral-700"
               }`}
               onPress={() => setSort("newest")}
             >
-              <Text className="font-display">Newest</Text>
+              <Text className="font-display dark:text-neutral-200">Newest</Text>
             </Pressable>
             <Pressable
               className={`rounded-lg px-2 ${
-                sort === "oldest" ? "border border-black" : "bg-gray-200"
+                sort === "oldest"
+                  ? "border border-black dark:border-neutral-50"
+                  : "bg-gray-200 dark:bg-neutral-700"
               }`}
               onPress={() => setSort("oldest")}
             >
-              <Text className="font-display">Oldest</Text>
+              <Text className="font-display dark:text-neutral-200">Oldest</Text>
             </Pressable>
           </View>
 
@@ -304,7 +307,7 @@ function SearchModal({
             />
           ) : (
             <View style={{ paddingVertical: 32, alignItems: "center" }}>
-              <Text className="font-display text-sm text-gray-400">
+              <Text className="font-display text-sm text-gray-400 dark:text-neutral-500">
                 {query.trim().length > 0
                   ? isSearchingApi
                     ? "Searching..."
@@ -461,17 +464,9 @@ export function ModalProvider({ children }: { children: React.ReactNode }) {
                 justifyContent: "center",
               }}
             >
-              <Pressable
-                style={{
-                  width: "90%",
-                  borderRadius: 12,
-                  backgroundColor: "white",
-                  padding: 16,
-                  alignSelf: "center",
-                }}
-              >
+              <Pressable className="w-[90%] self-center rounded-xl bg-white p-4 dark:bg-slate-950">
                 <Text
-                  className="font-display mb-3 text-sm text-wrap text-gray-700"
+                  className="font-display mb-3 text-sm text-wrap text-gray-700 dark:text-neutral-300"
                   numberOfLines={2}
                   ellipsizeMode="middle"
                 >
@@ -479,32 +474,32 @@ export function ModalProvider({ children }: { children: React.ReactNode }) {
                 </Text>
 
                 {copied ? (
-                  <Text className="font-display text-center text-sm text-green-600">
+                  <Text className="font-display text-center text-sm text-green-600 dark:text-green-400">
                     Copied!
                   </Text>
                 ) : (
                   <View style={{ gap: 12 }}>
                     <Pressable
                       onPress={handleCopy}
-                      className="items-center rounded-lg bg-gray-300 py-3 active:bg-gray-200"
+                      className="w-50 items-center self-center rounded-lg bg-gray-300 py-3 active:bg-gray-200 dark:bg-neutral-700 dark:active:bg-neutral-600"
                       style={{
                         width: 200,
                         alignSelf: "center",
                       }}
                     >
-                      <Text className="font-display text-md text-center text-gray-800">
+                      <Text className="font-display text-md text-center text-gray-800 dark:text-neutral-100">
                         Copy Link
                       </Text>
                     </Pressable>
                     <Pressable
                       onPress={handleOpen}
-                      className="items-center rounded-lg bg-gray-300 py-3 active:bg-gray-200"
+                      className="w-50 items-center self-center rounded-lg bg-gray-300 py-3 active:bg-gray-200 dark:bg-neutral-700 dark:active:bg-neutral-600"
                       style={{
                         width: 200,
                         alignSelf: "center",
                       }}
                     >
-                      <Text className="font-display text-md text-center text-gray-800">
+                      <Text className="font-display text-md text-center text-gray-800 dark:text-neutral-100">
                         Open Link
                       </Text>
                     </Pressable>
