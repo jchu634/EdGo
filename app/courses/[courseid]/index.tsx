@@ -95,7 +95,11 @@ export default function Index() {
       const colour = categoryColourMap.get(item.category);
       return (
         <Pressable
-          className="mx-2 w-56 rounded-2xl border-l p-3 pl-2.5 dark:bg-neutral-800"
+          className={
+            item.isSeen
+              ? "mx-2 w-56 rounded-2xl border-l bg-gray-200 p-3 pl-2.5 dark:bg-neutral-700"
+              : "mx-2 w-56 rounded-2xl border-l bg-gray-300 p-3 pl-2.5 dark:bg-neutral-800"
+          }
           style={{
             borderLeftColor: colour || "#d1d5db",
           }}
@@ -133,7 +137,11 @@ export default function Index() {
       const colour = categoryColourMap.get(item.category);
       return (
         <Pressable
-          className="w-80% mx-1.5 mb-3 rounded-2xl border-l bg-gray-300 p-4 px-4 pl-2.5 dark:bg-neutral-800"
+          className={
+            item.isSeen
+              ? "w-80% mx-1.5 mb-3 rounded-2xl border-l bg-gray-200 p-4 px-4 pl-2.5 dark:bg-neutral-700"
+              : "w-80% mx-1.5 mb-3 rounded-2xl border-l bg-gray-300 p-4 px-4 pl-2.5 dark:bg-neutral-800"
+          }
           style={{
             borderLeftColor: colour || "#d1d5db",
           }}

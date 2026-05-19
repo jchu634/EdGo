@@ -1,0 +1,1 @@
+ALTER TABLE `threads` ADD `is_seen` integer DEFAULT false NOT NULL;
