@@ -10,6 +10,7 @@ export default {
   userInterfaceStyle: "automatic",
   ios: {
     supportsTablet: true,
+    bundleIdentifier: IS_DEV ? "com.edgo.dev" : "com.edgo",
   },
   android: {
     adaptiveIcon: {
@@ -19,7 +20,6 @@ export default {
     },
     predictiveBackGestureEnabled: false,
     package: IS_DEV ? "com.edgo.dev" : "com.edgo",
-    bundleIdentifier: IS_DEV ? "com.edgo.dev" : "com.edgo",
   },
   web: {
     output: "static",
