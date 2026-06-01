@@ -98,6 +98,7 @@ export default {
       },
     ],
     "expo-image",
+    "expo-status-bar",
   ],
   experiments: {
     typedRoutes: true,

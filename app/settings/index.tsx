@@ -14,7 +14,7 @@ import { sendTestNotification } from "@/src/lib/notifications";
 
 import "@/app/global.css";
 import { useMMKVBoolean, useMMKVString } from "react-native-mmkv";
-import DateTimePicker from "@expo/ui/datetimepicker";
+import DateTimePicker from "@expo/ui/community/datetime-picker";
 
 const FREQUENCY_OPTIONS: { value: NotificationFrequency; label: string }[] = [
   { value: "hourly", label: "Every hour" },
