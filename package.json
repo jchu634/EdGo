@@ -44,7 +44,6 @@
     "expo-task-manager": "~56.0.16",
     "expo-web-browser": "~56.0.5",
     "install": "^0.13.0",
-    "npx": "^10.2.2",
     "patch-package": "^8.0.1",
     "phosphor-react-native": "^3.0.4",
     "react": "19.2.3",
