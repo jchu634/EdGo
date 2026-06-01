@@ -6,8 +6,14 @@ import {
 } from "effect/unstable/http";
 
 import { Effect, Schedule, Schema, Duration, Fiber } from "effect";
-import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { View, Text, Pressable, Dimensions, FlatList } from "react-native";
+import { useState, useEffect, useMemo, useCallback } from "react";
+import {
+  View,
+  Text,
+  Pressable,
+  FlatList,
+  useWindowDimensions,
+} from "react-native";
 import { EyeIcon, HeartIcon, ChatsIcon } from "phosphor-react-native";
 import { useUniwind } from "uniwind";
 
@@ -25,8 +31,6 @@ import { useRecentThreads } from "@/src/lib/threads";
 import "@/app/global.css";
 
 const courseColours = ["#16DB93", "#F72585", "#014d3a", "#6A66A3", "#FF7F11"];
-const windowDimensions = Dimensions.get("window");
-const screenDimensions = Dimensions.get("screen");
 
 export default function Index() {
   const { theme } = useUniwind();
@@ -40,10 +44,7 @@ export default function Index() {
     Record<string, UnreadCountEntry> | undefined
   >();
 
-  const [dimensions, setDimensions] = useState({
-    window: windowDimensions,
-    screen: screenDimensions,
-  });
+  const { width: windowWidth } = useWindowDimensions();
 
   const { threads: recentThreads, loading: recentLoading } =
     useRecentThreads(courses);
@@ -152,12 +153,6 @@ export default function Index() {
       });
     const regionFiber = Effect.runFork(loadRegion());
 
-    const subscription = Dimensions.addEventListener(
-      "change",
-      ({ window, screen }) => {
-        setDimensions({ window, screen });
-      },
-    );
     return () => {
       Effect.runFork(Fiber.interrupt(regionFiber));
       subscription?.remove();
@@ -190,7 +185,7 @@ export default function Index() {
         <View className="w-max flex-1 flex-row">
           <View
             className="justify-center"
-            style={{ width: dimensions.window.width * 0.8 - 32 }}
+            style={{ width: windowWidth * 0.8 - 32 }}
           >
             <Text
               className="font-display-bold text-lg text-ellipsis dark:text-slate-100"
@@ -217,7 +212,7 @@ export default function Index() {
         </View>
       </Pressable>
     ),
-    [dimensions.window.width, unreadCounts, router],
+    [windowWidth, unreadCounts, router],
   );
 
   const renderRecentThreadItem = useCallback(
