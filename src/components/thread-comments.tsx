@@ -3,7 +3,7 @@ import { View, Text, Image, Pressable } from "react-native";
 import { Link } from "expo-router";
 import { Schema } from "effect";
 import { XmlNode, renderXmlNode, isXmlNode } from "@/src/lib/renderXML";
-import { settings } from "@/src/lib/storage";
+import { settings, getCachedParsedXml } from "@/src/lib/storage";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -13,7 +13,6 @@ import Animated, {
 import * as Haptics from "expo-haptics";
 import { HeartIcon, CheckCircleIcon } from "phosphor-react-native";
 import { EdComment as CommentSchema } from "@/src/lib/schema";
-import { getCachedParsedXml } from "@/src/lib/storage";
 
 export type CommentType = Schema.Schema.Type<typeof CommentSchema>;
 
@@ -46,7 +45,8 @@ export function AnimatedToggleIcon({
 
   const handlePress = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    scale.value = withSequence(withSpring(1.35), withSpring(1));
+
+    scale.set(withSequence(withSpring(1.35), withSpring(1)));
     onPress();
   };
 
