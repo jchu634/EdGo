@@ -239,7 +239,6 @@ export default function Index() {
           horizontal={true}
           className="mb-3 h-25 px-2 pt-4"
           contentContainerClassName="flex-row gap-x-2"
-          endFillColorClassName="accent-gray-100"
         >
           {courseCategories.map((category) => {
             const isActive = currentCategory === category.name;

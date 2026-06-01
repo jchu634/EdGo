@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo, useCallback } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import {
   View,
   Text,
@@ -12,7 +12,6 @@ import { Effect, Schema } from "effect";
 import { parseXml } from "react-native-turboxml";
 import { XmlNode, renderXmlNode, isXmlNode } from "@/src/lib/renderXML";
 import * as Linking from "expo-linking";
-import { settings } from "@/src/lib/storage";
 
 import {
   EyeIcon,
@@ -39,6 +38,7 @@ import {
   cacheThreadDetail,
   getCachedParsedXml,
   cacheParsedXml,
+  settings,
 } from "@/src/lib/storage";
 import { threadsTable } from "@/src/db/schema";
 import { useDb } from "@/src/providers/dbProvider";
