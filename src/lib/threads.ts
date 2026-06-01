@@ -8,11 +8,15 @@ import {
 import { eq, and, desc, asc, sql } from "drizzle-orm";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { threadsTable, type ThreadUser, type NewThread } from "@/src/db/schema";
+import { threadsTable, type NewThread } from "@/src/db/schema";
 import { useLiveQuery } from "drizzle-orm/expo-sqlite";
 import { useDb } from "@/src/providers/dbProvider";
 import type { Db } from "@/src/providers/dbProvider";
-import { ThreadResponse, ThreadDetailResponse } from "@/src/lib/schema";
+import {
+  ThreadResponse,
+  ThreadDetailResponse,
+  ThreadUser,
+} from "@/src/lib/schema";
 import { getApiKey } from "@/src/lib/storage";
 
 const PAGE_SIZE = 100;
@@ -162,7 +166,7 @@ export function fetchThreadsFromApi(
 
 function toDbThread(
   courseId: number,
-  t: Schema.Schema.Type<typeof import("@/src/lib/schema").ThreadUser>,
+  t: Schema.Schema.Type<typeof ThreadUser>,
 ): NewThread {
   return {
     id: t.id,
@@ -226,9 +230,7 @@ const upsertConflict = {
 export async function syncThreadsToDb(
   db: Db,
   courseId: number,
-  apiThreads: Schema.Schema.Type<
-    typeof import("@/src/lib/schema").ThreadUser
-  >[],
+  apiThreads: Schema.Schema.Type<typeof ThreadUser>[],
 ) {
   const rows = apiThreads.map((t) => toDbThread(courseId, t));
   if (rows.length === 0) return;
