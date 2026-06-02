@@ -19,12 +19,39 @@ import {
 } from "@/src/lib/schema";
 import { getApiKey } from "@/src/lib/storage";
 
+// ---------------------------------------------------------------------------
+// Constants
+
 const PAGE_SIZE = 100;
 const MAX_RETRIES = 5;
+const USE_ASYNC_DRIZZLE = true;
+
+// ---------------------------------------------------------------------------
+// Utilities
 
 function escapeLike(str: string): string {
   return str.replace(/\\/g, "\\\\").replace(/%/g, "\\%").replace(/_/g, "\\_");
 }
+
+const getApiKeyEffect = Effect.tryPromise({
+  try: () => getApiKey(),
+  catch: (error) => new Error(`Failed to read API key: ${String(error)}`),
+}).pipe(
+  Effect.flatMap((apiKey) =>
+    apiKey ? Effect.succeed(apiKey) : Effect.fail(new Error("Missing API Key")),
+  ),
+);
+
+function interruptFiber(
+  fiberRef: React.MutableRefObject<Fiber.Fiber<any, any> | null>,
+) {
+  if (!fiberRef.current) return;
+  Effect.runFork(Fiber.interrupt(fiberRef.current));
+  fiberRef.current = null;
+}
+
+// ---------------------------------------------------------------------------
+// API calls
 
 export function fetchThreadDetail(courseId: number, threadNumber: number) {
   return Effect.gen(function* () {
@@ -41,6 +68,7 @@ export function fetchThreadDetail(courseId: number, threadNumber: number) {
     );
   }).pipe(Effect.provide(FetchHttpClient.layer));
 }
+
 export function sendThreadViewed(threadNumber: number) {
   return Effect.gen(function* () {
     const apiKey = yield* getApiKeyEffect;
@@ -72,6 +100,64 @@ function threadPostWithRetry(url: string) {
     Effect.provide(FetchHttpClient.layer),
   );
 }
+
+function searchThreads(
+  courseId: number,
+  query: string,
+  options?: { sort?: string; limit?: number },
+) {
+  const { sort = "relevance", limit = 20 } = options ?? {};
+
+  const params = new URLSearchParams({
+    query,
+    sort,
+    limit: String(limit),
+  });
+
+  return Effect.gen(function* () {
+    const apiKey = yield* getApiKeyEffect;
+    const client = yield* HttpClient.HttpClient;
+
+    const request = HttpClientRequest.get(
+      `https://edstem.org/api/courses/${courseId}/threads/search?${params.toString()}`,
+    ).pipe(HttpClientRequest.bearerToken(apiKey), HttpClientRequest.acceptJson);
+
+    return yield* client
+      .execute(request)
+      .pipe(Effect.flatMap(HttpClientResponse.schemaBodyJson(ThreadResponse)));
+  }).pipe(Effect.provide(FetchHttpClient.layer));
+}
+
+export function fetchThreadsFromApi(
+  courseId: number,
+  options?: {
+    category?: string;
+    offset?: number;
+    sort?: string;
+    limit?: number;
+  },
+) {
+  const { category, offset, sort = "new", limit = PAGE_SIZE } = options ?? {};
+
+  return Effect.gen(function* () {
+    const apiKey = yield* getApiKeyEffect;
+    const client = yield* HttpClient.HttpClient;
+
+    const params = new URLSearchParams({ sort, limit: String(limit) });
+    if (category) params.set("category", category);
+    if (offset !== undefined) params.set("offset", String(offset));
+
+    const request = HttpClientRequest.get(
+      `https://edstem.org/api/courses/${courseId}/threads?${params.toString()}`,
+    ).pipe(HttpClientRequest.bearerToken(apiKey), HttpClientRequest.acceptJson);
+
+    const response = yield* client.execute(request);
+    return yield* HttpClientResponse.schemaBodyJson(ThreadResponse)(response);
+  }).pipe(Effect.provide(FetchHttpClient.layer));
+}
+
+// ---------------------------------------------------------------------------
+// Thread actions (star, vote)
 
 export function starThread(threadId: number) {
   return threadPostWithRetry(`https://edstem.org/api/threads/${threadId}/star`);
@@ -107,105 +193,8 @@ export function unvoteComment(commentId: number) {
   );
 }
 
-const getApiKeyEffect = Effect.tryPromise({
-  try: () => getApiKey(),
-  catch: (error) => new Error(`Failed to read API key: ${String(error)}`),
-}).pipe(
-  Effect.flatMap((apiKey) =>
-    apiKey ? Effect.succeed(apiKey) : Effect.fail(new Error("Missing API Key")),
-  ),
-);
-
-function searchThreads(
-  courseId: number,
-  query: string,
-  options?: { sort?: string; limit?: number },
-) {
-  const { sort = "relevance", limit = 20 } = options ?? {};
-
-  const params = new URLSearchParams({
-    query,
-    sort,
-    limit: String(limit),
-  });
-
-  return Effect.gen(function* () {
-    const apiKey = yield* getApiKeyEffect;
-    const client = yield* HttpClient.HttpClient;
-
-    const request = HttpClientRequest.get(
-      `https://edstem.org/api/courses/${courseId}/threads/search?${params.toString()}`,
-    ).pipe(HttpClientRequest.bearerToken(apiKey), HttpClientRequest.acceptJson);
-
-    return yield* client
-      .execute(request)
-      .pipe(Effect.flatMap(HttpClientResponse.schemaBodyJson(ThreadResponse)));
-  }).pipe(Effect.provide(FetchHttpClient.layer));
-}
-
-export const searchAndSyncThreads = (
-  db: Db,
-  courseId: number,
-  query: string,
-  options?: { sort?: string; limit?: number },
-) =>
-  searchThreads(courseId, query, options).pipe(
-    Effect.flatMap((response) =>
-      Effect.tryPromise({
-        try: () => syncThreadsToDb(db, courseId, Array.from(response.threads)),
-        catch: (error) =>
-          new Error("Failed to sync threads to DB", { cause: error }),
-      }).pipe(Effect.as(response)),
-    ),
-  );
-
-export function fetchThreadsFromApi(
-  courseId: number,
-  options?: {
-    category?: string;
-    offset?: number;
-    sort?: string;
-    limit?: number;
-  },
-) {
-  const { category, offset, sort = "new", limit = PAGE_SIZE } = options ?? {};
-
-  return Effect.gen(function* () {
-    const apiKey = yield* getApiKeyEffect;
-    const client = yield* HttpClient.HttpClient;
-
-    const params = new URLSearchParams({ sort, limit: String(limit) });
-    if (category) params.set("category", category);
-    if (offset !== undefined) params.set("offset", String(offset));
-
-    const request = HttpClientRequest.get(
-      `https://edstem.org/api/courses/${courseId}/threads?${params.toString()}`,
-    ).pipe(HttpClientRequest.bearerToken(apiKey), HttpClientRequest.acceptJson);
-
-    const response = yield* client.execute(request);
-    return yield* HttpClientResponse.schemaBodyJson(ThreadResponse)(response);
-  }).pipe(Effect.provide(FetchHttpClient.layer));
-}
-
-export const fetchAndSyncThreads = (
-  db: Db,
-  courseId: number,
-  options?: {
-    category?: string;
-    offset?: number;
-    sort?: string;
-    limit?: number;
-  },
-) =>
-  fetchThreadsFromApi(courseId, options).pipe(
-    Effect.flatMap((response) =>
-      Effect.tryPromise({
-        try: () => syncThreadsToDb(db, courseId, Array.from(response.threads)),
-        catch: (error) =>
-          new Error("Failed to sync threads to DB", { cause: error }),
-      }).pipe(Effect.as(response)),
-    ),
-  );
+// ---------------------------------------------------------------------------
+// Data transformation & DB sync
 
 function toDbThread(
   courseId: number,
@@ -239,8 +228,6 @@ function toDbThread(
     isVoted: (t.vote ?? 0) === 1,
   };
 }
-
-const USE_ASYNC_DRIZZLE = true;
 
 const upsertConflict = {
   target: threadsTable.id,
@@ -297,54 +284,44 @@ export async function syncThreadsToDb(
   }
 }
 
-export function useThreadsDbQuery(courseId: number, category?: string) {
-  console.debug("[useThreadsDbQuery] called", { courseId, category });
-  const db = useDb();
+// ---------------------------------------------------------------------------
+// Composed sync functions (API + DB)
 
-  const conditions = [eq(threadsTable.courseId, courseId)];
-  if (category) conditions.push(eq(threadsTable.category, category));
-
-  const {
-    data: threads,
-    error: queryError,
-    updatedAt,
-  } = useLiveQuery(
-    db
-      .select()
-      .from(threadsTable)
-      .where(conditions.length === 1 ? conditions[0] : and(...conditions))
-      .orderBy(desc(threadsTable.isPinned), desc(threadsTable.id)),
-    [courseId, category],
+export const searchAndSyncThreads = (
+  db: Db,
+  courseId: number,
+  query: string,
+  options?: { sort?: string; limit?: number },
+) =>
+  searchThreads(courseId, query, options).pipe(
+    Effect.flatMap((response) =>
+      Effect.tryPromise({
+        try: () => syncThreadsToDb(db, courseId, Array.from(response.threads)),
+        catch: (error) =>
+          new Error("Failed to sync threads to DB", { cause: error }),
+      }).pipe(Effect.as(response)),
+    ),
   );
 
-  const allThreads = threads ?? [];
-  const pinnedThreads = allThreads.filter((t) => t.isPinned);
-  const regularThreads = allThreads.filter((t) => !t.isPinned);
-
-  console.debug("[useThreadsDbQuery] render", {
-    courseId,
-    totalThreads: allThreads.length,
-    pinnedCount: pinnedThreads.length,
-    regularCount: regularThreads.length,
-    queryError: queryError?.message ?? null,
-  });
-
-  return {
-    threads: allThreads,
-    pinnedThreads,
-    regularThreads,
-    queryError,
-    updatedAt,
-  };
-}
-
-function interruptFiber(
-  fiberRef: React.MutableRefObject<Fiber.Fiber<any, any> | null>,
-) {
-  if (!fiberRef.current) return;
-  Effect.runFork(Fiber.interrupt(fiberRef.current));
-  fiberRef.current = null;
-}
+export const fetchAndSyncThreads = (
+  db: Db,
+  courseId: number,
+  options?: {
+    category?: string;
+    offset?: number;
+    sort?: string;
+    limit?: number;
+  },
+) =>
+  fetchThreadsFromApi(courseId, options).pipe(
+    Effect.flatMap((response) =>
+      Effect.tryPromise({
+        try: () => syncThreadsToDb(db, courseId, Array.from(response.threads)),
+        catch: (error) =>
+          new Error("Failed to sync threads to DB", { cause: error }),
+      }).pipe(Effect.as(response)),
+    ),
+  );
 
 interface SyncPageResult {
   threadCount: number;
@@ -384,6 +361,50 @@ function syncPageProgram(
       Effect.logError("[syncPageProgram] failed to sync threads", err),
     ),
   );
+}
+
+// ---------------------------------------------------------------------------
+// React hooks
+
+export function useThreadsDbQuery(courseId: number, category?: string) {
+  console.debug("[useThreadsDbQuery] called", { courseId, category });
+  const db = useDb();
+
+  const conditions = [eq(threadsTable.courseId, courseId)];
+  if (category) conditions.push(eq(threadsTable.category, category));
+
+  const {
+    data: threads,
+    error: queryError,
+    updatedAt,
+  } = useLiveQuery(
+    db
+      .select()
+      .from(threadsTable)
+      .where(conditions.length === 1 ? conditions[0] : and(...conditions))
+      .orderBy(desc(threadsTable.isPinned), desc(threadsTable.id)),
+    [courseId, category],
+  );
+
+  const allThreads = threads ?? [];
+  const pinnedThreads = allThreads.filter((t) => t.isPinned);
+  const regularThreads = allThreads.filter((t) => !t.isPinned);
+
+  console.debug("[useThreadsDbQuery] render", {
+    courseId,
+    totalThreads: allThreads.length,
+    pinnedCount: pinnedThreads.length,
+    regularCount: regularThreads.length,
+    queryError: queryError?.message ?? null,
+  });
+
+  return {
+    threads: allThreads,
+    pinnedThreads,
+    regularThreads,
+    queryError,
+    updatedAt,
+  };
 }
 
 type SyncMode = "initial" | "refresh" | "page";
