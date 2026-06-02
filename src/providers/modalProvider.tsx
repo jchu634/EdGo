@@ -1,6 +1,5 @@
 import React, {
   createContext,
-  useCallback,
   useContext,
   useState,
   useEffect,
@@ -22,11 +21,11 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { eq, and, desc, asc, sql } from "drizzle-orm";
 import { useLiveQuery } from "drizzle-orm/expo-sqlite";
-import { Effect } from "effect";
+import { Effect, Fiber } from "effect";
 
 import { useDb } from "@/src/providers/dbProvider";
 import { threadsTable, type ThreadUser } from "@/src/db/schema";
-import { searchThreadsFromApi, syncThreadsToDb } from "@/src/lib/threads";
+import { searchAndSyncThreads } from "@/src/lib/threads";
 
 function escapeLike(str: string): string {
   return str.replace(/\\/g, "\\\\").replace(/%/g, "\\%").replace(/_/g, "\\_");
@@ -98,15 +97,63 @@ function SearchModal({
   );
   const [sort, setSort] = useState(contextSort ?? "relevance");
 
+  const sortTypes = ["relevance", "newest", "oldest"];
+
   const orderByClause =
     sort === "oldest"
       ? [desc(threadsTable.isPinned), asc(threadsTable.id)]
       : [desc(threadsTable.isPinned), desc(threadsTable.id)];
 
   const [isSearchingApi, setIsSearchingApi] = useState(false);
+  const fiberRef = useRef<Fiber.Fiber<any, any> | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Local DB results — always queried, gives instant results
+  function triggerApiSearch(searchQuery: string, sortOverride?: string) {
+    const effectiveSort = sortOverride ?? sort;
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+      debounceRef.current = null;
+    }
+    if (fiberRef.current) {
+      Effect.runFork(Fiber.interrupt(fiberRef.current));
+      fiberRef.current = null;
+    }
+
+    const trimmed = searchQuery.trim();
+    if (trimmed.length === 0) {
+      setIsSearchingApi(false);
+      return;
+    }
+
+    setIsSearchingApi(true);
+    debounceRef.current = setTimeout(() => {
+      debounceRef.current = null;
+
+      const program = searchAndSyncThreads(db, courseId, trimmed, {
+        sort: effectiveSort,
+      }).pipe(
+        Effect.tapError((err) =>
+          Effect.sync(() => {
+            console.error("Search failed:", err);
+          }),
+        ),
+        Effect.ensuring(
+          Effect.sync(() => {
+            setIsSearchingApi(false);
+          }),
+        ),
+      );
+      fiberRef.current = Effect.runFork(program);
+    }, 300);
+  }
+
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      if (fiberRef.current) Effect.runFork(Fiber.interrupt(fiberRef.current));
+    };
+  }, []);
+
   const { data: localResults } = useLiveQuery(
     query.trim().length > 0
       ? db
@@ -129,61 +176,22 @@ function SearchModal({
     [courseId, query, sort],
   );
 
-  // Debounced API search — syncs results to local DB so useLiveQuery picks them up
-  useEffect(() => {
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-
-    if (query.trim().length === 0) {
-      setIsSearchingApi(false);
-      return;
-    }
-
-    let isCurrent = true;
-
-    setIsSearchingApi(true);
-    debounceRef.current = setTimeout(async () => {
-      try {
-        const response = await Effect.runPromise(
-          searchThreadsFromApi(courseId, query.trim(), { sort }),
-        );
-        if (!isCurrent) return;
-        if (response?.threads?.length) {
-          await syncThreadsToDb(db, courseId, response.threads as any[]);
-        }
-      } catch (err) {
-        console.error("[search] API search failed:", err);
-      } finally {
-        if (isCurrent) {
-          setIsSearchingApi(false);
-        }
-      }
-    }, 400);
-
-    return () => {
-      isCurrent = false;
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-    };
-  }, [courseId, query, sort, db]);
-
   const results = localResults ?? [];
 
-  const handlePressThread = useCallback(
-    (thread: ThreadUser) => {
-      onClose();
-      router.push(`/courses/${courseId}/${thread.number}`);
-    },
-    [courseId, onClose, router],
-  );
+  function handlePressThread(thread: ThreadUser) {
+    onClose();
+    router.push(`/courses/${courseId}/${thread.number}`);
+  }
 
-  const handlePersistSearch = useCallback(() => {
+  function handlePersistSearch() {
     if (query.trim()) {
       setContextQuery(courseId, query.trim(), sort);
     }
     onClose();
-  }, [query, courseId, setContextQuery, onClose, sort]);
+  }
 
-  const renderThread = useCallback(
-    ({ item }: { item: ThreadUser }) => (
+  function renderThread({ item }: { item: ThreadUser }) {
+    return (
       <Pressable
         onPress={() => handlePressThread(item)}
         className="border-b border-gray-100 px-4 py-3 active:bg-gray-50 dark:border-neutral-700 dark:active:bg-neutral-800"
@@ -198,9 +206,8 @@ function SearchModal({
           #{item.number}
         </Text>
       </Pressable>
-    ),
-    [handlePressThread],
-  );
+    );
+  }
 
   return (
     <Modal
@@ -238,7 +245,10 @@ function SearchModal({
           >
             <TextInput
               value={query}
-              onChangeText={setQuery}
+              onChangeText={(text) => {
+                setQuery(text);
+                triggerApiSearch(text);
+              }}
               placeholder="Search threads..."
               placeholderTextColor="#9ca3af"
               className="font-display flex-1 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm text-gray-800 dark:border-neutral-700 dark:bg-neutral-800 dark:text-slate-100"
@@ -262,60 +272,24 @@ function SearchModal({
             <Text className="font-display-bold dark:text-slate-100">
               Sort By:{" "}
             </Text>
-            <Pressable
-              className={`rounded-lg px-2 ${
-                sort === "relevance"
-                  ? "border border-black dark:border-neutral-50"
-                  : "bg-gray-200 dark:bg-neutral-700"
-              }`}
-              onPress={() => setSort("relevance")}
-            >
-              <Text
-                className={
-                  sort === "relevance"
-                    ? "font-display dark:text-slate-100"
-                    : "font-display dark:text-slate-100"
-                }
+            {sortTypes.map((s) => (
+              <Pressable
+                key={s}
+                className={`rounded-lg px-2 ${
+                  sort === s
+                    ? "border border-black dark:border-neutral-50"
+                    : "bg-gray-200 dark:bg-neutral-700"
+                }`}
+                onPress={() => {
+                  setSort(s);
+                  if (query.trim().length > 0) triggerApiSearch(query, s);
+                }}
               >
-                Relevance
-              </Text>
-            </Pressable>
-            <Pressable
-              className={`rounded-lg px-2 ${
-                sort === "newest"
-                  ? "border border-black dark:border-neutral-50"
-                  : "bg-gray-200 dark:bg-neutral-700"
-              }`}
-              onPress={() => setSort("newest")}
-            >
-              <Text
-                className={
-                  sort === "newest"
-                    ? "font-display dark:text-slate-100"
-                    : "font-display dark:text-slate-100"
-                }
-              >
-                Newest
-              </Text>
-            </Pressable>
-            <Pressable
-              className={`rounded-lg px-2 ${
-                sort === "oldest"
-                  ? "border border-black dark:border-neutral-50"
-                  : "bg-gray-200 dark:bg-neutral-700"
-              }`}
-              onPress={() => setSort("oldest")}
-            >
-              <Text
-                className={
-                  sort === "oldest"
-                    ? "font-display dark:text-slate-100"
-                    : "font-display dark:text-slate-100"
-                }
-              >
-                Oldest
-              </Text>
-            </Pressable>
+                <Text className="font-display dark:text-slate-100">
+                  {s.charAt(0).toUpperCase() + s.slice(1)}
+                </Text>
+              </Pressable>
+            ))}
           </View>
 
           {/* Results list */}
@@ -351,38 +325,30 @@ function SearchModal({
 export function ModalProvider({ children }: { children: React.ReactNode }) {
   const { width, height } = useWindowDimensions();
 
-  // Link-text modal state
   const [activeHref, setActiveHref] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Search modal state
   const [searchCourseId, setSearchCourseId] = useState<number | null>(null);
 
-  // Search query state (persisted for threads page)
   const [searchQuery, setSearchQueryState] = useState<string | null>(null);
   const [searchQueryCourseId, setSearchQueryCourseId] = useState<number | null>(
     null,
   );
   const [searchSort, setSearchSort] = useState<string>("relevance");
 
-  const setSearchQuery = useCallback(
-    (courseId: number, q: string | null, sort?: string) => {
-      setSearchQueryState(q);
-      setSearchQueryCourseId(q ? courseId : null);
-      if (sort) setSearchSort(sort);
-    },
-    [],
-  );
+  function setSearchQuery(courseId: number, q: string | null, sort?: string) {
+    setSearchQueryState(q);
+    setSearchQueryCourseId(q ? courseId : null);
+    if (sort) setSearchSort(sort);
+  }
 
-  const clearSearch = useCallback(() => {
+  function clearSearch() {
     setSearchQueryState(null);
     setSearchQueryCourseId(null);
-  }, []);
+  }
 
-  // Link-text helpers
-
-  const openExternalUrl = useCallback(async (url: string) => {
+  async function openExternalUrl(url: string) {
     const trimmed = url.trim().toLowerCase();
     if (!trimmed.startsWith("http://") && !trimmed.startsWith("https://"))
       return;
@@ -394,34 +360,27 @@ export function ModalProvider({ children }: { children: React.ReactNode }) {
     } catch (err) {
       console.error("Failed to open URL:", err);
     }
-  }, []);
+  }
 
-  const openLink = useCallback(
-    (url: string) => {
-      openExternalUrl(url);
-    },
-    [openExternalUrl],
-  );
-
-  const showMenu = useCallback((url: string) => {
+  function showMenu(url: string) {
     if (copyTimeoutRef.current) {
       clearTimeout(copyTimeoutRef.current);
       copyTimeoutRef.current = null;
     }
     setActiveHref(url);
     setCopied(false);
-  }, []);
+  }
 
-  const dismissMenu = useCallback(() => {
+  function dismissMenu() {
     if (copyTimeoutRef.current) {
       clearTimeout(copyTimeoutRef.current);
       copyTimeoutRef.current = null;
     }
     setActiveHref(null);
     setCopied(false);
-  }, []);
+  }
 
-  const handleCopy = useCallback(async () => {
+  async function handleCopy() {
     if (!activeHref) return;
     await Clipboard.setStringAsync(activeHref);
     setCopied(true);
@@ -430,14 +389,14 @@ export function ModalProvider({ children }: { children: React.ReactNode }) {
       setCopied(false);
       copyTimeoutRef.current = null;
     }, 800);
-  }, [activeHref]);
+  }
 
-  const handleOpen = useCallback(() => {
+  function handleOpen() {
     if (!activeHref) return;
     const url = activeHref;
     setActiveHref(null);
     openExternalUrl(url);
-  }, [activeHref, openExternalUrl]);
+  }
 
   useEffect(() => {
     return () => {
@@ -445,17 +404,16 @@ export function ModalProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  // Search modal helpers
-  const openSearch = useCallback((courseId: number) => {
+  function openSearch(courseId: number) {
     setSearchCourseId(courseId);
-  }, []);
+  }
 
-  const closeSearch = useCallback(() => {
+  function closeSearch() {
     setSearchCourseId(null);
-  }, []);
+  }
 
   return (
-    <LinkTextContext.Provider value={{ openLink, showMenu }}>
+    <LinkTextContext.Provider value={{ openLink: openExternalUrl, showMenu }}>
       <SearchModalContext.Provider value={{ openSearch }}>
         <SearchQueryContext.Provider
           value={{

@@ -128,34 +128,47 @@ export default function Index() {
     // Load cached courses from MMKV for instant display
     const cached = getCachedCourses();
     if (cached) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- cached data for instant display
       setCourses(cached);
     }
 
-    Effect.runPromise(fetchCourses())
-      .then((response) => {
-        const mappedCourses = response.courses.map((c) => c.course);
-        mappedCourses.sort();
-        setCourses(mappedCourses);
-        cacheCourses(mappedCourses);
-
-        // Fetch unread counts via WebSocket (non-blocking)
-        getUnreadCounts()
-          .then((counts) => {
-            // console.log("[stream] Unread counts:", counts);
-            setUnreadCounts(counts.data);
-          })
-          .catch((err) => console.error("[stream] Error:", err));
-
-        return;
-      })
-      .catch((error) => {
-        console.error("error", error);
-      });
+    const coursesFiber = Effect.runFork(
+      fetchCourses().pipe(
+        Effect.flatMap((response) =>
+          Effect.sync(() => {
+            const mappedCourses = response.courses.map((c) => c.course);
+            mappedCourses.sort((a, b) => a.id - b.id);
+            setCourses(mappedCourses);
+            setCourses(mappedCourses);
+            cacheCourses(mappedCourses);
+          }),
+        ),
+        // Fetch unread counts via WebSocket
+        Effect.flatMap(() =>
+          Effect.tryPromise({
+            try: () => getUnreadCounts(),
+            catch: (err) => new Error(String(err)),
+          }).pipe(
+            Effect.flatMap((counts) =>
+              Effect.sync(() => setUnreadCounts(counts.data)),
+            ),
+            Effect.tapError((err) =>
+              Effect.sync(() => console.error("[stream] Error:", err)),
+            ),
+            Effect.catch(() => Effect.void),
+          ),
+        ),
+        Effect.tapError((error) =>
+          Effect.sync(() => console.error("error", error)),
+        ),
+        Effect.catch(() => Effect.void),
+      ),
+    );
     const regionFiber = Effect.runFork(loadRegion());
 
     return () => {
+      Effect.runFork(Fiber.interrupt(coursesFiber));
       Effect.runFork(Fiber.interrupt(regionFiber));
-      subscription?.remove();
     };
   }, []);
 

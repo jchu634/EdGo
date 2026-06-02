@@ -22,7 +22,7 @@ import { useUniwind } from "uniwind";
 
 import { CourseCategory } from "@/src/lib/schema";
 import { getCachedCourseCategory } from "@/src/lib/storage";
-import { useCourseThreads, useSearchResults } from "@/src/lib/threads";
+import { useThreadsDbQuery, useThreadsSync, useSearchDbQuery, useSearchSync } from "@/src/lib/threads";
 import { type ThreadUser } from "@/src/db/schema";
 import { useSearchQuery } from "@/src/providers/modalProvider";
 
@@ -66,11 +66,14 @@ export default function Index() {
   const {
     pinnedThreads,
     regularThreads,
+  } = useThreadsDbQuery(courseIdNum, currentCategory);
+
+  const {
     loading,
     refreshing,
     fetchMore,
     refresh,
-  } = useCourseThreads(courseIdNum, currentCategory);
+  } = useThreadsSync(courseIdNum, currentCategory);
 
   const { searchQuery, searchCourseId, searchSort, clearSearch } =
     useSearchQuery();
@@ -78,7 +81,12 @@ export default function Index() {
     searchQuery !== null &&
     searchQuery.trim().length > 0 &&
     searchCourseId === courseIdNum;
-  const { searchResults, isSearching } = useSearchResults(
+  const { searchResults } = useSearchDbQuery(
+    courseIdNum,
+    searchQuery ?? "",
+    searchSort,
+  );
+  const { isSearching } = useSearchSync(
     courseIdNum,
     isSearchMode ? { query: searchQuery, sort: searchSort } : null,
   );
