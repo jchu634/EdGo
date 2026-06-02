@@ -495,26 +495,22 @@ export function useThreadsSync(courseId: number, category?: string) {
   };
 }
 
-export function useSearchResults(
+export function useSearchDbQuery(
   courseId: number,
-  params: { query: string; sort: string } | null,
+  query: string,
+  sort: string,
 ) {
-  console.debug("[useSearchResults] called", { courseId, params });
+  console.debug("[useSearchDbQuery] called", { courseId, query, sort });
   const db = useDb();
-  const [isSearching, setIsSearching] = useState(false);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const fiberRef = useRef<Fiber.Fiber<any, any> | null>(null);
 
-  const trimmed = (params?.query ?? "").trim();
-  const sort = params?.sort ?? "relevance";
-  const isActive = trimmed.length > 0;
+  const trimmed = query.trim();
 
   const orderByClause =
     sort === "oldest"
       ? [desc(threadsTable.isPinned), asc(threadsTable.id)]
       : [desc(threadsTable.isPinned), desc(threadsTable.id)];
 
-  const { data: searchResults } = useLiveQuery(
+  const { data: searchResults, error: queryError, updatedAt } = useLiveQuery(
     db
       .select()
       .from(threadsTable)
@@ -529,6 +525,34 @@ export function useSearchResults(
     [courseId, trimmed, sort],
   );
 
+  console.debug("[useSearchDbQuery] render", {
+    courseId,
+    query: trimmed,
+    resultCount: (searchResults ?? []).length,
+    queryError: queryError?.message ?? null,
+  });
+
+  return {
+    searchResults: searchResults ?? [],
+    queryError,
+    updatedAt,
+  };
+}
+
+export function useSearchSync(
+  courseId: number,
+  params: { query: string; sort: string } | null,
+) {
+  console.debug("[useSearchSync] called", { courseId, params });
+  const db = useDb();
+  const [isSearching, setIsSearching] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const fiberRef = useRef<Fiber.Fiber<any, any> | null>(null);
+
+  const trimmed = (params?.query ?? "").trim();
+  const sort = params?.sort ?? "relevance";
+  const isActive = trimmed.length > 0;
+
   useEffect(() => {
     if (debounceRef.current) {
       clearTimeout(debounceRef.current);
@@ -541,17 +565,17 @@ export function useSearchResults(
       return;
     }
 
-    console.debug("[useSearchResults] debouncing search", { trimmed, sort });
+    console.debug("[useSearchSync] debouncing search", { trimmed, sort });
     setIsSearching(true);
     debounceRef.current = setTimeout(() => {
       debounceRef.current = null;
-      console.debug("[useSearchResults] executing search", { trimmed, sort });
+      console.debug("[useSearchSync] executing search", { trimmed, sort });
 
       const program = searchAndSyncThreads(db, courseId, trimmed, {
         sort,
       }).pipe(
         Effect.tapError((err) =>
-          Effect.logError("[useSearchResults] API search failed:", err),
+          Effect.logError("[useSearchSync] API search failed:", err),
         ),
         Effect.ensuring(
           Effect.sync(() => {
@@ -568,17 +592,14 @@ export function useSearchResults(
     };
   }, [courseId, trimmed, sort, db, isActive]);
 
-  const results = isActive ? (searchResults ?? []) : [];
-  console.debug("[useSearchResults] render", {
+  console.debug("[useSearchSync] render", {
     courseId,
     query: trimmed,
     isActive,
     isSearching: isActive && isSearching,
-    resultCount: results.length,
   });
 
   return {
-    searchResults: results,
     isSearching: isActive && isSearching,
   };
 }
