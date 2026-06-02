@@ -108,7 +108,8 @@ function SearchModal({
   const fiberRef = useRef<Fiber.Fiber<any, any> | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  function triggerApiSearch(searchQuery: string) {
+  function triggerApiSearch(searchQuery: string, sortOverride?: string) {
+    const effectiveSort = sortOverride ?? sort;
     if (debounceRef.current) {
       clearTimeout(debounceRef.current);
       debounceRef.current = null;
@@ -129,7 +130,7 @@ function SearchModal({
       debounceRef.current = null;
 
       const program = searchAndSyncThreads(db, courseId, trimmed, {
-        sort,
+        sort: effectiveSort,
       }).pipe(
         Effect.tapError((err) =>
           Effect.sync(() => {
@@ -281,7 +282,7 @@ function SearchModal({
                 }`}
                 onPress={() => {
                   setSort(s);
-                  if (query.trim().length > 0) triggerApiSearch(query);
+                  if (query.trim().length > 0) triggerApiSearch(query, s);
                 }}
               >
                 <Text className="font-display dark:text-slate-100">
