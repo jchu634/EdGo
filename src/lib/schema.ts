@@ -81,7 +81,7 @@ const edCommentFields = {
 };
 
 interface EdComment extends Schema.Struct.Type<typeof edCommentFields> {
-  readonly comments: ReadonlyArray<EdComment>;
+  readonly comments: readonly EdComment[];
 }
 
 const EdComment = Schema.Struct({
