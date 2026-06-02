@@ -155,7 +155,6 @@ export default function Index() {
 
     return () => {
       Effect.runFork(Fiber.interrupt(regionFiber));
-      subscription?.remove();
     };
   }, []);
 
