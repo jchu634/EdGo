@@ -108,32 +108,65 @@ export function unvoteComment(commentId: number) {
   );
 }
 
-export function searchThreadsFromApi(
+const getApiKeyEffect = Effect.tryPromise({
+  try: () => getApiKey(),
+  catch: (error) => new Error(`Failed to read API key: ${String(error)}`),
+}).pipe(
+  Effect.flatMap((apiKey) =>
+    apiKey ? Effect.succeed(apiKey) : Effect.fail(new Error("Missing API Key")),
+  ),
+);
+
+function searchThreadsFromApi(
   courseId: number,
   query: string,
-  options?: { sort: string; limit?: number },
+  options?: { sort?: string; limit?: number },
 ) {
   const { sort = "relevance", limit = 20 } = options ?? {};
-  return Effect.gen(function* () {
-    const apiKey = yield* Effect.promise(() => getApiKey());
-    if (!apiKey) {
-      return yield* Effect.fail(new Error("Missing API Key"));
-    }
-    const client = yield* HttpClient.HttpClient;
-    const params = new URLSearchParams({
-      query,
-      sort,
-      limit: String(limit),
-    });
 
-    const request = HttpClientRequest.get(
-      `https://edstem.org/api/courses/${courseId}/threads/search?${params.toString()}`,
-    ).pipe(HttpClientRequest.bearerToken(apiKey), HttpClientRequest.acceptJson);
-    const response = yield* client.execute(request);
+  const params = new URLSearchParams({
+    query,
+    sort,
+    limit: String(limit),
+  });
 
-    return yield* HttpClientResponse.schemaBodyJson(ThreadResponse)(response);
-  }).pipe(Effect.provide(FetchHttpClient.layer));
+  return getApiKeyEffect.pipe(
+    Effect.flatMap((apiKey) => {
+      const request = HttpClientRequest.get(
+        `https://edstem.org/api/courses/${courseId}/threads/search?${params.toString()}`,
+      ).pipe(
+        HttpClientRequest.bearerToken(apiKey),
+        HttpClientRequest.acceptJson,
+      );
+
+      return HttpClient.HttpClient.pipe(
+        Effect.flatMap((client) => client.execute(request)),
+        Effect.flatMap(HttpClientResponse.schemaBodyJson(ThreadResponse)),
+      );
+    }),
+    Effect.provide(FetchHttpClient.layer),
+  );
 }
+export const searchAndSyncThreads = (
+  db: Db,
+  courseId: number,
+  query: string,
+  options?: { sort?: string; limit?: number },
+) =>
+  searchThreadsFromApi(courseId, query, options).pipe(
+    Effect.tap((response) =>
+      Effect.tryPromise({
+        try: () => (
+          console.log(
+            "[searchAndSyncThreadsFromApi] syncing search results to DB",
+          ),
+          syncThreadsToDb(db, courseId, response.threads as any[])
+        ),
+        catch: (error) =>
+          new Error(`Failed to sync threads to DB: ${String(error)}`),
+      }),
+    ),
+  );
 
 export function fetchThreadsFromApi(
   courseId: number,
