@@ -84,6 +84,7 @@ interface EdComment extends Schema.Struct.Type<typeof edCommentFields> {
   readonly comments: readonly EdComment[];
 }
 
+// eslint-disable-next-line @typescript-eslint/no-redeclare
 const EdComment = Schema.Struct({
   ...edCommentFields,
   comments: Schema.Array(
