@@ -49,16 +49,16 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-native": "0.85.3",
-    "react-native-gesture-handler": "~3.0.0",
+    "react-native-gesture-handler": "~2.31.1",
     "react-native-mmkv": "^4.3.1",
     "react-native-nitro-modules": "^0.35.4",
-    "react-native-reanimated": "4.4.0",
-    "react-native-safe-area-context": "~5.8.0",
+    "react-native-reanimated": "4.3.1",
+    "react-native-safe-area-context": "~5.7.0",
     "react-native-screens": "4.25.2",
     "react-native-svg": "15.15.4",
     "react-native-turboxml": "^1.0.3",
     "react-native-web": "~0.21.0",
-    "react-native-worklets": "0.9.1",
+    "react-native-worklets": "0.8.3",
     "tailwind-merge": "^3.5.0",
     "tailwindcss": "^4.2.2",
     "uniwind": "^1.6.2"
@@ -74,5 +74,6 @@
     "prettier-plugin-tailwindcss": "^0.7.3",
     "typescript": "~6.0.3"
   },
-  "private": true
+  "private": true,
+  "packageManager": "pnpm@11.5.1+sha512.93f7b57422ea7068257235b4c16eb60762eb68e1dc23723199cc739043ea9be2c4143274a399d8c6defa2b1176226d9ca1c4b63482d6200c1a8fbaa78c1d1485"
 }
