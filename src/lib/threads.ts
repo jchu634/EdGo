@@ -328,7 +328,7 @@ export function useCourseThreads(courseId: number, category?: string) {
     offsetRef.current = 0;
     setEndOfPages(false);
     fetchAndSync(0);
-  }, [fetchAndSync]);
+  }, []);
 
   const refresh = useCallback(async () => {
     console.log("[useCourseThreads] refresh");
