@@ -128,7 +128,7 @@ export default function Index() {
     // Load cached courses from MMKV for instant display
     const cached = getCachedCourses();
     if (cached) {
-      /* eslint-disable react-hooks/set-state-in-effect -- cached data for instant display */
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- cached data for instant display
       setCourses(cached);
     }
 

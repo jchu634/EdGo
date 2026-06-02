@@ -457,10 +457,10 @@ export function useThreadsSync(courseId: number, category?: string) {
   useEffect(() => {
     console.debug("[useThreadsSync] initial fetch effect");
     offsetRef.current = 0;
-    /* eslint-disable react-hooks/set-state-in-effect -- It is only run on initial mount */
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- It is only run on initial mount
     fetchAndSync("initial", 0);
     return () => interruptFiber(fiberRef);
-    /* eslint-disable react-hooks/exhaustive-deps -- It is meant to only run on initial mount */
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- It is meant to only run on initial mount
   }, []);
 
   function refresh() {
@@ -510,7 +510,11 @@ export function useSearchDbQuery(
       ? [desc(threadsTable.isPinned), asc(threadsTable.id)]
       : [desc(threadsTable.isPinned), desc(threadsTable.id)];
 
-  const { data: searchResults, error: queryError, updatedAt } = useLiveQuery(
+  const {
+    data: searchResults,
+    error: queryError,
+    updatedAt,
+  } = useLiveQuery(
     db
       .select()
       .from(threadsTable)
