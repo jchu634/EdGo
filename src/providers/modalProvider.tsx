@@ -127,16 +127,20 @@ function SearchModal({
     setIsSearchingApi(true);
     debounceRef.current = setTimeout(() => {
       debounceRef.current = null;
+
       const program = searchAndSyncThreads(db, courseId, trimmed, {
         sort,
       }).pipe(
         Effect.tapError((err) =>
           Effect.sync(() => {
             console.error("Search failed:", err);
+          }),
+        ),
+        Effect.ensuring(
+          Effect.sync(() => {
             setIsSearchingApi(false);
           }),
         ),
-        Effect.tap(() => Effect.sync(() => setIsSearchingApi(false))),
       );
       fiberRef.current = Effect.runFork(program);
     }, 300);

@@ -6,7 +6,7 @@ import {
   HttpClientResponse,
 } from "effect/unstable/http";
 import { eq, and, desc, asc, sql } from "drizzle-orm";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { threadsTable, type NewThread } from "@/src/db/schema";
 import { useLiveQuery } from "drizzle-orm/expo-sqlite";
@@ -28,14 +28,13 @@ function escapeLike(str: string): string {
 
 export function fetchThreadDetail(courseId: number, threadNumber: number) {
   return Effect.gen(function* () {
-    const apiKey = yield* Effect.promise(() => getApiKey());
-    if (!apiKey) {
-      return yield* Effect.fail(new Error("Missing API Key"));
-    }
+    const apiKey = yield* getApiKeyEffect;
     const client = yield* HttpClient.HttpClient;
+
     const request = HttpClientRequest.get(
       `https://edstem.org/api/courses/${courseId}/threads/${threadNumber}`,
     ).pipe(HttpClientRequest.bearerToken(apiKey), HttpClientRequest.acceptJson);
+
     const response = yield* client.execute(request);
     return yield* HttpClientResponse.schemaBodyJson(ThreadDetailResponse)(
       response,
@@ -44,14 +43,13 @@ export function fetchThreadDetail(courseId: number, threadNumber: number) {
 }
 export function sendThreadViewed(threadNumber: number) {
   return Effect.gen(function* () {
-    const apiKey = yield* Effect.promise(() => getApiKey());
-    if (!apiKey) {
-      return yield* Effect.fail(new Error("Missing API Key"));
-    }
+    const apiKey = yield* getApiKeyEffect;
     const client = yield* HttpClient.HttpClient;
+
     const request = HttpClientRequest.get(
       `https://edstem.org/api/threads/${threadNumber}?view=1`,
     ).pipe(HttpClientRequest.bearerToken(apiKey), HttpClientRequest.acceptJson);
+
     const response = yield* client.execute(request);
     console.log(`SEND VIEWED`, { threadNumber, status: response.status });
     return response.status >= 200 && response.status < 300;
@@ -60,12 +58,13 @@ export function sendThreadViewed(threadNumber: number) {
 
 function threadPostWithRetry(url: string) {
   return Effect.gen(function* () {
-    const apiKey = yield* Effect.promise(() => getApiKey());
-    if (!apiKey) return yield* Effect.fail(new Error("Missing API Key"));
+    const apiKey = yield* getApiKeyEffect;
     const client = yield* HttpClient.HttpClient;
+
     const request = HttpClientRequest.post(url).pipe(
       HttpClientRequest.bearerToken(apiKey),
     );
+
     const response = yield* client.execute(request);
     return response.status === 204;
   }).pipe(
@@ -117,7 +116,7 @@ const getApiKeyEffect = Effect.tryPromise({
   ),
 );
 
-function searchThreadsFromApi(
+function searchThreads(
   courseId: number,
   query: string,
   options?: { sort?: string; limit?: number },
@@ -130,41 +129,33 @@ function searchThreadsFromApi(
     limit: String(limit),
   });
 
-  return getApiKeyEffect.pipe(
-    Effect.flatMap((apiKey) => {
-      const request = HttpClientRequest.get(
-        `https://edstem.org/api/courses/${courseId}/threads/search?${params.toString()}`,
-      ).pipe(
-        HttpClientRequest.bearerToken(apiKey),
-        HttpClientRequest.acceptJson,
-      );
+  return Effect.gen(function* () {
+    const apiKey = yield* getApiKeyEffect;
+    const client = yield* HttpClient.HttpClient;
 
-      return HttpClient.HttpClient.pipe(
-        Effect.flatMap((client) => client.execute(request)),
-        Effect.flatMap(HttpClientResponse.schemaBodyJson(ThreadResponse)),
-      );
-    }),
-    Effect.provide(FetchHttpClient.layer),
-  );
+    const request = HttpClientRequest.get(
+      `https://edstem.org/api/courses/${courseId}/threads/search?${params.toString()}`,
+    ).pipe(HttpClientRequest.bearerToken(apiKey), HttpClientRequest.acceptJson);
+
+    return yield* client
+      .execute(request)
+      .pipe(Effect.flatMap(HttpClientResponse.schemaBodyJson(ThreadResponse)));
+  }).pipe(Effect.provide(FetchHttpClient.layer));
 }
+
 export const searchAndSyncThreads = (
   db: Db,
   courseId: number,
   query: string,
   options?: { sort?: string; limit?: number },
 ) =>
-  searchThreadsFromApi(courseId, query, options).pipe(
-    Effect.tap((response) =>
+  searchThreads(courseId, query, options).pipe(
+    Effect.flatMap((response) =>
       Effect.tryPromise({
-        try: () => (
-          console.log(
-            "[searchAndSyncThreadsFromApi] syncing search results to DB",
-          ),
-          syncThreadsToDb(db, courseId, response.threads as any[])
-        ),
+        try: () => syncThreadsToDb(db, courseId, Array.from(response.threads)),
         catch: (error) =>
-          new Error(`Failed to sync threads to DB: ${String(error)}`),
-      }),
+          new Error("Failed to sync threads to DB", { cause: error }),
+      }).pipe(Effect.as(response)),
     ),
   );
 
@@ -178,12 +169,11 @@ export function fetchThreadsFromApi(
   },
 ) {
   const { category, offset, sort = "new", limit = PAGE_SIZE } = options ?? {};
+
   return Effect.gen(function* () {
-    const apiKey = yield* Effect.promise(() => getApiKey());
-    if (!apiKey) {
-      return yield* Effect.fail(new Error("Missing API Key"));
-    }
+    const apiKey = yield* getApiKeyEffect;
     const client = yield* HttpClient.HttpClient;
+
     const params = new URLSearchParams({ sort, limit: String(limit) });
     if (category) params.set("category", category);
     if (offset !== undefined) params.set("offset", String(offset));
@@ -313,57 +303,53 @@ export function useCourseThreads(courseId: number, category?: string) {
   const offsetRef = useRef(0);
   const [endOfPages, setEndOfPages] = useState(false);
 
-  const fetchAndSync = useCallback(
-    async (offset?: number) => {
-      console.log("[useCourseThreads] fetchAndSync start", {
-        courseId,
-        category,
-        offset,
-      });
-      setLoading(true);
-      setError(undefined);
-      try {
-        const response = await Effect.runPromise(
-          fetchThreadsFromApi(courseId, { category, offset }),
-        );
-        if (!response) {
-          console.log("[useCourseThreads] fetchAndSync got no response");
-          return;
-        }
-        if (response.threads.length === 0) {
-          console.log("[useCourseThreads] fetchAndSync reached end of pages", {
-            offset,
-          });
-          setEndOfPages(true);
-          return;
-        }
-        console.log(
-          `[useCourseThreads] Fetched ${response.threads.length} threads from API (offset: ${offset})`,
-        );
-        await syncThreadsToDb(db, courseId, [...response.threads]);
-        offsetRef.current = (offset ?? 0) + PAGE_SIZE;
-        console.log("[useCourseThreads] fetchAndSync done", {
-          threadCount: response.threads.length,
-          nextOffset: offsetRef.current,
-        });
-      } catch (err) {
-        console.error("[useCourseThreads] Failed to sync threads:", err);
-        setError(err instanceof Error ? err : new Error(String(err)));
-      } finally {
-        setLoading(false);
+  async function fetchAndSync(offset?: number) {
+    console.log("[useCourseThreads] fetchAndSync start", {
+      courseId,
+      category,
+      offset,
+    });
+    setLoading(true);
+    setError(undefined);
+    try {
+      const response = await Effect.runPromise(
+        fetchThreadsFromApi(courseId, { category, offset }),
+      );
+      if (!response) {
+        console.log("[useCourseThreads] fetchAndSync got no response");
+        return;
       }
-    },
-    [db, courseId, category],
-  );
+      if (response.threads.length === 0) {
+        console.log("[useCourseThreads] fetchAndSync reached end of pages", {
+          offset,
+        });
+        setEndOfPages(true);
+        return;
+      }
+      console.log(
+        `[useCourseThreads] Fetched ${response.threads.length} threads from API (offset: ${offset})`,
+      );
+      await syncThreadsToDb(db, courseId, [...response.threads]);
+      offsetRef.current = (offset ?? 0) + PAGE_SIZE;
+      console.log("[useCourseThreads] fetchAndSync done", {
+        threadCount: response.threads.length,
+        nextOffset: offsetRef.current,
+      });
+    } catch (err) {
+      console.error("[useCourseThreads] Failed to sync threads:", err);
+      setError(err instanceof Error ? err : new Error(String(err)));
+    } finally {
+      setLoading(false);
+    }
+  }
 
   useEffect(() => {
     console.log("[useCourseThreads] initial fetch effect");
     offsetRef.current = 0;
-    setEndOfPages(false);
     fetchAndSync(0);
   }, []);
 
-  const refresh = useCallback(async () => {
+  async function refresh() {
     console.log("[useCourseThreads] refresh");
     setRefreshing(true);
     try {
@@ -373,9 +359,9 @@ export function useCourseThreads(courseId: number, category?: string) {
     } finally {
       setRefreshing(false);
     }
-  }, [fetchAndSync]);
+  }
 
-  const fetchMore = useCallback(() => {
+  function fetchMore() {
     console.log("[useCourseThreads] fetchMore", {
       offset: offsetRef.current,
       endOfPages,
@@ -384,7 +370,7 @@ export function useCourseThreads(courseId: number, category?: string) {
     });
     if (endOfPages || loading || refreshing) return;
     fetchAndSync(offsetRef.current);
-  }, [endOfPages, loading, refreshing, fetchAndSync]);
+  }
 
   const allThreads = threads ?? [];
   const pinnedThreads = allThreads.filter((t) => t.isPinned);
@@ -464,7 +450,7 @@ export function useSearchResults(
       console.log("[useSearchResults] executing search", { trimmed, sort });
       try {
         const response = await Effect.runPromise(
-          searchThreadsFromApi(courseId, trimmed, { sort }),
+          searchThreads(courseId, trimmed, { sort }),
         );
         if (response?.threads?.length) {
           console.log("[useSearchResults] API returned results", {
