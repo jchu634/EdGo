@@ -565,6 +565,7 @@ export function useSearchSync(
     interruptFiber(fiberRef);
 
     if (!isActive) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Searching State will not trigger cascading render
       setIsSearching(false);
       return;
     }
@@ -632,6 +633,7 @@ export function useRecentThreads(courses: { id: number }[] | undefined) {
       return;
     }
     let cancelled = false;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Loading State will not trigger cascading render
     setLoading(true);
     console.debug("[useRecentThreads] fetching for courses", {
       courseIds: courses.map((c) => c.id),

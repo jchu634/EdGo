@@ -137,9 +137,8 @@ export default function Index() {
         Effect.flatMap((response) =>
           Effect.sync(() => {
             const mappedCourses = response.courses.map((c) => c.course);
-           const mappedCourses = response.courses.map((c) => c.course);
-           mappedCourses.sort((a, b) => a.id - b.id);
-           setCourses(mappedCourses);
+            mappedCourses.sort((a, b) => a.id - b.id);
+            setCourses(mappedCourses);
             setCourses(mappedCourses);
             cacheCourses(mappedCourses);
           }),
