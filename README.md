@@ -8,13 +8,13 @@ A UNOFFICIAL react-native app for Ed Discussion.
 1. Install dependencies
 
    ```bash
-   npm install
+   pnpm install
    ```
 
 2. Start the app
 
    ```bash
-   npx expo start
+   pnpm exec expo start
    ```
 
 In the output, you'll find options to open the app in a
