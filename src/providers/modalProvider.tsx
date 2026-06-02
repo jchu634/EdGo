@@ -1,6 +1,5 @@
 import React, {
   createContext,
-  useCallback,
   useContext,
   useState,
   useEffect,
@@ -109,42 +108,39 @@ function SearchModal({
   const fiberRef = useRef<Fiber.Fiber<any, any> | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const triggerApiSearch = useCallback(
-    (searchQuery: string) => {
-      if (debounceRef.current) {
-        clearTimeout(debounceRef.current);
-        debounceRef.current = null;
-      }
-      if (fiberRef.current) {
-        Effect.runFork(Fiber.interrupt(fiberRef.current));
-        fiberRef.current = null;
-      }
+  function triggerApiSearch(searchQuery: string) {
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+      debounceRef.current = null;
+    }
+    if (fiberRef.current) {
+      Effect.runFork(Fiber.interrupt(fiberRef.current));
+      fiberRef.current = null;
+    }
 
-      const trimmed = searchQuery.trim();
-      if (trimmed.length === 0) {
-        setIsSearchingApi(false);
-        return;
-      }
+    const trimmed = searchQuery.trim();
+    if (trimmed.length === 0) {
+      setIsSearchingApi(false);
+      return;
+    }
 
-      setIsSearchingApi(true);
-      debounceRef.current = setTimeout(() => {
-        debounceRef.current = null;
-        const program = searchAndSyncThreads(db, courseId, trimmed, {
-          sort,
-        }).pipe(
-          Effect.tapError((err) =>
-            Effect.sync(() => {
-              console.error("Search failed:", err);
-              setIsSearchingApi(false);
-            }),
-          ),
-          Effect.tap(() => Effect.sync(() => setIsSearchingApi(false))),
-        );
-        fiberRef.current = Effect.runFork(program);
-      }, 300);
-    },
-    [db, courseId, sort],
-  );
+    setIsSearchingApi(true);
+    debounceRef.current = setTimeout(() => {
+      debounceRef.current = null;
+      const program = searchAndSyncThreads(db, courseId, trimmed, {
+        sort,
+      }).pipe(
+        Effect.tapError((err) =>
+          Effect.sync(() => {
+            console.error("Search failed:", err);
+            setIsSearchingApi(false);
+          }),
+        ),
+        Effect.tap(() => Effect.sync(() => setIsSearchingApi(false))),
+      );
+      fiberRef.current = Effect.runFork(program);
+    }, 300);
+  }
 
   useEffect(() => {
     return () => {
@@ -153,7 +149,6 @@ function SearchModal({
     };
   }, []);
 
-  // Local DB results — always queried, gives instant results
   const { data: localResults } = useLiveQuery(
     query.trim().length > 0
       ? db
@@ -178,23 +173,20 @@ function SearchModal({
 
   const results = localResults ?? [];
 
-  const handlePressThread = useCallback(
-    (thread: ThreadUser) => {
-      onClose();
-      router.push(`/courses/${courseId}/${thread.number}`);
-    },
-    [courseId, onClose, router],
-  );
+  function handlePressThread(thread: ThreadUser) {
+    onClose();
+    router.push(`/courses/${courseId}/${thread.number}`);
+  }
 
-  const handlePersistSearch = useCallback(() => {
+  function handlePersistSearch() {
     if (query.trim()) {
       setContextQuery(courseId, query.trim(), sort);
     }
     onClose();
-  }, [query, courseId, setContextQuery, onClose, sort]);
+  }
 
-  const renderThread = useCallback(
-    ({ item }: { item: ThreadUser }) => (
+  function renderThread({ item }: { item: ThreadUser }) {
+    return (
       <Pressable
         onPress={() => handlePressThread(item)}
         className="border-b border-gray-100 px-4 py-3 active:bg-gray-50 dark:border-neutral-700 dark:active:bg-neutral-800"
@@ -209,9 +201,8 @@ function SearchModal({
           #{item.number}
         </Text>
       </Pressable>
-    ),
-    [handlePressThread],
-  );
+    );
+  }
 
   return (
     <Modal
@@ -329,38 +320,30 @@ function SearchModal({
 export function ModalProvider({ children }: { children: React.ReactNode }) {
   const { width, height } = useWindowDimensions();
 
-  // Link-text modal state
   const [activeHref, setActiveHref] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Search modal state
   const [searchCourseId, setSearchCourseId] = useState<number | null>(null);
 
-  // Search query state (persisted for threads page)
   const [searchQuery, setSearchQueryState] = useState<string | null>(null);
   const [searchQueryCourseId, setSearchQueryCourseId] = useState<number | null>(
     null,
   );
   const [searchSort, setSearchSort] = useState<string>("relevance");
 
-  const setSearchQuery = useCallback(
-    (courseId: number, q: string | null, sort?: string) => {
-      setSearchQueryState(q);
-      setSearchQueryCourseId(q ? courseId : null);
-      if (sort) setSearchSort(sort);
-    },
-    [],
-  );
+  function setSearchQuery(courseId: number, q: string | null, sort?: string) {
+    setSearchQueryState(q);
+    setSearchQueryCourseId(q ? courseId : null);
+    if (sort) setSearchSort(sort);
+  }
 
-  const clearSearch = useCallback(() => {
+  function clearSearch() {
     setSearchQueryState(null);
     setSearchQueryCourseId(null);
-  }, []);
+  }
 
-  // Link-text helpers
-
-  const openExternalUrl = useCallback(async (url: string) => {
+  async function openExternalUrl(url: string) {
     const trimmed = url.trim().toLowerCase();
     if (!trimmed.startsWith("http://") && !trimmed.startsWith("https://"))
       return;
@@ -372,34 +355,27 @@ export function ModalProvider({ children }: { children: React.ReactNode }) {
     } catch (err) {
       console.error("Failed to open URL:", err);
     }
-  }, []);
+  }
 
-  const openLink = useCallback(
-    (url: string) => {
-      openExternalUrl(url);
-    },
-    [openExternalUrl],
-  );
-
-  const showMenu = useCallback((url: string) => {
+  function showMenu(url: string) {
     if (copyTimeoutRef.current) {
       clearTimeout(copyTimeoutRef.current);
       copyTimeoutRef.current = null;
     }
     setActiveHref(url);
     setCopied(false);
-  }, []);
+  }
 
-  const dismissMenu = useCallback(() => {
+  function dismissMenu() {
     if (copyTimeoutRef.current) {
       clearTimeout(copyTimeoutRef.current);
       copyTimeoutRef.current = null;
     }
     setActiveHref(null);
     setCopied(false);
-  }, []);
+  }
 
-  const handleCopy = useCallback(async () => {
+  async function handleCopy() {
     if (!activeHref) return;
     await Clipboard.setStringAsync(activeHref);
     setCopied(true);
@@ -408,14 +384,14 @@ export function ModalProvider({ children }: { children: React.ReactNode }) {
       setCopied(false);
       copyTimeoutRef.current = null;
     }, 800);
-  }, [activeHref]);
+  }
 
-  const handleOpen = useCallback(() => {
+  function handleOpen() {
     if (!activeHref) return;
     const url = activeHref;
     setActiveHref(null);
     openExternalUrl(url);
-  }, [activeHref, openExternalUrl]);
+  }
 
   useEffect(() => {
     return () => {
@@ -423,17 +399,16 @@ export function ModalProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  // Search modal helpers
-  const openSearch = useCallback((courseId: number) => {
+  function openSearch(courseId: number) {
     setSearchCourseId(courseId);
-  }, []);
+  }
 
-  const closeSearch = useCallback(() => {
+  function closeSearch() {
     setSearchCourseId(null);
-  }, []);
+  }
 
   return (
-    <LinkTextContext.Provider value={{ openLink, showMenu }}>
+    <LinkTextContext.Provider value={{ openLink: openExternalUrl, showMenu }}>
       <SearchModalContext.Provider value={{ openSearch }}>
         <SearchQueryContext.Provider
           value={{
