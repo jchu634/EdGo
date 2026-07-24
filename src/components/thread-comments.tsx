@@ -2,8 +2,8 @@ import React from "react";
 import { View, Text, Image, Pressable } from "react-native";
 import { Link } from "expo-router";
 import { Schema } from "effect";
-import { XmlNode, renderXmlNode, isXmlNode } from "@/src/lib/renderXML";
-import { settings, getCachedParsedXml } from "@/src/lib/storage";
+import { XmlNode, renderXmlNode } from "@/src/lib/renderXML";
+import { settings } from "@/src/lib/storage";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -186,43 +186,4 @@ export function renderComment(
       )}
     </View>
   );
-}
-
-export async function parseCommentsXml(
-  comments: readonly CommentType[],
-  parseAndCacheXml: (xml: string, key: string) => Promise<XmlNode | null>,
-  xmlMap: Map<string, XmlNode>,
-) {
-  for (const c of comments) {
-    if (c.content) {
-      const parsed = await parseAndCacheXml(c.content, `comment-${c.id}`);
-      if (parsed) {
-        xmlMap.set(`comment-${c.id}`, parsed);
-      }
-    }
-    if (c.comments.length > 0) {
-      await parseCommentsXml(c.comments, parseAndCacheXml, xmlMap);
-    }
-  }
-}
-
-export function loadCachedCommentXml(
-  comments: readonly CommentType[],
-  courseId: number,
-  threadNumber: number,
-  xmlMap: Map<string, XmlNode>,
-) {
-  for (const c of comments) {
-    const cCached = getCachedParsedXml(
-      courseId,
-      threadNumber,
-      `comment-${c.id}`,
-    );
-    if (cCached && isXmlNode(cCached)) {
-      xmlMap.set(`comment-${c.id}`, cCached as XmlNode);
-    }
-    if (c.comments.length > 0) {
-      loadCachedCommentXml(c.comments, courseId, threadNumber, xmlMap);
-    }
-  }
 }
