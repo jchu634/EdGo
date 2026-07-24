@@ -1,5 +1,7 @@
 // ─── Types ──────────────────────────────────────────────────────────────────
 import { getApiKey } from "@/src/lib/storage";
+import { DEMO } from "@/src/lib/demo";
+import { demoUnreadCounts } from "@/src/lib/demo-data";
 
 export type StreamMessageType = "thread.unreadCounts" | "pong";
 
@@ -170,6 +172,7 @@ export async function streamRequest<T = unknown>(
  * ```
  */
 export function getUnreadCounts(): Promise<UnreadCountsResponse> {
+  if (DEMO) return Promise.resolve(demoUnreadCounts);
   return streamRequest<UnreadCountsResponse>(
     { id: 1, type: "thread.unreadCounts" },
     {

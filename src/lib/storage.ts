@@ -3,6 +3,7 @@ import { createMMKV, type MMKV } from "react-native-mmkv";
 import * as SecureStore from "expo-secure-store";
 import { Course, CourseCategory, ThreadDetailResponse } from "@/src/lib/schema";
 import * as Crypto from "expo-crypto";
+import { DEMO, DEMO_API_KEY } from "@/src/lib/demo";
 
 let courseCache: MMKV | null = null;
 let threadCache: MMKV | null = null;
@@ -51,9 +52,25 @@ export async function initStorage(): Promise<void> {
     encryptionKey: encryptionKey,
     encryptionType: "AES-128",
   });
+
+  if (DEMO) {
+    bootstrapDemoSettings();
+  }
+}
+
+function bootstrapDemoSettings(): void {
+  const s = settings;
+  if (!s) return;
+  if (!s.contains("user.name")) s.set("user.name", "Jamie Rivera");
+  if (!s.contains("user.email")) s.set("user.email", "jamie.rivera@uni.edu");
+  if (!s.contains("user.default_region")) s.set("user.default_region", "us");
+  if (!s.contains("user.country_code")) s.set("user.country_code", "US");
+  if (!s.contains("user.developer_settings"))
+    s.set("user.developer_settings", false);
 }
 
 export async function getApiKey(): Promise<string | null> {
+  if (DEMO) return DEMO_API_KEY;
   return SecureStore.getItemAsync(API_KEY_KEY);
 }
 

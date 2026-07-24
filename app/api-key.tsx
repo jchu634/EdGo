@@ -21,6 +21,8 @@ import { useUniwind } from "uniwind";
 import { useApiKey } from "@/src/providers/keyProvider";
 import { RegionResponse, UserResponse } from "@/src/lib/schema";
 import { settings } from "@/src/lib/storage";
+import { DEMO } from "@/src/lib/demo";
+import { demoRegion } from "@/src/lib/demo-data";
 import { EyeClosedIcon, EyeIcon } from "phosphor-react-native";
 import LinkText from "@/src/components/LinkText";
 
@@ -35,6 +37,16 @@ export default function ApiKeyScreen() {
 
   const validateApiKey = (apiKey: string) =>
     Effect.gen(function* () {
+      if (DEMO) {
+        yield* Effect.sync(() => {
+          settings!.set("user.name", "Jamie Rivera");
+          settings!.set("user.email", "jamie.rivera@uni.edu");
+          if (!settings!.contains("user.developer_settings")) {
+            settings!.set("user.developer_settings", false);
+          }
+        });
+        return true;
+      }
       const client = yield* HttpClient.HttpClient;
 
       const request = HttpClientRequest.get(`https://edstem.org/api/user`).pipe(
@@ -59,6 +71,13 @@ export default function ApiKeyScreen() {
 
   const fetchRegion = () =>
     Effect.gen(function* () {
+      if (DEMO) {
+        yield* Effect.sync(() => {
+          settings!.set("user.default_region", demoRegion.default_region);
+          settings!.set("user.country_code", demoRegion.country_code);
+        });
+        return;
+      }
       const client = yield* HttpClient.HttpClient;
 
       const request = HttpClientRequest.get(

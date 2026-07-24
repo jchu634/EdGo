@@ -28,6 +28,16 @@ import {
 } from "@/src/lib/storage";
 import { useRecentThreads } from "@/src/hooks/useRecentThreads";
 import { useNetwork } from "@/src/providers/networkProvider";
+import { useDb } from "@/src/providers/dbProvider";
+import { syncThreadsToDb } from "@/src/lib/threads";
+import { threadsTable } from "@/src/db/schema";
+import { DEMO } from "@/src/lib/demo";
+import {
+  demoUserResponse,
+  demoRegion,
+  allDemoCourseIds,
+  getDemoThreads,
+} from "@/src/lib/demo-data";
 
 import "@/app/global.css";
 
@@ -44,6 +54,8 @@ export default function Index() {
   const { theme } = useUniwind();
 
   const { isOnline } = useNetwork();
+
+  const db = useDb();
 
   const router = useRouter();
   const [courses, setCourses] = useState<
@@ -68,6 +80,9 @@ export default function Index() {
 
   const fetchCourses = () =>
     Effect.gen(function* () {
+      if (DEMO) {
+        return demoUserResponse;
+      }
       const apiKey = yield* Effect.promise(() => getApiKey());
       if (!apiKey) {
         return yield* Effect.fail(new Error("Missing API Key"));
@@ -85,6 +100,14 @@ export default function Index() {
 
   const loadRegion = () =>
     Effect.gen(function* () {
+      if (DEMO) {
+        yield* Effect.sync(() => {
+          settings!.set("user.default_region", demoRegion.default_region);
+          settings!.set("user.country_code", demoRegion.country_code);
+        });
+        return;
+      }
+
       const apiKey = yield* Effect.promise(() => getApiKey());
 
       if (!apiKey) {
@@ -165,7 +188,34 @@ export default function Index() {
   }, []);
 
   useEffect(() => {
-    if (!isOnline) return;
+    if (!DEMO) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const existing = await db.select().from(threadsTable).limit(1);
+        if (cancelled || existing.length > 0) return;
+        await Promise.all(
+          allDemoCourseIds().map((cid) =>
+            syncThreadsToDb(
+              db,
+              cid,
+              getDemoThreads(cid).threads as unknown as Parameters<
+                typeof syncThreadsToDb
+              >[2],
+            ),
+          ),
+        );
+      } catch (e) {
+        console.error("[demo] DB seed failed", e);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [db]);
+
+  useEffect(() => {
+    if (!DEMO && !isOnline) return;
 
     const unreadFiber = Effect.runFork(
       Effect.tryPromise({

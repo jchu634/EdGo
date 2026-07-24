@@ -15,6 +15,12 @@ import {
   ThreadUser,
 } from "@/src/lib/schema";
 import { getApiKey } from "@/src/lib/storage";
+import { DEMO } from "@/src/lib/demo";
+import {
+  getDemoThreads,
+  getDemoThreadDetail,
+  searchDemoThreads,
+} from "@/src/lib/demo-data";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -39,6 +45,11 @@ const getApiKeyEffect = Effect.tryPromise({
 // API calls
 
 export function fetchThreadDetail(courseId: number, threadNumber: number) {
+  if (DEMO) {
+    const detail = getDemoThreadDetail(courseId, threadNumber);
+    if (detail) return Effect.succeed(detail);
+    return Effect.fail(new Error("Demo thread not found"));
+  }
   return Effect.gen(function* () {
     const apiKey = yield* getApiKeyEffect;
     const client = yield* HttpClient.HttpClient;
@@ -55,6 +66,7 @@ export function fetchThreadDetail(courseId: number, threadNumber: number) {
 }
 
 export function sendThreadViewed(threadNumber: number) {
+  if (DEMO) return Effect.succeed(true);
   return Effect.gen(function* () {
     const apiKey = yield* getApiKeyEffect;
     const client = yield* HttpClient.HttpClient;
@@ -70,6 +82,7 @@ export function sendThreadViewed(threadNumber: number) {
 }
 
 function threadPostWithRetry(url: string) {
+  if (DEMO) return Effect.succeed(true);
   return Effect.gen(function* () {
     const apiKey = yield* getApiKeyEffect;
     const client = yield* HttpClient.HttpClient;
@@ -92,6 +105,10 @@ function searchThreads(
   options?: { sort?: string; limit?: number },
 ) {
   const { sort = "relevance", limit = 20 } = options ?? {};
+
+  if (DEMO) {
+    return Effect.succeed(searchDemoThreads(courseId, query, { sort, limit }));
+  }
 
   const params = new URLSearchParams({
     query,
@@ -123,6 +140,12 @@ export function fetchThreadsFromApi(
   },
 ) {
   const { category, offset, sort = "new", limit = PAGE_SIZE } = options ?? {};
+
+  if (DEMO) {
+    return Effect.succeed(
+      getDemoThreads(courseId, { category, offset, sort, limit }),
+    );
+  }
 
   return Effect.gen(function* () {
     const apiKey = yield* getApiKeyEffect;
