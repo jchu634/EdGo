@@ -63,6 +63,7 @@ export const Course = Schema.Struct({
   name: Schema.String,
   year: Schema.String,
   session: Schema.String,
+  status: Schema.Literals(["active", "archived"]),
   settings: Schema.Struct({
     discussion: Schema.Struct({
       sortable_feed: Schema.Boolean,
