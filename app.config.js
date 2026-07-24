@@ -3,7 +3,7 @@ const IS_DEV = process.env.APP_VARIANT === "development";
 export default {
   name: IS_DEV ? "EdGo (Dev)" : "EdGo",
   slug: "EdGo",
-  version: "0.1.4",
+  version: "0.1.5",
   orientation: "portrait",
   icon: "./assets/images/icon.png",
   scheme: "edgo",
