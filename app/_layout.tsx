@@ -11,6 +11,8 @@ import { NotificationProvider } from "@/src/providers/notificationProvider";
 import { NetworkProvider } from "@/src/providers/networkProvider";
 import OfflineBanner from "@/src/components/OfflineBanner";
 
+import "@/app/global.css";
+
 function HeaderRight() {
   const router = useRouter();
   const { courseid } = useGlobalSearchParams();
@@ -49,7 +51,7 @@ export default function RootLayout() {
           <NotificationProvider>
             <NetworkProvider>
               <ModalProvider>
-                <View className="flex-1">
+                <View style={{ flex: 1 }}>
                   <OfflineBanner />
                   <Stack
                     screenOptions={{
