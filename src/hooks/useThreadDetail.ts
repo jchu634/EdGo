@@ -35,11 +35,15 @@ export function useThreadDetail(
   useEffect(() => {
     const program = loadFreshThreadDetailData(courseId, threadNumber).pipe(
       Effect.match({
-        onFailure: (err) =>
-          console.error("[Thread] Failed to load thread detail:", err),
-        onSuccess: (fresh) => setData(fresh),
+        onFailure: (err) => {
+          console.error("[Thread] Failed to load thread detail:", err);
+          setLoading(false);
+        },
+        onSuccess: (fresh) => {
+          setData(fresh);
+          setLoading(false);
+        },
       }),
-      Effect.ensuring(Effect.sync(() => setLoading(false))),
     );
     fiberRef.current = Effect.runFork(program);
 

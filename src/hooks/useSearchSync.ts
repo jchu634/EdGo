@@ -13,6 +13,7 @@ export function useSearchSync(
   const [isSearching, setIsSearching] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const fiberRef = useRef<Fiber.Fiber<any, any> | null>(null);
+  const activeRequestIdRef = useRef<symbol | null>(null);
 
   const trimmed = (params?.query ?? "").trim();
   const sort = params?.sort ?? "relevance";
@@ -24,6 +25,9 @@ export function useSearchSync(
       debounceRef.current = null;
     }
     interruptFiber(fiberRef);
+
+    const requestId = Symbol();
+    activeRequestIdRef.current = requestId;
 
     if (!isActive) {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- Searching State will not trigger cascading render
@@ -45,7 +49,9 @@ export function useSearchSync(
         ),
         Effect.ensuring(
           Effect.sync(() => {
-            setIsSearching(false);
+            if (activeRequestIdRef.current === requestId) {
+              setIsSearching(false);
+            }
           }),
         ),
       );
@@ -53,6 +59,9 @@ export function useSearchSync(
     }, 400);
 
     return () => {
+      if (activeRequestIdRef.current === requestId) {
+        activeRequestIdRef.current = null;
+      }
       if (debounceRef.current) clearTimeout(debounceRef.current);
       interruptFiber(fiberRef);
     };

@@ -76,7 +76,21 @@ export function useThreadVotes(thread: ThreadDetail | null, db: Db) {
       starCount: s.starCount + (next ? 1 : -1),
     }));
     const program = Effect.gen(function* () {
-      yield* (next ? starThread : unstarThread)(thread.id);
+      yield* (next ? starThread : unstarThread)(thread.id).pipe(
+        Effect.tapError((err) =>
+          Effect.sync(() => {
+            console.error(
+              `[Star] failed to ${next ? "star" : "unstar"} ${thread.id}:`,
+              err,
+            );
+            setState((s) => ({
+              ...s,
+              isStarred: prevStarred,
+              starCount: prevCount,
+            }));
+          }),
+        ),
+      );
       yield* Effect.tryPromise({
         try: () =>
           db
@@ -87,19 +101,12 @@ export function useThreadVotes(thread: ThreadDetail | null, db: Db) {
             })
             .where(eq(threadsTable.id, thread.id)),
         catch: (e) => new Error(`DB star update failed: ${String(e)}`),
-      });
-    }).pipe(
-      Effect.tapError((err) =>
-        Effect.sync(() => {
-          console.error(
-            `[Star] failed to ${next ? "star" : "unstar"} ${thread.id}:`,
-            err,
-          );
-          setState((s) => ({ ...s, isStarred: prevStarred, starCount: prevCount }));
-        }),
-      ),
-      Effect.ignore,
-    );
+      }).pipe(
+        Effect.tapError((err) =>
+          Effect.logError(`[Star] local DB persist failed for ${thread.id}:`, err),
+        ),
+      );
+    }).pipe(Effect.ignore);
     Effect.runFork(program);
   }
 
@@ -114,7 +121,21 @@ export function useThreadVotes(thread: ThreadDetail | null, db: Db) {
       voteCount: s.voteCount + (next ? 1 : -1),
     }));
     const program = Effect.gen(function* () {
-      yield* (next ? upvoteThread : unvoteThread)(thread.id);
+      yield* (next ? upvoteThread : unvoteThread)(thread.id).pipe(
+        Effect.tapError((err) =>
+          Effect.sync(() => {
+            console.error(
+              `[Vote] failed to ${next ? "upvote" : "unvote"} ${thread.id}:`,
+              err,
+            );
+            setState((s) => ({
+              ...s,
+              isVoted: prevVoted,
+              voteCount: prevCount,
+            }));
+          }),
+        ),
+      );
       yield* Effect.tryPromise({
         try: () =>
           db
@@ -125,19 +146,12 @@ export function useThreadVotes(thread: ThreadDetail | null, db: Db) {
             })
             .where(eq(threadsTable.id, thread.id)),
         catch: (e) => new Error(`DB vote update failed: ${String(e)}`),
-      });
-    }).pipe(
-      Effect.tapError((err) =>
-        Effect.sync(() => {
-          console.error(
-            `[Vote] failed to ${next ? "upvote" : "unvote"} ${thread.id}:`,
-            err,
-          );
-          setState((s) => ({ ...s, isVoted: prevVoted, voteCount: prevCount }));
-        }),
-      ),
-      Effect.ignore,
-    );
+      }).pipe(
+        Effect.tapError((err) =>
+          Effect.logError(`[Vote] local DB persist failed for ${thread.id}:`, err),
+        ),
+      );
+    }).pipe(Effect.ignore);
     Effect.runFork(program);
   }
 

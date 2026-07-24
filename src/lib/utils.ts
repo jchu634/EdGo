@@ -13,7 +13,17 @@ export function escapeLike(str: string): string {
 export function interruptFiber(
   fiberRef: MutableRefObject<Fiber.Fiber<any, any> | null>,
 ) {
-  if (!fiberRef.current) return;
-  Effect.runFork(Fiber.interrupt(fiberRef.current));
-  fiberRef.current = null;
+  const fiber = fiberRef.current;
+  if (!fiber) return;
+  Effect.runFork(
+    Fiber.interrupt(fiber).pipe(
+      Effect.ensuring(
+        Effect.sync(() => {
+          if (fiberRef.current === fiber) {
+            fiberRef.current = null;
+          }
+        }),
+      ),
+    ),
+  );
 }

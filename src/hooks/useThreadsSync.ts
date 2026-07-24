@@ -18,28 +18,37 @@ export function useThreadsSync(courseId: number, category?: string) {
   function fetchAndSync(mode: SyncMode, offset?: number) {
     console.debug("[useThreadsSync] fetchAndSync", { mode, offset });
 
-    interruptFiber(fiberRef);
+    const previousFiber = fiberRef.current;
+    fiberRef.current = null;
 
-    if (mode === "refresh") {
-      offsetRef.current = 0;
-      setEndOfPages(false);
-      setRefreshing(true);
-    } else {
-      setLoading(true);
-    }
-
-    const actualOffset = offset ?? offsetRef.current;
-
-    const program = syncPageProgram(db, courseId, category, actualOffset).pipe(
-      Effect.tap((result) =>
-        Effect.sync(() => {
-          if (result.endOfPages) {
-            setEndOfPages(true);
-          } else {
-            offsetRef.current = result.nextOffset;
-          }
-        }),
-      ),
+    const program = Effect.gen(function* () {
+      if (previousFiber) {
+        yield* Fiber.interrupt(previousFiber);
+      }
+      yield* Effect.sync(() => {
+        if (mode === "refresh") {
+          offsetRef.current = 0;
+          setEndOfPages(false);
+          setRefreshing(true);
+        } else {
+          setLoading(true);
+        }
+      });
+      const actualOffset = offset ?? offsetRef.current;
+      const result = yield* syncPageProgram(
+        db,
+        courseId,
+        category,
+        actualOffset,
+      );
+      yield* Effect.sync(() => {
+        if (result.endOfPages) {
+          setEndOfPages(true);
+        } else {
+          offsetRef.current = result.nextOffset;
+        }
+      });
+    }).pipe(
       Effect.ensuring(
         Effect.sync(() => {
           setLoading(false);
@@ -54,7 +63,6 @@ export function useThreadsSync(courseId: number, category?: string) {
   useEffect(() => {
     console.debug("[useThreadsSync] initial fetch effect");
     offsetRef.current = 0;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- It is only run on initial mount
     fetchAndSync("initial", 0);
     return () => interruptFiber(fiberRef);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- It is meant to only run on initial mount

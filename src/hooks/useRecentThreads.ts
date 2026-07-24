@@ -24,6 +24,8 @@ export function useRecentThreads(courses: { id: number }[] | undefined) {
     [],
   );
 
+  const courseKey = (courses ?? []).map((c) => c.id).join(",");
+
   useEffect(() => {
     if (!courses || courses.length === 0) {
       console.debug("[useRecentThreads] no courses, skipping fetch");
@@ -69,7 +71,8 @@ export function useRecentThreads(courses: { id: number }[] | undefined) {
     return () => {
       cancelled = true;
     };
-  }, [db, courses]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- dedupe by course IDs so equivalent sets don't refetch
+  }, [db, courseKey]);
 
   console.debug("[useRecentThreads] render", {
     courseCount: courses?.length,
