@@ -8,7 +8,40 @@ const _baseUser = Schema.Struct({
 });
 
 const userSettings = Schema.Struct({
+  accessible: Schema.Boolean,
+
   tz: Schema.String,
+  theme: Schema.Literals(["os", "light", "highContrast", "dark"]),
+
+  digest_interval: Schema.NullOr(Schema.String),
+  discuss_feed_style: Schema.String, // TODO: Literals
+  locale: Schema.String,
+  character_key_shortcuts_disabled: Schema.Boolean,
+  set_tz_automatically: Schema.Boolean,
+  reply_via_email: Schema.Boolean,
+  email_announcements: Schema.Boolean,
+  email_watched_threads: Schema.Boolean,
+  email_thread_replies: Schema.Boolean,
+  email_comment_replies: Schema.Boolean,
+  email_mentions: Schema.Boolean,
+  mention_direct_message_digest_interval: Schema.String, // TODO: Literals
+  channel_digest_interval: Schema.String, // TODO: Literals
+  allow_password_login: Schema.Boolean,
+  desktop_notifications_enabled: Schema.Boolean,
+  desktop_notifications_scopes: Schema.Struct({
+    announcement: Schema.Boolean,
+    thread: Schema.Boolean,
+    direct_reply: Schema.Boolean,
+    mention: Schema.Boolean,
+    chat: Schema.Boolean,
+    watch: Schema.Boolean,
+  }),
+  snooze_end: Schema.String,
+  lexical_access: Schema.NullOr(Schema.String),
+  lexical_access_desktop: Schema.NullOr(Schema.String),
+  lexical_access_mobile: Schema.NullOr(Schema.String),
+  lexical_table: Schema.Boolean,
+  deactivated: Schema.Boolean,
 });
 
 export const CourseCategory = Schema.Struct({
