@@ -1,16 +1,5 @@
-import { useEffect, useState, useMemo, useCallback } from "react";
-import {
-  View,
-  Text,
-  ScrollView,
-  ActivityIndicator,
-  Image,
-  Pressable,
-} from "react-native";
+import { View, Text, ScrollView, ActivityIndicator, Image, Pressable } from "react-native";
 import { useLocalSearchParams } from "expo-router";
-import { Effect, Schema } from "effect";
-import { parseXml } from "react-native-turboxml";
-import { XmlNode, renderXmlNode, isXmlNode } from "@/src/lib/renderXML";
 import * as Linking from "expo-linking";
 
 import {
@@ -22,32 +11,12 @@ import {
   ArrowSquareOutIcon,
 } from "phosphor-react-native";
 
-import { ThreadDetailResponse } from "@/src/lib/schema";
-import {
-  fetchThreadDetail,
-  sendThreadViewed,
-  starThread,
-  unstarThread,
-  upvoteThread,
-  unvoteThread,
-  upvoteComment,
-  unvoteComment,
-} from "@/src/lib/threads";
-import {
-  getCachedThreadDetail,
-  cacheThreadDetail,
-  getCachedParsedXml,
-  cacheParsedXml,
-  settings,
-} from "@/src/lib/storage";
-import { threadsTable } from "@/src/db/schema";
+import { renderXmlNode } from "@/src/lib/renderXML";
+import { settings } from "@/src/lib/storage";
 import { useDb } from "@/src/providers/dbProvider";
-import { eq } from "drizzle-orm";
-import {
-  AnimatedToggleIcon,
-  renderComment,
-  type CommentType,
-} from "@/src/components/thread-comments";
+import { useThreadDetail } from "@/src/hooks/useThreadDetail";
+import { useThreadVotes } from "@/src/hooks/useThreadVotes";
+import { AnimatedToggleIcon, renderComment } from "@/src/components/thread-comments";
 
 import "@/app/global.css";
 
@@ -56,298 +25,24 @@ export default function ThreadPage() {
   const courseIdNum = Number(Array.isArray(courseid) ? courseid[0] : courseid);
   const threadNumber = Number(Array.isArray(thread) ? thread[0] : thread);
 
-  const [threadData, setThreadData] = useState<Schema.Schema.Type<
-    typeof ThreadDetailResponse
-  > | null>(null);
-  const [parsedXmlMap, setParsedXmlMap] = useState<Map<string, XmlNode>>(
-    new Map(),
-  );
-  const [loading, setLoading] = useState(true);
   const db = useDb();
-
-  const [isStarred, setIsStarred] = useState(false);
-  const [starCount, setStarCount] = useState(0);
-  const [isVoted, setIsVoted] = useState(false);
-  const [voteCount, setVoteCount] = useState(0);
-  const [commentVotes, setCommentVotes] = useState<Map<number, boolean>>(
-    new Map(),
+  const { thread: t, usersMap, parsedXmlMap, loading } = useThreadDetail(
+    courseIdNum,
+    threadNumber,
   );
-  const [commentVoteCounts, setCommentVoteCounts] = useState<
-    Map<number, number>
-  >(new Map());
+  const {
+    isStarred,
+    starCount,
+    isVoted,
+    voteCount,
+    commentVotes,
+    commentVoteCounts,
+    toggleStar,
+    toggleVote,
+    toggleCommentVote,
+  } = useThreadVotes(t, db);
 
-  const initVoteState = useCallback(
-    (data: Schema.Schema.Type<typeof ThreadDetailResponse>) => {
-      setIsStarred(data.thread.is_starred);
-      setStarCount(data.thread.star_count);
-      setIsVoted((data.thread.vote ?? 0) === 1);
-      setVoteCount(data.thread.vote_count);
-
-      const votes = new Map<number, boolean>();
-      const counts = new Map<number, number>();
-      const process = (comments: readonly CommentType[]) => {
-        for (const c of comments) {
-          votes.set(c.id, c.vote === 1);
-          counts.set(c.id, c.vote_count);
-          if (c.comments.length > 0) process(c.comments);
-        }
-      };
-      process(data.thread.comments);
-      process(data.thread.answers);
-      setCommentVotes(votes);
-      setCommentVoteCounts(counts);
-    },
-    [],
-  );
-
-  const usersMap = useMemo(() => {
-    const map = new Map<number, { name: string; avatar: string | null }>();
-    if (threadData?.users) {
-      for (const user of threadData.users) {
-        map.set(user.id, {
-          name: user.name,
-          avatar: user.avatar,
-        });
-      }
-    }
-    return map;
-  }, [threadData]);
-
-  const parseAndCacheXml = useCallback(
-    async (xmlString: string, xmlKey: string) => {
-      try {
-        const result = await parseXml(xmlString);
-        if (isXmlNode(result)) {
-          cacheParsedXml(courseIdNum, threadNumber, xmlKey, result);
-          return result as XmlNode;
-        }
-        const doc = (result as Record<string, unknown>)?.document;
-        if (doc && isXmlNode(doc)) {
-          cacheParsedXml(courseIdNum, threadNumber, xmlKey, doc);
-          return doc as XmlNode;
-        }
-      } catch (e) {
-        console.warn(`[XML] Failed to parse ${xmlKey}:`, e);
-      }
-      return null;
-    },
-    [courseIdNum, threadNumber],
-  );
-
-  useEffect(() => {
-    let cancelled = false;
-
-    const loadData = async () => {
-      setLoading(true);
-      setParsedXmlMap(new Map());
-      const cached = getCachedThreadDetail(courseIdNum, threadNumber);
-      if (!cached) {
-        setThreadData(null);
-      } else {
-        setThreadData(cached);
-        initVoteState(cached);
-
-        const xmlMap = new Map<string, XmlNode>();
-        const mainCached = getCachedParsedXml(
-          courseIdNum,
-          threadNumber,
-          "main",
-        );
-        if (mainCached && isXmlNode(mainCached)) {
-          xmlMap.set("main", mainCached as XmlNode);
-        }
-        const loadCommentXml = (comments: typeof cached.thread.comments) => {
-          for (const c of comments) {
-            const cCached = getCachedParsedXml(
-              courseIdNum,
-              threadNumber,
-              `comment-${c.id}`,
-            );
-            if (cCached && isXmlNode(cCached)) {
-              xmlMap.set(`comment-${c.id}`, cCached as XmlNode);
-            }
-            if (c.comments.length > 0) loadCommentXml(c.comments);
-          }
-        };
-        loadCommentXml(cached.thread.comments);
-        loadCommentXml(cached.thread.answers);
-        setParsedXmlMap(xmlMap);
-        setLoading(false);
-      }
-
-      try {
-        const response = (await Effect.runPromise(
-          fetchThreadDetail(courseIdNum, threadNumber) as Effect.Effect<
-            Schema.Schema.Type<typeof ThreadDetailResponse>,
-            Error,
-            never
-          >,
-        )) as Schema.Schema.Type<typeof ThreadDetailResponse>;
-        if (!response || cancelled) return;
-
-        setThreadData(response);
-        cacheThreadDetail(courseIdNum, threadNumber, response);
-        initVoteState(response);
-
-        const newXmlMap = new Map<string, XmlNode>();
-
-        const xmlContent = response.thread.content;
-        if (xmlContent) {
-          const parsed = await parseAndCacheXml(xmlContent, "main");
-          if (parsed) {
-            newXmlMap.set("main", parsed);
-          } else {
-            console.warn(
-              `[XML] Thread body failed to parse (${xmlContent.length} chars)`,
-            );
-          }
-        }
-
-        const parseComments = async (
-          comments:
-            | typeof response.thread.comments
-            | typeof response.thread.answers,
-        ) => {
-          for (const c of comments) {
-            const commentContent = c.content;
-            if (commentContent) {
-              const parsed = await parseAndCacheXml(
-                commentContent,
-                `comment-${c.id}`,
-              );
-              if (parsed) {
-                newXmlMap.set(`comment-${c.id}`, parsed);
-              } else {
-                console.warn(
-                  `[XML] Comment ${c.id} failed to parse (${commentContent.length} chars)`,
-                );
-              }
-            }
-            if (c.comments.length > 0) {
-              await parseComments(c.comments);
-            }
-          }
-        };
-        await parseComments(response.thread.comments);
-        await parseComments(response.thread.answers);
-
-        console.log(
-          `[XML] Parsed ${newXmlMap.size}/${1 + response.thread.comments.length + response.thread.answers.length} XML entries`,
-        );
-
-        if (!cancelled) {
-          setParsedXmlMap(newXmlMap);
-          setLoading(false);
-        }
-      } catch (err) {
-        console.error("[XML] Failed to load thread detail:", err);
-        if (!cancelled) setLoading(false);
-      }
-    };
-
-    loadData();
-    return () => {
-      cancelled = true;
-    };
-  }, [courseIdNum, threadNumber, parseAndCacheXml, initVoteState]);
-
-  useEffect(() => {
-    if (!threadData) return;
-
-    Effect.runFork(
-      sendThreadViewed(threadData.thread.id) as Effect.Effect<
-        boolean,
-        Error,
-        never
-      >,
-    );
-  }, [threadData]);
-
-  const handleStar = useCallback(async () => {
-    if (!threadData) return;
-    const next = !isStarred;
-    setIsStarred(next);
-    setStarCount((c) => (next ? c + 1 : c - 1));
-    try {
-      const fn = next ? starThread : unstarThread;
-      await Effect.runPromise(
-        fn(threadData.thread.id) as Effect.Effect<boolean, unknown, never>,
-      );
-      await db
-        .update(threadsTable)
-        .set({
-          isStarred: next,
-          starCount: next ? starCount + 1 : starCount - 1,
-        })
-        .where(eq(threadsTable.id, threadData.thread.id));
-    } catch (err) {
-      console.error(
-        `[Star] Failed to ${next ? "star" : "unstar"} thread ${threadData.thread.id}:`,
-        err,
-      );
-      setIsStarred(!next);
-      setStarCount((c) => (next ? c - 1 : c + 1));
-    }
-  }, [threadData, isStarred, db, starCount]);
-
-  const handleVote = useCallback(async () => {
-    if (!threadData) return;
-    const next = !isVoted;
-    setIsVoted(next);
-    setVoteCount((c) => (next ? c + 1 : c - 1));
-    try {
-      const fn = next ? upvoteThread : unvoteThread;
-      await Effect.runPromise(
-        fn(threadData.thread.id) as Effect.Effect<boolean, unknown, never>,
-      );
-      await db
-        .update(threadsTable)
-        .set({ isVoted: next, voteCount: next ? voteCount + 1 : voteCount - 1 })
-        .where(eq(threadsTable.id, threadData.thread.id));
-    } catch (err) {
-      console.error(
-        `[Vote] Failed to ${next ? "upvote" : "unvote"} thread ${threadData.thread.id}:`,
-        err,
-      );
-      setIsVoted(!next);
-      setVoteCount((c) => (next ? c - 1 : c + 1));
-    }
-  }, [threadData, isVoted, db, voteCount]);
-
-  const handleCommentVote = useCallback(
-    async (commentId: number, currentVoted: boolean) => {
-      const next = !currentVoted;
-      setCommentVotes((prev) => new Map(prev).set(commentId, next));
-      setCommentVoteCounts((prev) => {
-        const nextMap = new Map(prev);
-        nextMap.set(commentId, (nextMap.get(commentId) ?? 0) + (next ? 1 : -1));
-        return nextMap;
-      });
-      try {
-        const fn = next ? upvoteComment : unvoteComment;
-        await Effect.runPromise(
-          fn(commentId) as Effect.Effect<boolean, unknown, never>,
-        );
-      } catch (err) {
-        console.error(
-          `[Vote] Failed to ${next ? "upvote" : "unvote"} comment ${commentId}:`,
-          err,
-        );
-        setCommentVotes((prev) => new Map(prev).set(commentId, !next));
-        setCommentVoteCounts((prev) => {
-          const nextMap = new Map(prev);
-          nextMap.set(
-            commentId,
-            (nextMap.get(commentId) ?? 0) + (next ? -1 : 1),
-          );
-          return nextMap;
-        });
-      }
-    },
-    [],
-  );
-
-  if (loading && !threadData) {
+  if (loading && !t) {
     return (
       <View className="flex h-full items-center justify-center">
         <ActivityIndicator size="large" color="#70069e" />
@@ -355,7 +50,7 @@ export default function ThreadPage() {
     );
   }
 
-  if (!threadData) {
+  if (!t) {
     return (
       <View className="flex h-full items-center justify-center">
         <Text className="font-display text-gray-500">
@@ -365,7 +60,6 @@ export default function ThreadPage() {
     );
   }
 
-  const { thread: t } = threadData;
   const author = usersMap.get(t.user_id);
   const mainXml = parsedXmlMap.get("main");
   const answers = [
@@ -443,7 +137,7 @@ export default function ThreadPage() {
           </View>
           <AnimatedToggleIcon
             isOn={isVoted}
-            onPress={handleVote}
+            onPress={toggleVote}
             IconComponent={HeartIcon}
             onColor="#ef4444"
             offColor="#9ca3af"
@@ -451,7 +145,7 @@ export default function ThreadPage() {
           />
           <AnimatedToggleIcon
             isOn={isStarred}
-            onPress={handleStar}
+            onPress={toggleStar}
             IconComponent={StarIcon}
             onColor="#f59e0b"
             offColor="#9ca3af"
@@ -488,7 +182,7 @@ export default function ThreadPage() {
                 0,
                 commentVotes,
                 commentVoteCounts,
-                handleCommentVote,
+                toggleCommentVote,
               ),
             )}
           </View>
@@ -509,7 +203,7 @@ export default function ThreadPage() {
                 0,
                 commentVotes,
                 commentVoteCounts,
-                handleCommentVote,
+                toggleCommentVote,
               ),
             )}
           </View>

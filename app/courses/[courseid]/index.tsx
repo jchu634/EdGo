@@ -22,7 +22,10 @@ import { useUniwind } from "uniwind";
 
 import { CourseCategory } from "@/src/lib/schema";
 import { getCachedCourseCategory } from "@/src/lib/storage";
-import { useThreadsDbQuery, useThreadsSync, useSearchDbQuery, useSearchSync } from "@/src/lib/threads";
+import { useThreadsDbQuery } from "@/src/hooks/useThreadsDbQuery";
+import { useThreadsSync } from "@/src/hooks/useThreadsSync";
+import { useSearchDbQuery } from "@/src/hooks/useSearchDbQuery";
+import { useSearchSync } from "@/src/hooks/useSearchSync";
 import { type ThreadUser } from "@/src/db/schema";
 import { useSearchQuery } from "@/src/providers/modalProvider";
 

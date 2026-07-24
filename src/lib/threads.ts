@@ -1,16 +1,13 @@
-import { Effect, Fiber, Schema, Schedule } from "effect";
+import { Effect, Schema, Schedule } from "effect";
 import {
   FetchHttpClient,
   HttpClient,
   HttpClientRequest,
   HttpClientResponse,
 } from "effect/unstable/http";
-import { eq, and, desc, asc, sql } from "drizzle-orm";
-import { useEffect, useRef, useState } from "react";
+import { sql } from "drizzle-orm";
 
 import { threadsTable, type NewThread } from "@/src/db/schema";
-import { useLiveQuery } from "drizzle-orm/expo-sqlite";
-import { useDb } from "@/src/providers/dbProvider";
 import type { Db } from "@/src/providers/dbProvider";
 import {
   ThreadResponse,
@@ -29,10 +26,6 @@ const USE_ASYNC_DRIZZLE = true;
 // ---------------------------------------------------------------------------
 // Utilities
 
-function escapeLike(str: string): string {
-  return str.replace(/\\/g, "\\\\").replace(/%/g, "\\%").replace(/_/g, "\\_");
-}
-
 const getApiKeyEffect = Effect.tryPromise({
   try: () => getApiKey(),
   catch: (error) => new Error(`Failed to read API key: ${String(error)}`),
@@ -41,14 +34,6 @@ const getApiKeyEffect = Effect.tryPromise({
     apiKey ? Effect.succeed(apiKey) : Effect.fail(new Error("Missing API Key")),
   ),
 );
-
-function interruptFiber(
-  fiberRef: React.MutableRefObject<Fiber.Fiber<any, any> | null>,
-) {
-  if (!fiberRef.current) return;
-  Effect.runFork(Fiber.interrupt(fiberRef.current));
-  fiberRef.current = null;
-}
 
 // ---------------------------------------------------------------------------
 // API calls
@@ -329,7 +314,7 @@ interface SyncPageResult {
   endOfPages: boolean;
 }
 
-function syncPageProgram(
+export function syncPageProgram(
   db: Db,
   courseId: number,
   category: string | undefined,
@@ -361,327 +346,4 @@ function syncPageProgram(
       Effect.logError("[syncPageProgram] failed to sync threads", err),
     ),
   );
-}
-
-// ---------------------------------------------------------------------------
-// React hooks
-
-export function useThreadsDbQuery(courseId: number, category?: string) {
-  console.debug("[useThreadsDbQuery] called", { courseId, category });
-  const db = useDb();
-
-  const conditions = [eq(threadsTable.courseId, courseId)];
-  if (category) conditions.push(eq(threadsTable.category, category));
-
-  const {
-    data: threads,
-    error: queryError,
-    updatedAt,
-  } = useLiveQuery(
-    db
-      .select()
-      .from(threadsTable)
-      .where(conditions.length === 1 ? conditions[0] : and(...conditions))
-      .orderBy(desc(threadsTable.isPinned), desc(threadsTable.id)),
-    [courseId, category],
-  );
-
-  const allThreads = threads ?? [];
-  const pinnedThreads = allThreads.filter((t) => t.isPinned);
-  const regularThreads = allThreads.filter((t) => !t.isPinned);
-
-  console.debug("[useThreadsDbQuery] render", {
-    courseId,
-    totalThreads: allThreads.length,
-    pinnedCount: pinnedThreads.length,
-    regularCount: regularThreads.length,
-    queryError: queryError?.message ?? null,
-  });
-
-  return {
-    threads: allThreads,
-    pinnedThreads,
-    regularThreads,
-    queryError,
-    updatedAt,
-  };
-}
-
-type SyncMode = "initial" | "refresh" | "page";
-
-export function useThreadsSync(courseId: number, category?: string) {
-  console.debug("[useThreadsSync] called", { courseId, category });
-  const db = useDb();
-  const [loading, setLoading] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
-  const offsetRef = useRef(0);
-  const [endOfPages, setEndOfPages] = useState(false);
-  const fiberRef = useRef<Fiber.Fiber<any, any> | null>(null);
-
-  function fetchAndSync(mode: SyncMode, offset?: number) {
-    console.debug("[useThreadsSync] fetchAndSync", { mode, offset });
-
-    interruptFiber(fiberRef);
-
-    if (mode === "refresh") {
-      offsetRef.current = 0;
-      setEndOfPages(false);
-      setRefreshing(true);
-    } else {
-      setLoading(true);
-    }
-
-    const actualOffset = offset ?? offsetRef.current;
-
-    const program = syncPageProgram(db, courseId, category, actualOffset).pipe(
-      Effect.tap((result) =>
-        Effect.sync(() => {
-          if (result.endOfPages) {
-            setEndOfPages(true);
-          } else {
-            offsetRef.current = result.nextOffset;
-          }
-        }),
-      ),
-      Effect.ensuring(
-        Effect.sync(() => {
-          setLoading(false);
-          setRefreshing(false);
-        }),
-      ),
-    );
-
-    fiberRef.current = Effect.runFork(program);
-  }
-
-  useEffect(() => {
-    console.debug("[useThreadsSync] initial fetch effect");
-    offsetRef.current = 0;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- It is only run on initial mount
-    fetchAndSync("initial", 0);
-    return () => interruptFiber(fiberRef);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- It is meant to only run on initial mount
-  }, []);
-
-  function refresh() {
-    console.debug("[useThreadsSync] refresh");
-    fetchAndSync("refresh", 0);
-  }
-
-  function fetchMore() {
-    console.debug("[useThreadsSync] fetchMore", {
-      offset: offsetRef.current,
-      endOfPages,
-      loading,
-      refreshing,
-    });
-    if (endOfPages || loading || refreshing) return;
-    fetchAndSync("page");
-  }
-
-  console.debug("[useThreadsSync] render", {
-    courseId,
-    loading,
-    refreshing,
-    endOfPages,
-  });
-
-  return {
-    loading,
-    refreshing,
-    fetchMore,
-    refresh,
-    endOfPages,
-  };
-}
-
-export function useSearchDbQuery(
-  courseId: number,
-  query: string,
-  sort: string,
-) {
-  console.debug("[useSearchDbQuery] called", { courseId, query, sort });
-  const db = useDb();
-
-  const trimmed = query.trim();
-
-  const orderByClause =
-    sort === "oldest"
-      ? [desc(threadsTable.isPinned), asc(threadsTable.id)]
-      : [desc(threadsTable.isPinned), desc(threadsTable.id)];
-
-  const {
-    data: searchResults,
-    error: queryError,
-    updatedAt,
-  } = useLiveQuery(
-    db
-      .select()
-      .from(threadsTable)
-      .where(
-        and(
-          eq(threadsTable.courseId, courseId),
-          sql`${threadsTable.title} LIKE ${"%" + escapeLike(trimmed) + "%"} ESCAPE '\\'`,
-        ),
-      )
-      .orderBy(...orderByClause)
-      .limit(50),
-    [courseId, trimmed, sort],
-  );
-
-  console.debug("[useSearchDbQuery] render", {
-    courseId,
-    query: trimmed,
-    resultCount: (searchResults ?? []).length,
-    queryError: queryError?.message ?? null,
-  });
-
-  return {
-    searchResults: searchResults ?? [],
-    queryError,
-    updatedAt,
-  };
-}
-
-export function useSearchSync(
-  courseId: number,
-  params: { query: string; sort: string } | null,
-) {
-  console.debug("[useSearchSync] called", { courseId, params });
-  const db = useDb();
-  const [isSearching, setIsSearching] = useState(false);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const fiberRef = useRef<Fiber.Fiber<any, any> | null>(null);
-
-  const trimmed = (params?.query ?? "").trim();
-  const sort = params?.sort ?? "relevance";
-  const isActive = trimmed.length > 0;
-
-  useEffect(() => {
-    if (debounceRef.current) {
-      clearTimeout(debounceRef.current);
-      debounceRef.current = null;
-    }
-    interruptFiber(fiberRef);
-
-    if (!isActive) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- Searching State will not trigger cascading render
-      setIsSearching(false);
-      return;
-    }
-
-    console.debug("[useSearchSync] debouncing search", { trimmed, sort });
-    setIsSearching(true);
-    debounceRef.current = setTimeout(() => {
-      debounceRef.current = null;
-      console.debug("[useSearchSync] executing search", { trimmed, sort });
-
-      const program = searchAndSyncThreads(db, courseId, trimmed, {
-        sort,
-      }).pipe(
-        Effect.tapError((err) =>
-          Effect.logError("[useSearchSync] API search failed:", err),
-        ),
-        Effect.ensuring(
-          Effect.sync(() => {
-            setIsSearching(false);
-          }),
-        ),
-      );
-      fiberRef.current = Effect.runFork(program);
-    }, 400);
-
-    return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-      interruptFiber(fiberRef);
-    };
-  }, [courseId, trimmed, sort, db, isActive]);
-
-  console.debug("[useSearchSync] render", {
-    courseId,
-    query: trimmed,
-    isActive,
-    isSearching: isActive && isSearching,
-  });
-
-  return {
-    isSearching: isActive && isSearching,
-  };
-}
-
-export function useRecentThreads(courses: { id: number }[] | undefined) {
-  console.debug("[useRecentThreads] called", { courseCount: courses?.length });
-  const db = useDb();
-  const [loading, setLoading] = useState(false);
-
-  const { data: threads } = useLiveQuery(
-    db
-      .select()
-      .from(threadsTable)
-      .orderBy(
-        desc(
-          sql`COALESCE(${threadsTable.updatedAt}, ${threadsTable.createdAt})`,
-        ),
-      )
-      .limit(5),
-    [],
-  );
-
-  useEffect(() => {
-    if (!courses || courses.length === 0) {
-      console.debug("[useRecentThreads] no courses, skipping fetch");
-      return;
-    }
-    let cancelled = false;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- Loading State will not trigger cascading render
-    setLoading(true);
-    console.debug("[useRecentThreads] fetching for courses", {
-      courseIds: courses.map((c) => c.id),
-    });
-
-    Promise.all(
-      courses.map((course) =>
-        Effect.runPromise(
-          fetchThreadsFromApi(course.id, { sort: "new", limit: 5 }),
-        )
-          .then((response) => {
-            if (response?.threads?.length) {
-              console.debug("[useRecentThreads] synced course", {
-                courseId: course.id,
-                threadCount: response.threads.length,
-              });
-              return syncThreadsToDb(db, course.id, response.threads as any[]);
-            }
-            console.debug("[useRecentThreads] no threads for course", {
-              courseId: course.id,
-            });
-          })
-          .catch((err) => {
-            console.error(
-              "[useRecentThreads] Failed to sync course:",
-              course.id,
-              err,
-            );
-          }),
-      ),
-    ).finally(() => {
-      if (!cancelled) setLoading(false);
-      console.debug("[useRecentThreads] all fetches complete", { cancelled });
-    });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [db, courses]);
-
-  console.debug("[useRecentThreads] render", {
-    courseCount: courses?.length,
-    threadCount: (threads ?? []).length,
-    loading,
-  });
-
-  return {
-    threads: threads ?? [],
-    loading,
-  };
 }

@@ -26,7 +26,7 @@ import {
   getApiKey,
   settings,
 } from "@/src/lib/storage";
-import { useRecentThreads } from "@/src/lib/threads";
+import { useRecentThreads } from "@/src/hooks/useRecentThreads";
 
 import "@/app/global.css";
 
