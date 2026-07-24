@@ -19,7 +19,7 @@ export function NetworkProvider({
   const networkState = useNetworkState();
 
   const isOnline =
-    networkState.isConnected === true &&
+    networkState.isConnected !== false &&
     networkState.isInternetReachable !== false;
 
   return (
