@@ -26,10 +26,7 @@ import { Effect, Fiber } from "effect";
 import { useDb } from "@/src/providers/dbProvider";
 import { threadsTable, type ThreadUser } from "@/src/db/schema";
 import { searchAndSyncThreads } from "@/src/lib/threads";
-
-function escapeLike(str: string): string {
-  return str.replace(/\\/g, "\\\\").replace(/%/g, "\\%").replace(/_/g, "\\_");
-}
+import { escapeLike } from "@/src/lib/utils";
 
 interface LinkTextContextValue {
   openLink: (url: string) => void;
