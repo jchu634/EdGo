@@ -1,4 +1,4 @@
-import { ActivityIndicator, Platform, Pressable } from "react-native";
+import { ActivityIndicator, Platform, Pressable, View } from "react-native";
 import { Suspense } from "react";
 import { Stack, useGlobalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -8,6 +8,8 @@ import { KeyProvider } from "@/src/providers/keyProvider";
 import { DbProvider } from "@/src/providers/dbProvider";
 import { ModalProvider, useSearchModal } from "@/src/providers/modalProvider";
 import { NotificationProvider } from "@/src/providers/notificationProvider";
+import { NetworkProvider } from "@/src/providers/networkProvider";
+import OfflineBanner from "@/src/components/OfflineBanner";
 
 function HeaderRight() {
   const router = useRouter();
@@ -45,22 +47,27 @@ export default function RootLayout() {
       <KeyProvider>
         <DbProvider>
           <NotificationProvider>
-            <ModalProvider>
-              <Stack
-                screenOptions={{
-                  headerStyle: {
-                    backgroundColor: "#70069e",
-                  },
-                  headerTintColor: "white",
-                  headerTitle: "",
-                  headerRight: () => <HeaderRight />,
-                  contentStyle: {
-                    paddingBottom:
-                      Platform.OS === "android" ? insets.bottom : 0,
-                  },
-                }}
-              />
-            </ModalProvider>
+            <NetworkProvider>
+              <ModalProvider>
+                <View className="flex-1">
+                  <OfflineBanner />
+                  <Stack
+                    screenOptions={{
+                      headerStyle: {
+                        backgroundColor: "#70069e",
+                      },
+                      headerTintColor: "white",
+                      headerTitle: "",
+                      headerRight: () => <HeaderRight />,
+                      contentStyle: {
+                        paddingBottom:
+                          Platform.OS === "android" ? insets.bottom : 0,
+                      },
+                    }}
+                  />
+                </View>
+              </ModalProvider>
+            </NetworkProvider>
           </NotificationProvider>
         </DbProvider>
       </KeyProvider>
