@@ -3,6 +3,13 @@ A UNOFFICIAL react-native app for Ed Discussion.
 
 <img src="/assets/images/icon.png" alt="EdGo Log" width="200" height="200">
 
+<img src="/assets/images/darkMode_homepage.jpg" alt="Edgo Homepage Screenshot" width="150" height="200">
+<img src="/assets/images/darkMode_course.jpg" alt="EdGo Course Screenshot" width="150" height="200">
+<img src="/assets/images/darkMode_question.jpg" alt="EdGo Question Screenshot" width="150" height="200">
+<img src="/assets/images/lightMode_homepage.jpg" alt="EdGo Homepage Screenshot" width="150" height="200">
+<img src="/assets/images/lightMode_course.jpg" alt="EdGo Course Screenshot" width="150" height="200">
+<img src="/assets/images/lightMode_question.jpg" alt="EdGo Question Screenshot" width="150" height="200">
+
 ## Running dev build
 
 1. Install dependencies
