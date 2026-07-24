@@ -27,13 +27,23 @@ import {
   settings,
 } from "@/src/lib/storage";
 import { useRecentThreads } from "@/src/hooks/useRecentThreads";
+import { useNetwork } from "@/src/providers/networkProvider";
 
 import "@/app/global.css";
 
 const courseColours = ["#16DB93", "#F72585", "#014d3a", "#6A66A3", "#FF7F11"];
 
+const colourForCourse = (id: number) =>
+  courseColours[id % courseColours.length];
+
+type CourseListItem =
+  | { kind: "course"; course: Schema.Schema.Type<typeof Course> }
+  | { kind: "archivedHeader" };
+
 export default function Index() {
   const { theme } = useUniwind();
+
+  const { isOnline } = useNetwork();
 
   const router = useRouter();
   const [courses, setCourses] = useState<
@@ -50,11 +60,9 @@ export default function Index() {
     useRecentThreads(courses);
 
   const courseMap = useMemo(() => {
-    const map = new Map<number, { code: string; index: number }>();
+    const map = new Map<number, { code: string }>();
     if (!courses) return map;
-    [...courses]
-      .sort((a, b) => a.id - b.id)
-      .forEach((c, i) => map.set(c.id, { code: c.code, index: i }));
+    courses.forEach((c) => map.set(c.id, { code: c.code }));
     return map;
   }, [courses]);
 
@@ -139,24 +147,8 @@ export default function Index() {
             const mappedCourses = response.courses.map((c) => c.course);
             mappedCourses.sort((a, b) => a.id - b.id);
             setCourses(mappedCourses);
-            setCourses(mappedCourses);
             cacheCourses(mappedCourses);
           }),
-        ),
-        // Fetch unread counts via WebSocket
-        Effect.flatMap(() =>
-          Effect.tryPromise({
-            try: () => getUnreadCounts(),
-            catch: (err) => new Error(String(err)),
-          }).pipe(
-            Effect.flatMap((counts) =>
-              Effect.sync(() => setUnreadCounts(counts.data)),
-            ),
-            Effect.tapError((err) =>
-              Effect.sync(() => console.error("[stream] Error:", err)),
-            ),
-            Effect.catch(() => Effect.void),
-          ),
         ),
         Effect.tapError((error) =>
           Effect.sync(() => console.error("error", error)),
@@ -172,68 +164,116 @@ export default function Index() {
     };
   }, []);
 
-  const sortedCourses = useMemo(
-    () => (courses ? [...courses].sort((a, b) => a.id - b.id) : []),
-    [courses],
-  );
+  useEffect(() => {
+    if (!isOnline) return;
 
-  const renderCourseItem = useCallback(
-    ({
-      item: course,
-      index,
-    }: {
-      item: Schema.Schema.Type<typeof Course>;
-      index: number;
-    }) => (
-      <Pressable
-        className="ml-1.5 flex h-24 w-max flex-row justify-between gap-x-2 rounded-2xl bg-gray-300 p-3 px-2.5 dark:bg-neutral-800"
-        onPress={() => router.navigate(`/courses/${course.id}`)}
-      >
-        <View
-          className="h-full w-3 rounded-4xl"
-          style={{
-            backgroundColor: courseColours[index % courseColours.length],
-          }}
-        />
-        <View className="w-max flex-1 flex-row">
-          <View
-            className="justify-center"
-            style={{ width: windowWidth * 0.8 - 32 }}
-          >
-            <Text
-              className="font-display-bold text-lg text-ellipsis dark:text-slate-100"
-              numberOfLines={1}
-            >
-              {course.code}
-            </Text>
-            <Text
-              numberOfLines={1}
-              className="font-display text-sm dark:text-slate-100"
-            >
-              {course.name}
+    const unreadFiber = Effect.runFork(
+      Effect.tryPromise({
+        try: () => getUnreadCounts(),
+        catch: (err) => new Error(String(err)),
+      }).pipe(
+        Effect.flatMap((counts) =>
+          Effect.sync(() => setUnreadCounts(counts.data)),
+        ),
+        Effect.tapError((err) =>
+          Effect.sync(() => console.error("[stream] Error:", err)),
+        ),
+        Effect.catch(() => Effect.void),
+      ),
+    );
+
+    return () => {
+      Effect.runFork(Fiber.interrupt(unreadFiber));
+    };
+  }, [isOnline]);
+
+  const listData = useMemo<CourseListItem[]>(() => {
+    if (!courses) return [];
+    const byId = (
+      a: Schema.Schema.Type<typeof Course>,
+      b: Schema.Schema.Type<typeof Course>,
+    ) => a.id - b.id;
+    const active = courses.filter((c) => c.status !== "archived").sort(byId);
+    const archived = courses.filter((c) => c.status === "archived").sort(byId);
+    const items: CourseListItem[] = active.map(
+      (course): CourseListItem => ({ kind: "course", course }),
+    );
+    if (archived.length > 0) {
+      items.push({ kind: "archivedHeader" });
+      items.push(
+        ...archived.map(
+          (course): CourseListItem => ({ kind: "course", course }),
+        ),
+      );
+    }
+    return items;
+  }, [courses]);
+
+  const renderListItem = useCallback(
+    ({ item }: { item: CourseListItem }) => {
+      if (item.kind === "archivedHeader") {
+        return (
+          <View className="flex-1 flex-row items-center pt-3">
+            <Text className="font-display-bold px-4 pb-1 text-sm text-gray-600 dark:text-slate-100">
+              Archived
             </Text>
           </View>
-        </View>
-        <View className="size-10 items-center justify-center rounded-lg bg-blue-700">
-          <Text className="font-display-semibold text-center text-xs text-white">
-            {unreadCounts
-              ? unreadCounts[String(course.id)]
-                ? wrapNumbers(unreadCounts[String(course.id)].unread)
-                : "…"
-              : "…"}
-          </Text>
-        </View>
-      </Pressable>
-    ),
-    [windowWidth, unreadCounts, router],
+        );
+      }
+
+      const { course } = item;
+
+      const loaded = unreadCounts !== undefined;
+      const count = loaded
+        ? (unreadCounts?.[String(course.id)]?.unread ?? 0)
+        : 0;
+      const showBadge = isOnline && (count > 0 || !loaded);
+
+      return (
+        <Pressable
+          className="ml-1.5 flex h-24 w-max flex-row justify-between gap-x-2 rounded-2xl bg-gray-300 p-3 px-2.5 dark:bg-neutral-800"
+          onPress={() => router.navigate(`/courses/${course.id}`)}
+        >
+          <View
+            className="h-full w-3 rounded-4xl"
+            style={{ backgroundColor: colourForCourse(course.id) }}
+          />
+          <View className="w-max flex-1 flex-row">
+            <View
+              className="justify-center"
+              style={{ width: windowWidth * 0.8 - 32 }}
+            >
+              <Text
+                className="font-display-bold text-lg text-ellipsis dark:text-slate-100"
+                numberOfLines={1}
+              >
+                {course.code}
+              </Text>
+              <Text
+                numberOfLines={1}
+                className="font-display text-sm dark:text-slate-100"
+              >
+                {course.name}
+              </Text>
+            </View>
+          </View>
+          {showBadge && (
+            <View className="size-10 items-center justify-center rounded-lg bg-blue-700">
+              <Text className="font-display-semibold text-center text-xs text-white">
+                {loaded ? wrapNumbers(count) : "…"}
+              </Text>
+            </View>
+          )}
+        </Pressable>
+      );
+    },
+    [windowWidth, unreadCounts, isOnline, router],
   );
 
   const renderRecentThreadItem = useCallback(
     ({ item: thread }: { item: (typeof recentThreads)[number] }) => {
       const courseInfo = courseMap.get(thread.courseId);
-      const colour = courseInfo
-        ? courseColours[courseInfo.index % courseColours.length]
-        : "#d1d5db";
+      const colour = courseInfo ? colourForCourse(thread.courseId) : "#d1d5db";
       return (
         <Pressable
           className="mx-1.5 mb-2 rounded-2xl border-l bg-slate-200 p-3 pl-2.5 dark:bg-neutral-800"
@@ -275,10 +315,7 @@ export default function Index() {
                 <Text className="font-display pl-2 dark:text-white">
                   {thread.viewCount}
                 </Text>
-                <EyeIcon
-                  size={14}
-                  color={theme === "dark" ? "white" : "black"}
-                />
+                <EyeIcon size={14} color={theme === "dark" ? "white" : "black"} />
               </View>
               <View className="flex min-w-10 flex-row items-center">
                 <Text className="font-display pl-2 dark:text-white">
@@ -309,9 +346,13 @@ export default function Index() {
     <View className="flex-1 dark:bg-black">
       <View className="flex-5">
         <FlatList
-          data={sortedCourses}
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={renderCourseItem}
+          data={listData}
+          keyExtractor={(item) =>
+            item.kind === "course"
+              ? item.course.id.toString()
+              : "archived-header"
+          }
+          renderItem={renderListItem}
           contentContainerStyle={{
             paddingHorizontal: 8,
             paddingVertical: 8,

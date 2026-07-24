@@ -1,7 +1,7 @@
 {
   "name": "edgo",
   "main": "expo-router/entry",
-  "version": "1.0.0",
+  "version": "0.1.4",
   "scripts": {
     "start": "expo start",
     "reset-project": "node ./scripts/reset-project.js",
@@ -33,6 +33,7 @@
     "expo-haptics": "~57.0.1",
     "expo-image": "~57.0.1",
     "expo-linking": "~57.0.4",
+    "expo-network": "~57.0.1",
     "expo-notifications": "~57.0.7",
     "expo-router": "~57.0.8",
     "expo-secure-store": "~57.0.1",
@@ -74,5 +75,5 @@
     "typescript": "~6.0.3"
   },
   "private": true,
-  "packageManager": "pnpm@11.5.1+sha512.93f7b57422ea7068257235b4c16eb60762eb68e1dc23723199cc739043ea9be2c4143274a399d8c6defa2b1176226d9ca1c4b63482d6200c1a8fbaa78c1d1485"
+  "packageManager": "pnpm@11.16.0"
 }
