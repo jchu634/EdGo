@@ -1,4 +1,11 @@
-import { View, Text, ScrollView, ActivityIndicator, Image, Pressable } from "react-native";
+import {
+  View,
+  Text,
+  ScrollView,
+  ActivityIndicator,
+  Image,
+  Pressable,
+} from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import * as Linking from "expo-linking";
 
@@ -16,9 +23,12 @@ import { settings } from "@/src/lib/storage";
 import { useDb } from "@/src/providers/dbProvider";
 import { useThreadDetail } from "@/src/hooks/useThreadDetail";
 import { useThreadVotes } from "@/src/hooks/useThreadVotes";
-import { AnimatedToggleIcon, renderComment } from "@/src/components/thread-comments";
+import {
+  AnimatedToggleIcon,
+  renderComment,
+} from "@/src/components/ThreadComments";
 
-import "@/app/global.css";
+import "@/global.css";
 
 export default function ThreadPage() {
   const { courseid, thread } = useLocalSearchParams();
@@ -26,10 +36,12 @@ export default function ThreadPage() {
   const threadNumber = Number(Array.isArray(thread) ? thread[0] : thread);
 
   const db = useDb();
-  const { thread: t, usersMap, parsedXmlMap, loading } = useThreadDetail(
-    courseIdNum,
-    threadNumber,
-  );
+  const {
+    thread: t,
+    usersMap,
+    parsedXmlMap,
+    loading,
+  } = useThreadDetail(courseIdNum, threadNumber);
   const {
     isStarred,
     starCount,
@@ -159,7 +171,7 @@ export default function ThreadPage() {
           )}
         </View>
 
-        <View className="mb-4 rounded-xl bg-gray-50 p-3 dark:bg-black">
+        <View className="mb-2 rounded-xl bg-gray-50 p-1 dark:bg-black">
           {mainXml ? (
             renderXmlNode(mainXml, "thread-body")
           ) : (

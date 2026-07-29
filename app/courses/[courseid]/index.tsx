@@ -29,7 +29,7 @@ import { useSearchSync } from "@/src/hooks/useSearchSync";
 import { type ThreadUser } from "@/src/db/schema";
 import { useSearchQuery } from "@/src/providers/modalProvider";
 
-import "@/app/global.css";
+import "@/global.css";
 
 const categoryColours = [
   "0d74da",
@@ -66,17 +66,15 @@ export default function Index() {
     [courseCategories],
   );
 
-  const {
-    pinnedThreads,
-    regularThreads,
-  } = useThreadsDbQuery(courseIdNum, currentCategory);
+  const { pinnedThreads, regularThreads } = useThreadsDbQuery(
+    courseIdNum,
+    currentCategory,
+  );
 
-  const {
-    loading,
-    refreshing,
-    fetchMore,
-    refresh,
-  } = useThreadsSync(courseIdNum, currentCategory);
+  const { loading, refreshing, fetchMore, refresh } = useThreadsSync(
+    courseIdNum,
+    currentCategory,
+  );
 
   const { searchQuery, searchCourseId, searchSort, clearSearch } =
     useSearchQuery();

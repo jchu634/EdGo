@@ -29,7 +29,7 @@ import {
 import { useRecentThreads } from "@/src/hooks/useRecentThreads";
 import { useNetwork } from "@/src/providers/networkProvider";
 
-import "@/app/global.css";
+import "@/global.css";
 
 const courseColours = ["#16DB93", "#F72585", "#014d3a", "#6A66A3", "#FF7F11"];
 
@@ -315,7 +315,10 @@ export default function Index() {
                 <Text className="font-display pl-2 dark:text-white">
                   {thread.viewCount}
                 </Text>
-                <EyeIcon size={14} color={theme === "dark" ? "white" : "black"} />
+                <EyeIcon
+                  size={14}
+                  color={theme === "dark" ? "white" : "black"}
+                />
               </View>
               <View className="flex min-w-10 flex-row items-center">
                 <Text className="font-display pl-2 dark:text-white">

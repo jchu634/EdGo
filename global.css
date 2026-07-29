@@ -96,4 +96,39 @@
   --color-pumpkin-spice-800: oklch(35.54% 0.084 51.99);
   --color-pumpkin-spice-900: oklch(23.43% 0.049 56.93);
   --color-pumpkin-spice-950: oklch(19.4% 0.038 59.47);
+
+  --blur-xs: 4px;
+  --blur-sm: 8px;
+  --blur-md: 12px;
+  --blur-lg: 16px;
+  --blur-xl: 24px;
+  --blur-2xl: 40px;
+  --blur-3xl: 64px;
+  --blur-none: 0px;
+}
+@utility blur-xs {
+  filter: blur(--blur-xs);
+}
+
+@utility blur-sm {
+  filter: blur(--blur-sm);
+}
+
+@utility blur-md {
+  filter: blur(--blur-md);
+}
+@utility blur-lg {
+  filter: blur(--blur-lg);
+}
+@utility blur-xl {
+  filter: blur(--blur-xl);
+}
+@utility blur-2xl {
+  filter: blur(--blur-2xl);
+}
+@utility blur-3xl {
+  filter: blur(--blur-3xl);
+}
+@utility blur-none {
+  filter: blur(--blur-none);
 }
