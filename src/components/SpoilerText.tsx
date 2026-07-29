@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Pressable, View } from "react-native";
-import cn from "cnfast";
+import { cn } from "cnfast";
 
 export default function SpoilerText({
   children,
