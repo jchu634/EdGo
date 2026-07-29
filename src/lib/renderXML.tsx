@@ -440,9 +440,31 @@ export function renderXmlNode(
       );
 
     if (node.selfClosing && node.children.length === 0) {
-      if (node.tag === "break" || node.tag === "br") {
-        return <Text key={keyPrefix}>{"\n"}</Text>;
+      switch (node.tag) {
+        case "break":
+        case "br":
+          return <Text key={keyPrefix}>{"\n"}</Text>;
+        case "image": {
+          const src = node.attrs.src;
+          const imageWidth = node.attrs.width;
+          const imageHeight = node.attrs.height;
+          const calculatedAspectRatio =
+            Number(imageWidth) / Number(imageHeight);
+          if (src) {
+            return (
+              <Image
+                key={keyPrefix}
+                source={{ uri: src }}
+                style={{ aspectRatio: calculatedAspectRatio }}
+                className="my-2 w-full rounded-lg"
+                resizeMethod="auto"
+                resizeMode="contain"
+              />
+            );
+          }
+        }
       }
+
       return null;
     }
 
@@ -499,7 +521,8 @@ export function renderXmlNode(
           return renderXmlNode(wrapper, keyPrefix, listDepth);
         }
 
-        // Depth guard: Have not implemented horizontal scroll, and there is not enough width, so past level 2 we punt to the site.
+        // Depth guard: Have not implemented horizontal scroll, and there is
+        // not enough width, so past level 2 we punt to the site.
         if (listDepth > 2) {
           return (
             <Text
@@ -568,19 +591,8 @@ export function renderXmlNode(
           </Text>
         );
       }
-      case "image": {
-        const src = node.attrs.src || node.attrs.url;
-        if (src) {
-          return (
-            <Image
-              key={keyPrefix}
-              source={{ uri: src }}
-              className="my-2 h-40 w-full rounded-lg"
-              resizeMode="contain"
-            />
-          );
-        }
-        return null;
+      case "figure": {
+        return <View key={keyPrefix}>{children()}</View>;
       }
       case "link": {
         return (
