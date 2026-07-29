@@ -450,15 +450,18 @@ export function renderXmlNode(
           const imageHeight = node.attrs.height;
           const calculatedAspectRatio =
             Number(imageWidth) / Number(imageHeight);
+
           if (src) {
             return (
               <Image
                 key={keyPrefix}
                 source={{ uri: src }}
                 style={{
-                  aspectRatio: calculatedAspectRatio
-                    ? calculatedAspectRatio
-                    : 1,
+                  aspectRatio:
+                    Number.isFinite(calculatedAspectRatio) &&
+                    calculatedAspectRatio > 0
+                      ? calculatedAspectRatio
+                      : 1,
                 }}
                 className="my-2 w-full rounded-lg"
                 resizeMethod="auto"
