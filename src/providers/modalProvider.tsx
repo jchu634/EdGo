@@ -441,7 +441,7 @@ export function ModalProvider({ children }: { children: React.ReactNode }) {
                 justifyContent: "center",
               }}
             >
-              <Pressable className="w-[90%] self-center rounded-xl bg-white p-4 dark:bg-slate-950">
+              <Pressable className="w-[90%] self-center rounded-xl bg-white p-4 dark:bg-slate-800">
                 <Text
                   className="font-display mb-3 text-sm text-wrap text-gray-500 dark:text-neutral-100"
                   numberOfLines={2}
@@ -455,12 +455,11 @@ export function ModalProvider({ children }: { children: React.ReactNode }) {
                     Copied!
                   </Text>
                 ) : (
-                  <View style={{ gap: 12 }}>
+                  <View className="flex w-full flex-row justify-between">
                     <Pressable
                       onPress={handleCopy}
-                      className="w-50 items-center self-center rounded-lg bg-gray-300 py-3 active:bg-gray-200 dark:bg-neutral-400 dark:active:bg-neutral-600"
+                      className="w-44 items-center self-center rounded-lg bg-gray-300 py-3 active:bg-gray-200 dark:bg-neutral-700 dark:active:bg-neutral-600"
                       style={{
-                        width: 200,
                         alignSelf: "center",
                       }}
                     >
@@ -470,9 +469,8 @@ export function ModalProvider({ children }: { children: React.ReactNode }) {
                     </Pressable>
                     <Pressable
                       onPress={handleOpen}
-                      className="w-50 items-center self-center rounded-lg bg-gray-300 py-3 active:bg-gray-200 dark:bg-neutral-400 dark:active:bg-neutral-600"
+                      className="w-44 items-center self-center rounded-lg bg-gray-300 py-3 active:bg-gray-200 dark:bg-neutral-700 dark:active:bg-neutral-600"
                       style={{
-                        width: 200,
                         alignSelf: "center",
                       }}
                     >

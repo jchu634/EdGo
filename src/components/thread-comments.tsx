@@ -96,7 +96,7 @@ export function renderComment(
   return (
     <View
       key={`comment-${comment.id}`}
-      className={`mb-3 rounded-xl bg-gray-100 p-3 ${depth > 0 ? "ml-4 border-2 border-l border-gray-300" : ""}`}
+      className={`mb-3 rounded-xl bg-gray-100 p-3 dark:bg-gray-800 ${depth > 0 ? "ml-4 border-2 border-l border-gray-300" : ""}`}
     >
       <View className="mb-2 flex-row items-center gap-x-2">
         {!comment.is_anonymous && author?.avatar ? (
