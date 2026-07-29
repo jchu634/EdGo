@@ -1,4 +1,4 @@
-import { ActivityIndicator, Platform, Pressable, View } from "react-native";
+import { ActivityIndicator, Platform, Pressable, View, Text } from "react-native";
 import { Suspense } from "react";
 import { Stack, useGlobalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -6,6 +6,7 @@ import { Ionicons } from "@expo/vector-icons";
 
 import { KeyProvider } from "@/src/providers/keyProvider";
 import { DbProvider } from "@/src/providers/dbProvider";
+import { getCachedCourses } from "@/src/lib/storage";
 import { ModalProvider, useSearchModal } from "@/src/providers/modalProvider";
 import { NotificationProvider } from "@/src/providers/notificationProvider";
 import { NetworkProvider } from "@/src/providers/networkProvider";
@@ -13,6 +14,29 @@ import OfflineBanner from "@/src/components/OfflineBanner";
 
 import "@/app/global.css";
 
+function HeaderLeft() {
+  const cached = getCachedCourses();
+
+  const { courseid } = useGlobalSearchParams();
+
+  const normalizedCourseId =
+    courseid && (!Array.isArray(courseid) || courseid.length > 0)
+      ? Number(Array.isArray(courseid) ? courseid[0] : courseid)
+      : NaN;
+
+  const course = cached?.find(c => c.id === normalizedCourseId)
+
+  return (
+    <>
+      {!isNaN(normalizedCourseId) && course && (
+        <Text className="text-white font-display-medium truncate w-3/4 h-6 line-clamp-1">
+          {course.name}
+        </Text>
+      )}
+
+    </>
+  );
+}
 function HeaderRight() {
   const router = useRouter();
   const { courseid } = useGlobalSearchParams();
@@ -60,6 +84,8 @@ export default function RootLayout() {
                       },
                       headerTintColor: "white",
                       headerTitle: "",
+                      headerBackVisible: true,
+                      headerLeft: () => <HeaderLeft />,
                       headerRight: () => <HeaderRight />,
                       contentStyle: {
                         paddingBottom:
