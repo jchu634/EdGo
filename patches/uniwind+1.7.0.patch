@@ -1,0 +1,78 @@
+diff --git a/node_modules/uniwind/dist/metro/transformer.cjs b/node_modules/uniwind/dist/metro/transformer.cjs
+index 71e5e76..20b5b7e 100644
+--- a/node_modules/uniwind/dist/metro/transformer.cjs
++++ b/node_modules/uniwind/dist/metro/transformer.cjs
+@@ -630,6 +630,19 @@ class CSS {
+           return declarationValue.value;
+         case "baseline-position":
+           return "baseline";
++        case "filters": {
++          const filters = declarationValue.value.map((filter) => {
++            if (filter.type === "blur") {
++              const length = filter.value;
++              if (length.type === "value") {
++                return `blur(${length.value.value}${length.value.unit})`;
++              }
++              return void 0;
++            }
++            return void 0;
++          }).filter(config.isDefined);
++          return filters.length > 0 ? filters.join(" ") : void 0;
++        }
+         default:
+           if (Object.keys(declarationValue).length === 1) {
+             return declarationValue.type;
+diff --git a/node_modules/uniwind/dist/metro/transformer.mjs b/node_modules/uniwind/dist/metro/transformer.mjs
+index 6fb28df..72a7bc5 100644
+--- a/node_modules/uniwind/dist/metro/transformer.mjs
++++ b/node_modules/uniwind/dist/metro/transformer.mjs
+@@ -623,6 +623,19 @@ class CSS {
+           return declarationValue.value;
+         case "baseline-position":
+           return "baseline";
++        case "filters": {
++          const filters = declarationValue.value.map((filter) => {
++            if (filter.type === "blur") {
++              const length = filter.value;
++              if (length.type === "value") {
++                return `blur(${length.value.value}${length.value.unit})`;
++              }
++              return void 0;
++            }
++            return void 0;
++          }).filter(isDefined);
++          return filters.length > 0 ? filters.join(" ") : void 0;
++        }
+         default:
+           if (Object.keys(declarationValue).length === 1) {
+             return declarationValue.type;
+diff --git a/node_modules/uniwind/src/bundler/css-processor/css.ts b/node_modules/uniwind/src/bundler/css-processor/css.ts
+index a1d19f8..91bd1fe 100644
+--- a/node_modules/uniwind/src/bundler/css-processor/css.ts
++++ b/node_modules/uniwind/src/bundler/css-processor/css.ts
+@@ -288,6 +288,25 @@ export class CSS {
+                     return declarationValue.value
+                 case 'baseline-position':
+                     return 'baseline'
++                case 'filters': {
++                    const filters = declarationValue.value
++                        .map(filter => {
++                            if (filter.type === 'blur') {
++                                const length = filter.value
++
++                                if (length.type === 'value') {
++                                    return `blur(${length.value.value}${length.value.unit})`
++                                }
++
++                                return undefined
++                            }
++
++                            return undefined
++                        })
++                        .filter(isDefined)
++
++                    return filters.length > 0 ? filters.join(' ') : undefined
++                }
+                 default:
+                     // CSS string properties like absolute, relative, italic, etc.
+                     if (Object.keys(declarationValue).length === 1) {
