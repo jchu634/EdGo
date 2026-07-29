@@ -288,9 +288,146 @@ function renderInlineRuns(
   });
 }
 
+// Block-level tags that may appear inside a <list-item>. These are NOT merged
+// into the item's inline text — they are rendered as separate blocks below the
+// marker line (e.g. a nested <list> or an extra <paragraph>).
+const LIST_BLOCK_TAGS = new Set([
+  "list",
+  "paragraph",
+  "p",
+  "heading",
+  "pre",
+  "codeblock",
+  "image",
+  "spoiler",
+]);
+
+/**
+ * Workaround for an upstream API bug: A list can be wrapped in a degenerate
+ * "wrapper" list with a single <list-item>, whose only content is another <list>.
+ * For example:
+ *
+ *   <list style="number">
+ *     <list-item>
+ *       <list style="number">...</list>   <!-- the real list -->
+ *     </list-item>
+ *   </list>
+ *
+ * This renders as a spurious marker ("1.") followed by a sub-list.
+ * When this is detected, we skip the wrapper and just render the inner list as if the wrapper never existed
+ *
+ * Returns the inner <list> node, or null if `node` is not such a wrapper.
+ */
+function unwrapWrapperList(node: XmlElementNode): XmlElementNode | null {
+  const items = node.children.filter(
+    (c): c is XmlElementNode =>
+      c.type === "element" && (c.tag === "li" || c.tag === "list-item"),
+  );
+  if (items.length !== 1) return null;
+  const item = items[0];
+
+  const innerLists = item.children.filter(
+    (c): c is XmlElementNode => c.type === "element" && c.tag === "list",
+  );
+  if (innerLists.length !== 1) return null;
+
+  // Only unwrap if there is no real content
+  const hasOtherContent = item.children.some((c) => {
+    if (c.type === "text") return c.value.trim().length > 0;
+    if (c.type === "element") return c.tag !== "list";
+    return false;
+  });
+  if (hasOtherContent) return null;
+
+  return innerLists[0];
+}
+
+function renderListItem(
+  item: XmlElementNode,
+  keyPrefix: string,
+  marker: string,
+  childListDepth: number,
+): React.ReactNode {
+  const fragments: React.ReactNode[] = [];
+  let markerPlaced = false;
+  let i = 0;
+  const kids = item.children;
+
+  // Helper func to render the marker+content inside a single <Text>
+  const placeMarkerOnInline = (inlineNodes: XmlNode[], k: string) => {
+    const runs = collectInlineRuns(inlineNodes);
+    fragments.push(
+      <View key={k} className="flex-row">
+        <Text className="font-display mr-1 dark:text-white">{marker}</Text>
+        <Text className="font-display flex-1 dark:text-slate-100" selectable>
+          {renderInlineRuns(runs, k)}
+        </Text>
+      </View>,
+    );
+    markerPlaced = true;
+  };
+
+  while (i < kids.length) {
+    const child = kids[i];
+    const isParagraph =
+      child.type === "element" &&
+      (child.tag === "paragraph" || child.tag === "p");
+    const isBlock = child.type === "element" && LIST_BLOCK_TAGS.has(child.tag);
+
+    // Leading <paragraph>: just attach the marker to its text
+    // Most common
+    if (!markerPlaced && isParagraph) {
+      placeMarkerOnInline(child.children, `${keyPrefix}-m`);
+      i++;
+      continue;
+    }
+
+    // Leading inline content with no paragraph wrapper:
+    // gather the inline siblings, then attach the marker to them.
+    if (!markerPlaced && !isBlock) {
+      const inlineNodes: XmlNode[] = [];
+      while (i < kids.length) {
+        const c = kids[i];
+        if (c.type === "element" && LIST_BLOCK_TAGS.has(c.tag)) break;
+        inlineNodes.push(c);
+        i++;
+      }
+      placeMarkerOnInline(inlineNodes, `${keyPrefix}-m`);
+      continue;
+    }
+
+    // Render any other (block) child below the marker line
+    // e.g. a nested <list> or a subsequent
+    fragments.push(
+      renderXmlNode(child, `${keyPrefix}-blk-${i}`, childListDepth),
+    );
+    i++;
+  }
+
+  // Fallback: No inline content to attach the marker to (e.g. only a nested list).
+  // Emit a bare marker so numbering stays consistent.
+  if (!markerPlaced) {
+    fragments.unshift(
+      <Text
+        key={`${keyPrefix}-marker`}
+        className="font-display dark:text-white"
+      >
+        {marker}
+      </Text>,
+    );
+  }
+
+  return (
+    <View key={keyPrefix} className="mb-1 ml-4">
+      {fragments}
+    </View>
+  );
+}
+
 export function renderXmlNode(
   node: XmlNode,
   keyPrefix = "node",
+  listDepth = 1,
 ): React.ReactNode {
   if (node.type === "text") {
     return <Text key={keyPrefix}>{node.value} </Text>;
@@ -318,7 +455,11 @@ export function renderXmlNode(
       case "p": {
         const runs = collectInlineRuns(node.children);
         return (
-          <Text key={keyPrefix} className="font-display mb-2 dark:text-slate-100" selectable>
+          <Text
+            key={keyPrefix}
+            className="font-display mb-2 dark:text-slate-100"
+            selectable
+          >
             {renderInlineRuns(runs, keyPrefix)}
           </Text>
         );
@@ -350,17 +491,62 @@ export function renderXmlNode(
             <Text className="font-mono text-sm">{children()}</Text>
           </View>
         );
-      case "list":
+      case "list": {
+        // API workaround: if this is a degenerate single-item wrapper list,
+        // skip it and render the list it wraps at the same depth.
+        const wrapper = unwrapWrapperList(node);
+        if (wrapper) {
+          return renderXmlNode(wrapper, keyPrefix, listDepth);
+        }
+
+        // Depth guard: Have not implemented horizontal scroll, and there is not enough width, so past level 2 we punt to the site.
+        if (listDepth > 2) {
+          return (
+            <Text
+              key={keyPrefix}
+              className="my-1 text-slate-500 italic dark:text-slate-400"
+            >
+              Nested lists beyond 2 levels aren't supported — please view this
+              post on the website.
+            </Text>
+          );
+        }
+        // style="number" -> ordered ("1." marker), otherwise bullet ("•").
+        const ordered = node.attrs.style === "number";
+        let itemIndex = 0;
         return (
-          <View key={keyPrefix} className="mb-2 ml-2">
-            {children()}
+          <View key={keyPrefix} className="mb-2">
+            {node.children.map((child, i) => {
+              if (
+                child.type === "element" &&
+                (child.tag === "li" || child.tag === "list-item")
+              ) {
+                itemIndex += 1;
+                const marker = ordered ? `${itemIndex}.` : "•";
+                return renderListItem(
+                  child,
+                  `${keyPrefix}-li-${i}`,
+                  marker,
+                  listDepth + 1,
+                );
+              }
+              // Non-item children (unexpected inside a list) render inline.
+              return renderXmlNode(
+                child,
+                `${keyPrefix}-blk-${i}`,
+                listDepth + 1,
+              );
+            })}
           </View>
         );
+      }
+      // Fallback for an <li>/<list-item> encountered outside a <list> (the
+      // list case normally renders items itself via renderListItem).
       case "li":
       case "list-item":
         return (
           <View key={keyPrefix} className="mb-1 ml-2 flex-row">
-            <Text className="font-display">• </Text>
+            <Text className="font-display dark:text-white">• </Text>
             {children()}
           </View>
         );

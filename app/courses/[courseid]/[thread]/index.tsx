@@ -171,7 +171,7 @@ export default function ThreadPage() {
           )}
         </View>
 
-        <View className="mb-4 rounded-xl bg-gray-50 p-3 dark:bg-black">
+        <View className="mb-2 rounded-xl bg-gray-50 p-1 dark:bg-black">
           {mainXml ? (
             renderXmlNode(mainXml, "thread-body")
           ) : (
