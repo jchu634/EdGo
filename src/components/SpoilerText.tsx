@@ -7,15 +7,15 @@ export default function SpoilerText({
 }: {
   children: React.ReactNode;
 }) {
-  const [isPressed, setIsPressed] = useState(false);
+  const [isBlurred, setIsBlurred] = useState(true);
 
   return (
     <Pressable
       onPress={() => {
-        setIsPressed(!isPressed);
+        setIsBlurred(!isBlurred);
       }}
     >
-      <View className={cn("mb-2", isPressed && "blur-sm")}>{children}</View>
+      <View className={cn("mb-2", isBlurred && "blur-sm")}>{children}</View>
     </Pressable>
   );
 }
