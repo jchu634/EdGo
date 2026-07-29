@@ -455,7 +455,11 @@ export function renderXmlNode(
               <Image
                 key={keyPrefix}
                 source={{ uri: src }}
-                style={{ aspectRatio: calculatedAspectRatio }}
+                style={{
+                  aspectRatio: calculatedAspectRatio
+                    ? calculatedAspectRatio
+                    : 1,
+                }}
                 className="my-2 w-full rounded-lg"
                 resizeMethod="auto"
                 resizeMode="contain"
