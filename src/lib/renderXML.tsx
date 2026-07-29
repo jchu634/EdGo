@@ -107,7 +107,7 @@ function extractRunsFromNode(node: XmlNode, marks: InlineMarks): InlineRun[] {
       if (node.children.length > 0 && node.children[0].type === "text") {
         return collectInlineRuns(node.children, {
           ...marks,
-          href: node.children[0].value,
+          href: node.attrs.href,
         });
       } else {
         return collectInlineRuns(node.children, {
