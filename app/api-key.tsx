@@ -24,7 +24,7 @@ import { settings } from "@/src/lib/storage";
 import { EyeClosedIcon, EyeIcon } from "phosphor-react-native";
 import LinkText from "@/src/components/LinkText";
 
-import "@/app/global.css";
+import "@/global.css";
 
 export default function ApiKeyScreen() {
   const { setApiKey, isLoading } = useApiKey();

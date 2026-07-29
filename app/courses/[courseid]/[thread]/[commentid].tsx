@@ -3,9 +3,12 @@ import { useLocalSearchParams } from "expo-router";
 import { useDb } from "@/src/providers/dbProvider";
 import { useThreadDetail } from "@/src/hooks/useThreadDetail";
 import { useThreadVotes } from "@/src/hooks/useThreadVotes";
-import { renderComment, findCommentById } from "@/src/components/thread-comments";
+import {
+  renderComment,
+  findCommentById,
+} from "@/src/components/thread-comments";
 
-import "@/app/global.css";
+import "@/global.css";
 
 export default function CommentThreadPage() {
   const { courseid, thread, commentid } = useLocalSearchParams();
@@ -14,13 +17,14 @@ export default function CommentThreadPage() {
   const commentIdNum = Number(
     Array.isArray(commentid) ? commentid[0] : commentid,
   );
-
   const db = useDb();
-  const { thread: t, usersMap, parsedXmlMap, loading } = useThreadDetail(
-    courseIdNum,
-    threadNumber,
-    { sendViewed: false },
-  );
+
+  const {
+    thread: t,
+    usersMap,
+    parsedXmlMap,
+    loading,
+  } = useThreadDetail(courseIdNum, threadNumber, { sendViewed: false });
   const { commentVotes, commentVoteCounts, toggleCommentVote } = useThreadVotes(
     t,
     db,

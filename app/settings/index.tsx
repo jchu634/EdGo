@@ -12,7 +12,7 @@ import { useApiKey } from "@/src/providers/keyProvider";
 import { useNotificationSync } from "@/src/providers/notificationProvider";
 import { sendTestNotification } from "@/src/lib/notifications";
 
-import "@/app/global.css";
+import "@/global.css";
 import { useMMKVBoolean, useMMKVString } from "react-native-mmkv";
 import { DateTimePicker } from "@expo/ui/community/datetime-picker";
 

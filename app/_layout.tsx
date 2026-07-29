@@ -1,4 +1,10 @@
-import { ActivityIndicator, Platform, Pressable, View, Text } from "react-native";
+import {
+  ActivityIndicator,
+  Platform,
+  Pressable,
+  View,
+  Text,
+} from "react-native";
 import { Suspense } from "react";
 import { Stack, useGlobalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -11,8 +17,7 @@ import { ModalProvider, useSearchModal } from "@/src/providers/modalProvider";
 import { NotificationProvider } from "@/src/providers/notificationProvider";
 import { NetworkProvider } from "@/src/providers/networkProvider";
 import OfflineBanner from "@/src/components/OfflineBanner";
-
-import "@/app/global.css";
+import "@/global.css";
 
 function HeaderLeft() {
   const cached = getCachedCourses();
@@ -24,16 +29,14 @@ function HeaderLeft() {
       ? Number(Array.isArray(courseid) ? courseid[0] : courseid)
       : NaN;
 
-  const course = cached?.find(c => c.id === normalizedCourseId)
-
+  const course = cached?.find((c) => c.id === normalizedCourseId);
   return (
     <>
       {!isNaN(normalizedCourseId) && course && (
-        <Text className="text-white font-display-medium truncate w-3/4 h-6 line-clamp-1">
+        <Text className="font-display-medium line-clamp-1 h-6 w-3/4 truncate text-white">
           {course.name}
         </Text>
       )}
-
     </>
   );
 }

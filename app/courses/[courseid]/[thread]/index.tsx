@@ -1,4 +1,3 @@
-import { View, Text, ScrollView, ActivityIndicator, Image, Pressable } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import * as Linking from "expo-linking";
 
@@ -18,7 +17,7 @@ import { useThreadDetail } from "@/src/hooks/useThreadDetail";
 import { useThreadVotes } from "@/src/hooks/useThreadVotes";
 import { AnimatedToggleIcon, renderComment } from "@/src/components/thread-comments";
 
-import "@/app/global.css";
+import "@/global.css";
 
 export default function ThreadPage() {
   const { courseid, thread } = useLocalSearchParams();
@@ -191,8 +190,7 @@ export default function ThreadPage() {
         {comments.length > 0 && (
           <View className="mb-8">
             <Text className="font-display-bold mb-2 text-base text-gray-700">
-              Comments ({comments.length})
-            </Text>
+
             {comments.map((comment) =>
               renderComment(
                 comment,
