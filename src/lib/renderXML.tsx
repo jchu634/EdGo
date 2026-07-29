@@ -1,6 +1,8 @@
 import { View, Text, Image } from "react-native";
 import React from "react";
 import LinkText from "@/src/components/LinkText";
+import SpoilerText from "@/src/components/SpoilerText";
+
 interface XmlTextNode {
   type: "text";
   value: string;
@@ -16,18 +18,7 @@ interface XmlElementNode {
 
 export type XmlNode = XmlTextNode | XmlElementNode;
 
-export function isXmlNode(val: unknown): val is XmlNode {
-  if (!val || typeof val !== "object") return false;
-  const obj = val as Record<string, unknown>;
-  if (obj.type === "text" && typeof obj.value === "string") return true;
-  if (
-    (obj.type === "element" || obj.type === "document") &&
-    typeof obj.tag === "string" &&
-    Array.isArray(obj.children)
-  )
-    return true;
-  return false;
-}
+type TextBlockNode = XmlElementNode & { _blockTag?: string };
 
 type InlineMarks = {
   bold?: boolean;
@@ -47,6 +38,19 @@ type InlineRun =
   | {
       kind: "newline";
     };
+
+export function isXmlNode(val: unknown): val is XmlNode {
+  if (!val || typeof val !== "object") return false;
+  const obj = val as Record<string, unknown>;
+  if (obj.type === "text" && typeof obj.value === "string") return true;
+  if (
+    (obj.type === "element" || obj.type === "document") &&
+    typeof obj.tag === "string" &&
+    Array.isArray(obj.children)
+  )
+    return true;
+  return false;
+}
 
 function sameMarks(a: InlineMarks, b: InlineMarks): boolean {
   return (
@@ -153,18 +157,13 @@ function collectInlineRuns(
   return mergeAdjacentRuns(runs);
 }
 
-type TextBlockNode = XmlElementNode & { _blockTag?: string };
-
 function collectMergedBlockRuns(blocks: TextBlockNode[]): InlineRun[] {
   const allRuns: InlineRun[] = [];
   for (let i = 0; i < blocks.length; i++) {
     if (i > 0) {
       const prevIsHeading = blocks[i - 1]._blockTag === "heading";
       const curIsHeading = blocks[i]._blockTag === "heading";
-      if (curIsHeading) {
-        allRuns.push({ kind: "newline" });
-        allRuns.push({ kind: "newline" });
-      } else if (!prevIsHeading) {
+      if (curIsHeading || !prevIsHeading) {
         allRuns.push({ kind: "newline" });
         allRuns.push({ kind: "newline" });
       } else {
@@ -185,6 +184,51 @@ function collectMergedBlockRuns(blocks: TextBlockNode[]): InlineRun[] {
     }
   }
   return mergeAdjacentRuns(allRuns);
+}
+
+function renderBlockChildren(
+  node: XmlElementNode,
+  keyPrefix: string,
+): React.ReactNode[] {
+  const fragments: React.ReactNode[] = [];
+  let blockBuffer: TextBlockNode[] = [];
+  let groupIdx = 0;
+
+  const flushBuffer = () => {
+    if (blockBuffer.length === 0) return;
+    const runs = collectMergedBlockRuns(blockBuffer);
+    fragments.push(
+      <Text
+        key={`${keyPrefix}-pg-${groupIdx}`}
+        className="font-display mb-2 dark:text-slate-100"
+        selectable
+      >
+        {renderInlineRuns(runs, `${keyPrefix}-pg-${groupIdx}`)}
+      </Text>,
+    );
+    blockBuffer = [];
+    groupIdx++;
+  };
+
+  node.children.forEach((child, i) => {
+    if (
+      child.type === "element" &&
+      (child.tag === "paragraph" ||
+        child.tag === "p" ||
+        child.tag === "heading")
+    ) {
+      blockBuffer.push({
+        ...child,
+        _blockTag: child.tag,
+      });
+    } else {
+      flushBuffer();
+      fragments.push(renderXmlNode(child, `${keyPrefix}-blk-${i}`));
+    }
+  });
+  flushBuffer();
+
+  return fragments;
 }
 
 function headingSizeClass(level: number): string {
@@ -212,13 +256,19 @@ function renderInlineRuns(
     if (run.kind === "newline") {
       return <React.Fragment key={k}>{"\n"}</React.Fragment>;
     }
-
     const classNames: string[] = [];
-    if (run.marks.bold) classNames.push("font-display-bold");
-    if (run.marks.italic) classNames.push("italic");
-    if (run.marks.underline) classNames.push("underline");
-    if (run.marks.code)
+
+    if (run.marks.code) {
       classNames.push("rounded", "bg-gray-200", "px-1", "font-mono");
+    } else if (run.marks.bold && run.marks.italic) {
+      classNames.push("font-display-bold-italic");
+    } else if (run.marks.bold) {
+      classNames.push("font-display-bold");
+    } else if (run.marks.italic) {
+      classNames.push("font-display-italic");
+    }
+
+    if (run.marks.underline) classNames.push("underline");
     if (run.marks.heading) classNames.push(headingSizeClass(run.marks.heading));
 
     const className = classNames.join(" ");
@@ -230,16 +280,11 @@ function renderInlineRuns(
         </LinkText>
       );
     }
-
-    if (className) {
-      return (
-        <Text key={k} className={className}>
-          {run.text}
-        </Text>
-      );
-    }
-
-    return <React.Fragment key={k}>{run.text}</React.Fragment>;
+    return (
+      <Text key={k} className={className}>
+        {run.text}
+      </Text>
+    );
   });
 }
 
@@ -265,56 +310,15 @@ export function renderXmlNode(
     }
 
     switch (node.tag) {
-      case "document": {
-        const fragments: React.ReactNode[] = [];
-        let blockBuffer: TextBlockNode[] = [];
-        let groupIdx = 0;
-
-        const flushBuffer = () => {
-          if (blockBuffer.length === 0) return;
-          const runs = collectMergedBlockRuns(blockBuffer);
-          fragments.push(
-            <Text
-              key={`${keyPrefix}-pg-${groupIdx}`}
-              className="font-display mb-2 dark:text-slate-100"
-              selectable
-            >
-              {renderInlineRuns(runs, `${keyPrefix}-pg-${groupIdx}`)}
-            </Text>,
-          );
-          blockBuffer = [];
-          groupIdx++;
-        };
-
-        node.children.forEach((child, i) => {
-          if (
-            child.type === "element" &&
-            (child.tag === "paragraph" ||
-              child.tag === "p" ||
-              child.tag === "heading")
-          ) {
-            blockBuffer.push({
-              ...child,
-              _blockTag: child.tag,
-            });
-          } else {
-            flushBuffer();
-            fragments.push(renderXmlNode(child, `${keyPrefix}-doc-${i}`));
-          }
-        });
-        flushBuffer();
-
-        return <React.Fragment key={keyPrefix}>{fragments}</React.Fragment>;
-      }
+      case "document":
+        return (
+          <View key={keyPrefix}>{renderBlockChildren(node, keyPrefix)}</View>
+        );
       case "paragraph":
       case "p": {
         const runs = collectInlineRuns(node.children);
         return (
-          <Text
-            key={keyPrefix}
-            className="font-display mb-2 dark:text-slate-100"
-            selectable
-          >
+          <Text key={keyPrefix} className="font-display mb-2 dark:text-slate-100" selectable>
             {renderInlineRuns(runs, keyPrefix)}
           </Text>
         );
@@ -399,8 +403,18 @@ export function renderXmlNode(
           </LinkText>
         );
       }
-      default:
+      // <spoiler> is a block-level container (never nested inside a <paragraph>)
+      // Currently, it only holds text + lists, this may change to support images, codeblocks etc.
+      case "spoiler":
+        return (
+          <SpoilerText key={keyPrefix}>
+            {renderBlockChildren(node, keyPrefix)}
+          </SpoilerText>
+        );
+      default: {
+        console.log("Unhandled Node Tag:", node.tag);
         return <React.Fragment key={keyPrefix}>{children()}</React.Fragment>;
+      }
     }
   }
 
