@@ -6,7 +6,7 @@ import { useThreadVotes } from "@/src/hooks/useThreadVotes";
 import {
   renderComment,
   findCommentById,
-} from "@/src/components/thread-comments";
+} from "@/src/components/ThreadComments";
 
 import "@/global.css";
 

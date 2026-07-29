@@ -26,7 +26,7 @@ import { useThreadVotes } from "@/src/hooks/useThreadVotes";
 import {
   AnimatedToggleIcon,
   renderComment,
-} from "@/src/components/thread-comments";
+} from "@/src/components/ThreadComments";
 
 import "@/global.css";
 
