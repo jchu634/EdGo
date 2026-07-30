@@ -2,6 +2,7 @@ import { View, Text, Image } from "react-native";
 import React from "react";
 import LinkText from "@/src/components/LinkText";
 import SpoilerText from "@/src/components/SpoilerText";
+import { RaTeXView } from "ratex-react-native";
 
 interface XmlTextNode {
   type: "text";
@@ -83,6 +84,17 @@ function mergeAdjacentRuns(runs: InlineRun[]): InlineRun[] {
   }
 
   return merged;
+}
+
+const BLOCKED =
+  /\\(?:def|gdef|edef|xdef|let|global|newcommand|renewcommand|newenvironment|renewenvironment)\*?(?![A-Za-z@])/;
+
+function validateAndCleanLaTeX(input: any): string {
+  if (typeof input !== "string") return "";
+
+  const latex = input.slice(0, 5_000);
+
+  return BLOCKED.test(latex) ? "\\text{Invalid formatting detected.}" : latex;
 }
 
 function extractRunsFromNode(node: XmlNode, marks: InlineMarks): InlineRun[] {
@@ -615,6 +627,18 @@ export function renderXmlNode(
           <SpoilerText key={keyPrefix}>
             {renderBlockChildren(node, keyPrefix)}
           </SpoilerText>
+        );
+      case "math":
+        return (
+          <RaTeXView
+            key={keyPrefix}
+            latex={validateAndCleanLaTeX(
+              (node.children[0] as XmlTextNode).value,
+            )}
+            fontSize={24}
+            color="#1E88E5"
+            onError={(e) => console.warn("LaTeX error:", e.nativeEvent.error)}
+          />
         );
       default: {
         console.log("Unhandled Node Tag:", node.tag);

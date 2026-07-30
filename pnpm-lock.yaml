@@ -113,6 +113,9 @@ importers:
       phosphor-react-native:
         specifier: ^3.0.4
         version: 3.0.6(react-native-svg@15.15.4(react-native@0.86.2(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.86.2(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.2.15)(react@19.2.3)(supports-color@8.1.1))(react@19.2.3))(react-native@0.86.2(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.86.2(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.2.15)(react@19.2.3)(supports-color@8.1.1))(react@19.2.3)
+      ratex-react-native:
+        specifier: ^0.1.14
+        version: 0.1.14(react-native@0.86.2(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.86.2(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.2.15)(react@19.2.3)(supports-color@8.1.1))(react@19.2.3)
       react:
         specifier: 19.2.3
         version: 19.2.3
@@ -4341,6 +4344,12 @@ packages:
   range-parser@1.2.1:
     resolution: {integrity: sha512-Hrgsx+orqoygnmhFbKaHE6c296J+HTAQXoxEF6gNupROmmGJRoyzfG3ccAveqCBrwr/2yxQ5BVd/GTl5agOwSg==}
     engines: {node: '>= 0.6'}
+
+  ratex-react-native@0.1.14:
+    resolution: {integrity: sha512-EGLM4tb7OTGWjUexGUDHEDqXtYvQ6VR0Joo4AEz/W6qoGaA7yKRwSfBz0GpaHE+dx1W+sfD6X83DdIjqPudthQ==}
+    peerDependencies:
+      react: '>=19.2.0'
+      react-native: '>=0.84.0'
 
   react-devtools-core@6.1.5:
     resolution: {integrity: sha512-ePrwPfxAnB+7hgnEr8vpKxL9cmnp7F322t8oqcPshbIQQhDKgFDW4tjhF2wjVbdXF9O/nyuy3sQWd9JGpiLPvA==}
@@ -9661,6 +9670,11 @@ snapshots:
       inherits: 2.0.4
 
   range-parser@1.2.1: {}
+
+  ratex-react-native@0.1.14(react-native@0.86.2(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.86.2(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.2.15)(react@19.2.3)(supports-color@8.1.1))(react@19.2.3):
+    dependencies:
+      react: 19.2.3
+      react-native: 0.86.2(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.86.2(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.2.15)(react@19.2.3)(supports-color@8.1.1)
 
   react-devtools-core@6.1.5:
     dependencies:
