@@ -107,28 +107,28 @@
   --blur-none: 0px;
 }
 @utility blur-xs {
-  filter: blur(--blur-xs);
+  filter: blur(var(--blur-xs));
 }
 
 @utility blur-sm {
-  filter: blur(--blur-sm);
+  filter: blur(var(--blur-sm));
 }
 
 @utility blur-md {
-  filter: blur(--blur-md);
+  filter: blur(var(--blur-md));
 }
 @utility blur-lg {
-  filter: blur(--blur-lg);
+  filter: blur(var(--blur-lg));
 }
 @utility blur-xl {
-  filter: blur(--blur-xl);
+  filter: blur(var(--blur-xl));
 }
 @utility blur-2xl {
-  filter: blur(--blur-2xl);
+  filter: blur(var(--blur-2xl));
 }
 @utility blur-3xl {
-  filter: blur(--blur-3xl);
+  filter: blur(var(--blur-3xl));
 }
 @utility blur-none {
-  filter: blur(--blur-none);
+  filter: blur(var(--blur-none));
 }

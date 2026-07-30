@@ -1,8 +1,8 @@
 diff --git a/node_modules/uniwind/dist/metro/transformer.cjs b/node_modules/uniwind/dist/metro/transformer.cjs
-index 71e5e76..20b5b7e 100644
+index b5da026..d03a86b 100644
 --- a/node_modules/uniwind/dist/metro/transformer.cjs
 +++ b/node_modules/uniwind/dist/metro/transformer.cjs
-@@ -630,6 +630,19 @@ class CSS {
+@@ -629,6 +629,19 @@ class CSS {
            return declarationValue.value;
          case "baseline-position":
            return "baseline";
@@ -22,11 +22,32 @@ index 71e5e76..20b5b7e 100644
          default:
            if (Object.keys(declarationValue).length === 1) {
              return declarationValue.type;
+@@ -931,8 +944,19 @@ class Functions {
+       const color = `${fn.name}(${this.Processor.CSS.processValue(fn.arguments)})`;
+       return this.Processor.Color.processColor(color);
+     }
++    if (fn.name === "blur") {
++      const arg = fn.arguments[0];
++      let radius;
++      if (arg?.type === "dashed-ident" || arg?.type === "var") {
++        const name = arg.type === "var" ? arg.value.name.ident : arg.value;
++        const themeValue = this.Processor.vars[name];
++        radius = typeof themeValue === "number" ? `"${themeValue}px"` : `vars[${JSON.stringify(name)}]?.(vars)`;
++      } else {
++        radius = this.Processor.CSS.processValue(fn.arguments);
++      }
++      return `"blur(" + (${radius}) + ")"`;
++    }
+     if ([
+-      "blur",
+       "brightness",
+       "contrast",
+       "grayscale",
 diff --git a/node_modules/uniwind/dist/metro/transformer.mjs b/node_modules/uniwind/dist/metro/transformer.mjs
-index 6fb28df..72a7bc5 100644
+index 9be05ef..ab77df0 100644
 --- a/node_modules/uniwind/dist/metro/transformer.mjs
 +++ b/node_modules/uniwind/dist/metro/transformer.mjs
-@@ -623,6 +623,19 @@ class CSS {
+@@ -622,6 +622,19 @@ class CSS {
            return declarationValue.value;
          case "baseline-position":
            return "baseline";
@@ -46,8 +67,29 @@ index 6fb28df..72a7bc5 100644
          default:
            if (Object.keys(declarationValue).length === 1) {
              return declarationValue.type;
+@@ -924,8 +937,19 @@ class Functions {
+       const color = `${fn.name}(${this.Processor.CSS.processValue(fn.arguments)})`;
+       return this.Processor.Color.processColor(color);
+     }
++    if (fn.name === "blur") {
++      const arg = fn.arguments[0];
++      let radius;
++      if (arg?.type === "dashed-ident" || arg?.type === "var") {
++        const name = arg.type === "var" ? arg.value.name.ident : arg.value;
++        const themeValue = this.Processor.vars[name];
++        radius = typeof themeValue === "number" ? `"${themeValue}px"` : `vars[${JSON.stringify(name)}]?.(vars)`;
++      } else {
++        radius = this.Processor.CSS.processValue(fn.arguments);
++      }
++      return `"blur(" + (${radius}) + ")"`;
++    }
+     if ([
+-      "blur",
+       "brightness",
+       "contrast",
+       "grayscale",
 diff --git a/node_modules/uniwind/src/bundler/css-processor/css.ts b/node_modules/uniwind/src/bundler/css-processor/css.ts
-index a1d19f8..91bd1fe 100644
+index 80e14c6..aaae466 100644
 --- a/node_modules/uniwind/src/bundler/css-processor/css.ts
 +++ b/node_modules/uniwind/src/bundler/css-processor/css.ts
 @@ -288,6 +288,25 @@ export class CSS {
@@ -76,3 +118,35 @@ index a1d19f8..91bd1fe 100644
                  default:
                      // CSS string properties like absolute, relative, italic, etc.
                      if (Object.keys(declarationValue).length === 1) {
+diff --git a/node_modules/uniwind/src/bundler/css-processor/functions.ts b/node_modules/uniwind/src/bundler/css-processor/functions.ts
+index 7c5d4bd..991bfac 100644
+--- a/node_modules/uniwind/src/bundler/css-processor/functions.ts
++++ b/node_modules/uniwind/src/bundler/css-processor/functions.ts
+@@ -86,9 +86,26 @@ export class Functions {
+             return this.Processor.Color.processColor(color as CssColor)
+         }
+ 
++        if (fn.name === 'blur') {
++            const arg = fn.arguments[0]
++            let radius
++
++            if (arg?.type === 'dashed-ident' || arg?.type === 'var') {
++                const name = arg.type === 'var' ? arg.value.name.ident : arg.value
++                const themeValue = this.Processor.vars[name]
++
++                radius = typeof themeValue === 'number'
++                    ? `"${themeValue}px"`
++                    : `vars[${JSON.stringify(name)}]?.(vars)`
++            } else {
++                radius = this.Processor.CSS.processValue(fn.arguments)
++            }
++
++            return `"blur(" + (${radius}) + ")"`
++        }
++
+         if (
+             [
+-                'blur',
+                 'brightness',
+                 'contrast',
+                 'grayscale',
