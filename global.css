@@ -110,8 +110,9 @@
   filter: blur(var(--blur-xs));
 }
 
+/* CSS Vars do not consistently work, since blur is only used in spoilers, this is a easy workaround*/
 @utility blur-sm {
-  filter: blur(var(--blur-sm));
+  filter: blur(8px);
 }
 
 @utility blur-md {

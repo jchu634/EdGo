@@ -1,8 +1,11 @@
 import { View, Text, Image } from "react-native";
+import { withUniwind } from "uniwind";
 import React from "react";
 import LinkText from "@/src/components/LinkText";
 import SpoilerText from "@/src/components/SpoilerText";
 import { RaTeXView } from "ratex-react-native";
+
+const StyledRaTeXView = withUniwind(RaTeXView);
 
 interface XmlTextNode {
   type: "text";
@@ -630,13 +633,13 @@ export function renderXmlNode(
         );
       case "math":
         return (
-          <RaTeXView
+          <StyledRaTeXView
             key={keyPrefix}
             latex={validateAndCleanLaTeX(
               (node.children[0] as XmlTextNode).value,
             )}
             fontSize={24}
-            color="#1E88E5"
+            colorClassName="accent-gray-900 dark:accent-gray-100"
             onError={(e) => console.warn("LaTeX error:", e.nativeEvent.error)}
           />
         );
