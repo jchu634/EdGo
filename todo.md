@@ -2,7 +2,6 @@
 
 - Add more xml rendering formats
   - Code
-  - Latex
 - Support input + replying
 
 ## Potential Features
