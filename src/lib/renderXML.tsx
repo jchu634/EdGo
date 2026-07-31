@@ -632,12 +632,15 @@ export function renderXmlNode(
           </SpoilerText>
         );
       case "math":
+        const textChild = node.children.find(
+          (child): child is XmlTextNode => child.type === "text",
+        );
+        if (!textChild) return null;
+
         return (
           <StyledRaTeXView
             key={keyPrefix}
-            latex={validateAndCleanLaTeX(
-              (node.children[0] as XmlTextNode).value,
-            )}
+            latex={validateAndCleanLaTeX(textChild.value)}
             fontSize={24}
             colorClassName="accent-gray-900 dark:accent-gray-100"
             onError={(e) => console.warn("LaTeX error:", e.nativeEvent.error)}
