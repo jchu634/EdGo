@@ -122,10 +122,17 @@ export default function Index() {
             >
               {item.title}
             </Text>
-            <PushPinIcon
-              size={14}
-              color={theme === "dark" ? "white" : "black"}
-            />
+            <View className="flex flex-row items-center gap-x-1">
+              {item.isHidden && (
+                <Text className="font-display text-xs text-red-500 dark:text-red-400">
+                  Deleted
+                </Text>
+              )}
+              <PushPinIcon
+                size={14}
+                color={theme === "dark" ? "white" : "black"}
+              />
+            </View>
           </View>
           <View className="mt-1 flex flex-row items-center">
             <View
