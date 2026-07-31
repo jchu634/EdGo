@@ -55,7 +55,11 @@ const EMPTY_VOTE_STATE: VoteState = {
   commentVoteCounts: new Map(),
 };
 
-export function useThreadVotes(thread: ThreadDetail | null, db: Db) {
+export function useThreadVotes(
+  thread: ThreadDetail | null,
+  db: Db,
+  readOnly = false,
+) {
   const [state, setState] = useState<VoteState>(EMPTY_VOTE_STATE);
   const [trackedThreadId, setTrackedThreadId] = useState<number | null>(null);
 
@@ -66,7 +70,7 @@ export function useThreadVotes(thread: ThreadDetail | null, db: Db) {
   }
 
   function toggleStar() {
-    if (!thread) return;
+    if (!thread || readOnly) return;
     const next = !state.isStarred;
     const prevStarred = state.isStarred;
     const prevCount = state.starCount;
@@ -111,7 +115,7 @@ export function useThreadVotes(thread: ThreadDetail | null, db: Db) {
   }
 
   function toggleVote() {
-    if (!thread) return;
+    if (!thread || readOnly) return;
     const next = !state.isVoted;
     const prevVoted = state.isVoted;
     const prevCount = state.voteCount;
@@ -156,6 +160,7 @@ export function useThreadVotes(thread: ThreadDetail | null, db: Db) {
   }
 
   function toggleCommentVote(commentId: number, currentVoted: boolean) {
+    if (readOnly) return;
     const next = !currentVoted;
     setState((s) => {
       const commentVotes = new Map(s.commentVotes);

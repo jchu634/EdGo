@@ -44,6 +44,9 @@ export const threadsTable = sqliteTable(
       .notNull(),
     isVoted: integer("is_voted", { mode: "boolean" }).default(false).notNull(),
     isSeen: integer("is_seen", { mode: "boolean" }).default(false).notNull(),
+    isHidden: integer("is_hidden", { mode: "boolean" })
+      .default(false)
+      .notNull(),
     user: text("user", { mode: "json" }).$type<{
       id: number;
       name: string;

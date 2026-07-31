@@ -102,13 +102,14 @@ export default function Index() {
   const renderPinnedThreadItem = useCallback(
     ({ item }: { item: ThreadUser }) => {
       const colour = categoryColourMap.get(item.category);
+      const cardClass = (
+        item.isSeen
+          ? "mx-2 w-56 rounded-2xl border-l bg-gray-200 p-3 pl-2.5 dark:bg-neutral-700"
+          : "mx-2 w-56 rounded-2xl border-l bg-gray-300 p-3 pl-2.5 dark:bg-neutral-800"
+      ).concat(item.isHidden ? " opacity-60" : "");
       return (
         <Pressable
-          className={
-            item.isSeen
-              ? "mx-2 w-56 rounded-2xl border-l bg-gray-200 p-3 pl-2.5 dark:bg-neutral-700"
-              : "mx-2 w-56 rounded-2xl border-l bg-gray-300 p-3 pl-2.5 dark:bg-neutral-800"
-          }
+          className={cardClass}
           style={{
             borderLeftColor: colour || "#d1d5db",
           }}
@@ -144,13 +145,14 @@ export default function Index() {
   const renderThreadItem = useCallback(
     ({ item }: { item: ThreadUser }) => {
       const colour = categoryColourMap.get(item.category);
+      const cardClass = (
+        item.isSeen
+          ? "w-80% mx-1.5 mb-3 rounded-2xl border-l bg-gray-200 p-4 px-4 pl-2.5 dark:bg-neutral-700"
+          : "w-80% mx-1.5 mb-3 rounded-2xl border-l bg-gray-300 p-4 px-4 pl-2.5 dark:bg-neutral-800"
+      ).concat(item.isHidden ? " opacity-60" : "");
       return (
         <Pressable
-          className={
-            item.isSeen
-              ? "w-80% mx-1.5 mb-3 rounded-2xl border-l bg-gray-200 p-4 px-4 pl-2.5 dark:bg-neutral-700"
-              : "w-80% mx-1.5 mb-3 rounded-2xl border-l bg-gray-300 p-4 px-4 pl-2.5 dark:bg-neutral-800"
-          }
+          className={cardClass}
           style={{
             borderLeftColor: colour || "#d1d5db",
           }}
@@ -160,15 +162,22 @@ export default function Index() {
             <Text className="font-display-bold max-h-30 w-100 truncate dark:text-slate-100">
               {item.title}
             </Text>
-            {item.isStarred && (
-              <View className="flex flex-row items-center">
-                <StarIcon color="#f59e0b" weight="fill" />
-              </View>
-            )}
-            {item.isAnswered && <CheckIcon color="#3f6212" />}
-            {item.isPinned && (
-              <PushPinIcon color={theme === "dark" ? "white" : "black"} />
-            )}
+            <View className="flex flex-row items-center gap-x-1">
+              {item.isHidden && (
+                <Text className="font-display text-xs text-red-500 dark:text-red-400">
+                  Deleted
+                </Text>
+              )}
+              {item.isStarred && (
+                <View className="flex flex-row items-center">
+                  <StarIcon color="#f59e0b" weight="fill" />
+                </View>
+              )}
+              {item.isAnswered && <CheckIcon color="#3f6212" />}
+              {item.isPinned && (
+                <PushPinIcon color={theme === "dark" ? "white" : "black"} />
+              )}
+            </View>
           </View>
           <View className="flex flex-row justify-between">
             <View className="flex flex-row items-center">

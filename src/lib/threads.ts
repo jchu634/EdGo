@@ -5,7 +5,7 @@ import {
   HttpClientRequest,
   HttpClientResponse,
 } from "effect/unstable/http";
-import { sql } from "drizzle-orm";
+import { and, eq, inArray, not, sql } from "drizzle-orm";
 
 import { threadsTable, type NewThread } from "@/src/db/schema";
 import type { Db } from "@/src/providers/dbProvider";
@@ -211,6 +211,7 @@ function toDbThread(
     updatedAt: t.updated_at ?? null,
     isStarred: t.is_starred,
     isVoted: (t.vote ?? 0) === 1,
+    isHidden: false,
   };
 }
 
@@ -239,6 +240,7 @@ const upsertConflict = {
     updatedAt: sql`excluded.updated_at`,
     isStarred: sql`excluded.is_starred`,
     isVoted: sql`excluded.is_voted`,
+    isHidden: sql`excluded.is_hidden`,
   },
 } as const;
 
@@ -267,6 +269,40 @@ export async function syncThreadsToDb(
       .values(rows as NewThread[])
       .onConflictDoUpdate(upsertConflict);
   }
+}
+
+// Mark threads as hidden when the "new" sort omits them from a covered range.
+export async function markHiddenThreads(
+  db: Db,
+  courseId: number,
+  apiThreads: Schema.Schema.Type<typeof ThreadUser>[],
+) {
+  if (apiThreads.length === 0) return;
+  // Exclude pinned threads from the window: they skew the range inference.
+  const nonPinned = apiThreads.filter((t) => !t.is_pinned);
+  if (nonPinned.length === 0) return;
+
+  let min = Infinity;
+  let max = -Infinity;
+  for (const t of nonPinned) {
+    if (t.number < min) min = t.number;
+    if (t.number > max) max = t.number;
+  }
+  if (!Number.isFinite(min) || !Number.isFinite(max)) return;
+
+  const returnedIds = apiThreads.map((t) => t.id);
+
+  await db
+    .update(threadsTable)
+    .set({ isHidden: true })
+    .where(
+      and(
+        eq(threadsTable.courseId, courseId),
+        eq(threadsTable.isHidden, false),
+        sql`${threadsTable.number} BETWEEN ${min} AND ${max}`,
+        not(inArray(threadsTable.id, returnedIds)),
+      ),
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -301,7 +337,10 @@ export const fetchAndSyncThreads = (
   fetchThreadsFromApi(courseId, options).pipe(
     Effect.flatMap((response) =>
       Effect.tryPromise({
-        try: () => syncThreadsToDb(db, courseId, Array.from(response.threads)),
+        try: () =>
+          syncThreadsToDb(db, courseId, Array.from(response.threads)).then(() =>
+            markHiddenThreads(db, courseId, Array.from(response.threads)),
+          ),
         catch: (error) =>
           new Error("Failed to sync threads to DB", { cause: error }),
       }).pipe(Effect.as(response)),
