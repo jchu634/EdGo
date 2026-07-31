@@ -631,7 +631,7 @@ export function renderXmlNode(
             {renderBlockChildren(node, keyPrefix)}
           </SpoilerText>
         );
-      case "math":
+      case "math": {
         const textChild = node.children.find(
           (child): child is XmlTextNode => child.type === "text",
         );
@@ -646,6 +646,7 @@ export function renderXmlNode(
             onError={(e) => console.warn("LaTeX error:", e.nativeEvent.error)}
           />
         );
+      }
       default: {
         console.log("Unhandled Node Tag:", node.tag);
         return <React.Fragment key={keyPrefix}>{children()}</React.Fragment>;
