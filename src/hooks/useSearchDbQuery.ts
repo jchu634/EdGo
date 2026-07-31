@@ -34,16 +34,18 @@ export function useSearchDbQuery(
           sql`${threadsTable.title} LIKE ${"%" + escapeLike(trimmed) + "%"} ESCAPE '\\'`,
         ),
       )
-      .orderBy(...orderByClause)
-      .limit(50),
+      .orderBy(...orderByClause),
     [courseId, trimmed, sort],
   );
 
   // Drop ghost threads the user never opened; keep previously-opened hidden
-  // threads so they remain discoverable (rendered read-only).
-  const results = (searchResults ?? []).filter(
-    (t) => !t.isHidden || getCachedThreadDetail(courseId, t.number) !== null,
-  );
+  // threads so they remain discoverable (rendered read-only), then apply the
+  // final cap so the limit counts usable results rather than dropped ghosts.
+  const results = (searchResults ?? [])
+    .filter(
+      (t) => !t.isHidden || getCachedThreadDetail(courseId, t.number) !== null,
+    )
+    .slice(0, 50);
 
   console.debug("[useSearchDbQuery] render", {
     courseId,
