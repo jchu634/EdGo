@@ -276,9 +276,20 @@ export async function markHiddenThreads(
   db: Db,
   courseId: number,
   apiThreads: Schema.Schema.Type<typeof ThreadUser>[],
+  options: { category?: string; sort?: string },
 ) {
+  // Detection relies on the "new" (number-descending) sort over the full course.
+  // A category filter returns only that category's threads, so threads of other
+  // categories in the number range would be wrongly hidden; other sorts break the
+  // number-window inference.
+  if (options.category) return;
+  if ((options.sort ?? "new") !== "new") return;
+
   if (apiThreads.length === 0) return;
-  // Exclude pinned threads from the window: they skew the range inference.
+  // Exclude pinned threads from the window: they float to the top regardless of
+  // number, so their numbers would skew the range inference. Pinned threads are
+  // also only returned on the first page, so they must never be marked hidden
+  // (a later page's response omits them even when they still exist).
   const nonPinned = apiThreads.filter((t) => !t.is_pinned);
   if (nonPinned.length === 0) return;
 
@@ -299,6 +310,7 @@ export async function markHiddenThreads(
       and(
         eq(threadsTable.courseId, courseId),
         eq(threadsTable.isHidden, false),
+        eq(threadsTable.isPinned, false),
         sql`${threadsTable.number} BETWEEN ${min} AND ${max}`,
         not(inArray(threadsTable.id, returnedIds)),
       ),
@@ -339,7 +351,10 @@ export const fetchAndSyncThreads = (
       Effect.tryPromise({
         try: () =>
           syncThreadsToDb(db, courseId, Array.from(response.threads)).then(() =>
-            markHiddenThreads(db, courseId, Array.from(response.threads)),
+            markHiddenThreads(db, courseId, Array.from(response.threads), {
+              category: options?.category,
+              sort: options?.sort,
+            }),
           ),
         catch: (error) =>
           new Error("Failed to sync threads to DB", { cause: error }),
