@@ -562,7 +562,7 @@ export function renderXmlNode(
             key={keyPrefix}
             code={code}
             lang={node.attrs.language}
-            lineNumbers={node.attrs?.["line-numbers"] === "true"}
+            lineNumbers={node.attrs["line-numbers"] === "true"}
             runnable={node.attrs.runnable === "true"}
           />
         );
