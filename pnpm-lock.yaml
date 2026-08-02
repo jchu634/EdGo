@@ -32,6 +32,9 @@ importers:
       '@shikijs/themes':
         specifier: 4.3.1
         version: 4.3.1
+      '@shikijs/types':
+        specifier: 4.3.1
+        version: 4.3.1
       babel-plugin-inline-import:
         specifier: ^3.0.0
         version: 3.0.0
