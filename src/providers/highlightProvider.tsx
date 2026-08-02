@@ -1,183 +1,135 @@
-import type { HighlighterContextType } from "@shared/contexts/highlighter/context";
-import type { HighlighterCore } from "@shikijs/core";
-import { HighlighterContext } from "@shared/contexts/highlighter/context";
+import type { HighlighterCore, ThemedToken } from "@shikijs/core";
 import { createHighlighterCore } from "@shikijs/core";
-import ada from "@shikijs/langs/ada";
-import asm from "@shikijs/langs/asm";
-import bash from "@shikijs/langs/bash";
-import c from "@shikijs/langs/c";
-import cpp from "@shikijs/langs/cpp";
-import csharp from "@shikijs/langs/csharp";
-import css from "@shikijs/langs/css";
-import dart from "@shikijs/langs/dart";
-import f95 from "@shikijs/langs/f95";
-import go from "@shikijs/langs/go";
-import haskell from "@shikijs/langs/haskell";
-import html from "@shikijs/langs/html";
-import java from "@shikijs/langs/java";
-import javascript from "@shikijs/langs/javascript";
-import json from "@shikijs/langs/json";
-import jsx from "@shikijs/langs/jsx";
-import julia from "@shikijs/langs/julia";
-import kotlin from "@shikijs/langs/kotlin";
-import latex from "@shikijs/langs/latex";
-import lisp from "@shikijs/langs/lisp";
-import lua from "@shikijs/langs/lua";
-import matlab from "@shikijs/langs/matlab";
-import mips from "@shikijs/langs/mips";
-import nim from "@shikijs/langs/nim";
-import ocaml from "@shikijs/langs/ocaml";
-import php from "@shikijs/langs/php";
-import prolog from "@shikijs/langs/prolog";
-import python from "@shikijs/langs/python";
-import r from "@shikijs/langs/r";
-import racket from "@shikijs/langs/racket";
-import ruby from "@shikijs/langs/ruby";
-import rust from "@shikijs/langs/rust";
-import scala from "@shikijs/langs/scala";
-import sql from "@shikijs/langs/sql";
-import svelte from "@shikijs/langs/svelte";
-import swift from "@shikijs/langs/swift";
-import typescript from "@shikijs/langs/typescript";
-import vb from "@shikijs/langs/vb";
-import verilog from "@shikijs/langs/verilog";
-import vue from "@shikijs/langs/vue";
-import yaml from "@shikijs/langs/yaml";
-import aurorax from "@shikijs/themes/aurora-x";
-import React from "react";
+import type { LanguageRegistration } from "@shikijs/types";
+import githubDark from "@shikijs/themes/github-dark";
+import githubLight from "@shikijs/themes/github-light";
+import React, { createContext, useContext, useEffect, useState } from "react";
 import {
   createNativeEngine,
   isNativeEngineAvailable,
 } from "react-native-shiki-engine";
 
-const SHIKI_LANGS = [
-  asm,
-  ada,
-  mips,
-  bash,
-  c,
-  cpp,
-  csharp,
-  css,
-  dart,
-  f95,
-  go,
-  html,
-  haskell,
-  java,
-  javascript,
-  jsx,
-  json,
-  julia,
-  kotlin,
-  latex,
-  lisp,
-  lua,
-  sql,
-  nim,
-  ocaml,
-  matlab,
-  php,
-  prolog,
-  python,
-  r,
-  racket,
-  ruby,
-  rust,
-  scala,
-  svelte,
-  swift,
-  typescript,
-  vb,
-  verilog,
-  vue,
-  yaml,
-];
+export type HighlightTheme = "github-light" | "github-dark";
+
+interface HighlighterContextValue {
+  ready: boolean;
+  error: Error | null;
+  /**
+   * Tokenize code for the given language and theme.
+   * Dynamically loads the language grammar on first use, so the first call
+   * for a new language resolves after the grammar is registered.
+   * Returns null when not ready, on init error, or if the resolved language
+   * grammar is unavailable (caller should fall back to plain text).
+   */
+  tokenize: (
+    code: string,
+    lang: string,
+    theme: HighlightTheme,
+  ) => Promise<ThemedToken[][] | null>;
+}
+
+const HighlighterContext = createContext<HighlighterContextValue | null>(null);
 
 /**
- * Maps EdStem language values to the shiki grammar id registered with the
- * highlighter. Values that already match a registered grammar name/alias
- * (e.g. `py` -> python) are listed explicitly for clarity, and unsupported
- * languages fall back to plain text.
+ * Lazy Load Shiki Grammars (Defaults to plain text)
  */
+const SHIKI_LANG_MODULES: Record<
+  string,
+  () => Promise<{ default: LanguageRegistration[] }>
+> = {
+  asm: () => import("@shikijs/langs/asm"),
+  mipsasm: () => import("@shikijs/langs/mipsasm"),
+  ada: () => import("@shikijs/langs/ada"),
+  shellscript: () => import("@shikijs/langs/bash"),
+  c: () => import("@shikijs/langs/c"),
+  cpp: () => import("@shikijs/langs/cpp"),
+  csharp: () => import("@shikijs/langs/csharp"),
+  css: () => import("@shikijs/langs/css"),
+  html: () => import("@shikijs/langs/html"),
+  dart: () => import("@shikijs/langs/dart"),
+  "fortran-free-form": () => import("@shikijs/langs/f95"),
+  go: () => import("@shikijs/langs/go"),
+  haskell: () => import("@shikijs/langs/haskell"),
+  java: () => import("@shikijs/langs/java"),
+  javascript: () => import("@shikijs/langs/javascript"),
+  jsx: () => import("@shikijs/langs/jsx"),
+  typescript: () => import("@shikijs/langs/typescript"),
+  json: () => import("@shikijs/langs/json"),
+  julia: () => import("@shikijs/langs/julia"),
+  kotlin: () => import("@shikijs/langs/kotlin"),
+  latex: () => import("@shikijs/langs/latex"),
+  "common-lisp": () => import("@shikijs/langs/common-lisp"),
+  lua: () => import("@shikijs/langs/lua"),
+  sql: () => import("@shikijs/langs/sql"),
+  nim: () => import("@shikijs/langs/nim"),
+  ocaml: () => import("@shikijs/langs/ocaml"),
+  matlab: () => import("@shikijs/langs/matlab"),
+  php: () => import("@shikijs/langs/php"),
+  prolog: () => import("@shikijs/langs/prolog"),
+  python: () => import("@shikijs/langs/python"),
+  r: () => import("@shikijs/langs/r"),
+  racket: () => import("@shikijs/langs/racket"),
+  ruby: () => import("@shikijs/langs/ruby"),
+  rust: () => import("@shikijs/langs/rust"),
+  scala: () => import("@shikijs/langs/scala"),
+  svelte: () => import("@shikijs/langs/svelte"),
+  swift: () => import("@shikijs/langs/swift"),
+  verilog: () => import("@shikijs/langs/verilog"),
+  vue: () => import("@shikijs/langs/vue"),
+  vb: () => import("@shikijs/langs/vb"),
+  yaml: () => import("@shikijs/langs/yaml"),
+};
+
 const LANG_TO_SHIKI: Record<string, string> = {
   // Assembly
   x86: "asm",
   aarch64: "asm",
   mips: "mipsasm",
-  // Ada
   adb: "ada",
-  // Shell
   sh: "shellscript",
   // C-family
   c: "c",
   cc: "cpp",
   cs: "csharp",
-  // Web markup
   css: "css",
   html: "html",
-  // Dart
   dart: "dart",
-  // Fortran
   f95: "fortran-free-form",
-  // Go
   go: "go",
-  // Haskell
   hs: "haskell",
-  // JVM
   java: "java",
   kt: "kotlin",
   scala: "scala",
-  // JS / TS family
   js: "javascript",
   jsweb: "javascript",
   jsx: "jsx",
   ts: "typescript",
   json: "json",
-  // Julia
   jl: "julia",
-  // LaTeX
   tex: "latex",
-  // Lisp
   lisp: "common-lisp",
-  // Lua
   lua: "lua",
   // SQL (no per-dialect grammar available; fall back to generic sql)
   mysql: "sql",
   sql: "sql",
   sqlite: "sql",
-  // Nim
   nim: "nim",
-  // OCaml
   ml: "ocaml",
-  // Octave (MATLAB-compatible)
   m: "matlab",
-  // PHP
   php: "php",
-  // Prolog
   pro: "prolog",
   // Python (sage is Python-based)
   py: "python",
   sage: "python",
-  // R
   r: "r",
-  // Racket
   rkt: "racket",
-  // Ruby
   rb: "ruby",
-  // Rust
   rs: "rust",
-  // Svelte
   svelte: "svelte",
-  // Swift
   swift: "swift",
-  // Verilog
   v: "verilog",
-  // Vue
   vue: "vue",
-  // Visual Basic
   vb: "vb",
-  // Yaml
   yaml: "yaml",
   // Plain text / no shiki grammar available
   txt: "text",
@@ -190,55 +142,116 @@ function resolveShikiLang(lang: string): string {
   return LANG_TO_SHIKI[lang] ?? lang;
 }
 
+// Module-level singleton.
+// These live outside the component so they survive remounts, StrictMode double-invocation, and hot reloads.
 let highlighterInstance: HighlighterCore | null = null;
-let initializationPromise: Promise<void> | null = null;
+let initializationPromise: Promise<HighlighterCore> | null = null;
+let initializationError: Error | null = null;
+
+// Loaded/loading grammar tracking, shared across the app lifetime alongside the singleton so a grammar is compiled at most once.
+const loadedLangs = new Set<string>();
+const loadingLangPromises = new Map<string, Promise<void>>();
+
+async function createHighlighter(): Promise<HighlighterCore> {
+  if (!isNativeEngineAvailable()) {
+    throw new Error("react-native-shiki-engine native module is unavailable.");
+  }
+  // No grammars are loaded upfront; Registered on first use via ensureLangLoaded.
+  // Themes are cheap and needed to resolve token colors, so they are registered eagerly.
+  return createHighlighterCore({
+    langs: [],
+    themes: [githubLight, githubDark],
+    engine: createNativeEngine(),
+  });
+}
+
+function getOrCreateInitPromise(): Promise<HighlighterCore> {
+  if (!initializationPromise) {
+    initializationPromise = createHighlighter().catch((err) => {
+      initializationError = err instanceof Error ? err : new Error(String(err));
+      throw err;
+    });
+  }
+  return initializationPromise;
+}
+
+function ensureLangLoaded(shikiLang: string): Promise<void> {
+  if (loadedLangs.has(shikiLang)) return Promise.resolve();
+  const existing = loadingLangPromises.get(shikiLang);
+  if (existing) return existing;
+
+  const loader = SHIKI_LANG_MODULES[shikiLang];
+  // No loader means plain text or unsupported — nothing to register.
+  if (!loader || !highlighterInstance) return Promise.resolve();
+
+  const promise = (async () => {
+    const mod = await loader();
+    await highlighterInstance!.loadLanguage(mod.default);
+    loadedLangs.add(shikiLang);
+    loadingLangPromises.delete(shikiLang);
+  })();
+  loadingLangPromises.set(shikiLang, promise);
+  return promise;
+}
+
+export function useHighlighter(): HighlighterContextValue {
+  const ctx = useContext(HighlighterContext);
+  if (!ctx) {
+    throw new Error("useHighlighter must be used within HighlighterProvider");
+  }
+  return ctx;
+}
 
 export function HighlighterProvider({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const value = React.useMemo<HighlighterContextType>(
+  const [ready, setReady] = useState(false);
+  const [error, setError] = useState<Error | null>(initializationError);
+
+  useEffect(() => {
+    let mounted = true;
+    getOrCreateInitPromise()
+      .then((instance) => {
+        if (!mounted) return;
+        highlighterInstance = instance;
+        setReady(true);
+      })
+      .catch((err) => {
+        if (!mounted) return;
+        setError(err instanceof Error ? err : new Error(String(err)));
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const value = React.useMemo<HighlighterContextValue>(
     () => ({
-      initialize: async () => {
-        if (!initializationPromise) {
-          initializationPromise = (async () => {
-            const available = isNativeEngineAvailable();
-            if (!available) throw new Error("Native engine not available.");
-
-            highlighterInstance = await createHighlighterCore({
-              langs: SHIKI_LANGS,
-              themes: [aurorax],
-              engine: createNativeEngine(),
-            });
-          })();
-        }
-
-        await initializationPromise;
-      },
-
-      tokenize: (code: string, options: { lang: string; theme: string }) => {
-        if (!highlighterInstance) {
-          throw new Error(
-            "Highlighter not initialized. Call initialize() first.",
-          );
-        }
-        return highlighterInstance.codeToTokensBase(code, {
-          ...options,
-          lang: resolveShikiLang(options.lang),
-        });
-      },
-
-      dispose: () => {
-        if (highlighterInstance) {
-          highlighterInstance.dispose();
-          highlighterInstance = null;
-          initializationPromise = null;
+      ready,
+      error,
+      tokenize: async (code, lang, theme) => {
+        if (!highlighterInstance) return null;
+        const shikiLang = resolveShikiLang(lang);
+        await ensureLangLoaded(shikiLang);
+        if (!highlighterInstance) return null;
+        try {
+          return highlighterInstance.codeToTokensBase(code, {
+            lang: shikiLang,
+            theme,
+          });
+        } catch {
+          return null;
         }
       },
     }),
-    [],
+    [ready, error],
   );
 
-  return <HighlighterContext value={value}>{children}</HighlighterContext>;
+  return (
+    <HighlighterContext.Provider value={value}>
+      {children}
+    </HighlighterContext.Provider>
+  );
 }
