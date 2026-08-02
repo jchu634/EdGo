@@ -4,6 +4,7 @@ import type { LanguageRegistration } from "@shikijs/types";
 import githubDark from "@shikijs/themes/github-dark";
 import githubLight from "@shikijs/themes/github-light";
 import React, { createContext, useContext, useEffect, useState } from "react";
+import { Effect } from "effect";
 import {
   createNativeEngine,
   isNativeEngineAvailable,
@@ -152,25 +153,40 @@ let initializationError: Error | null = null;
 const loadedLangs = new Set<string>();
 const loadingLangPromises = new Map<string, Promise<void>>();
 
-async function createHighlighter(): Promise<HighlighterCore> {
-  if (!isNativeEngineAvailable()) {
-    throw new Error("react-native-shiki-engine native module is unavailable.");
-  }
-  // No grammars are loaded upfront; Registered on first use via ensureLangLoaded.
-  // Themes are cheap and needed to resolve token colors, so they are registered eagerly.
-  return createHighlighterCore({
-    langs: [],
-    themes: [githubLight, githubDark],
-    engine: createNativeEngine(),
-  });
-}
+// Build the highlighter core. No grammars are loaded upfront; registered on
+// first use via ensureLangLoaded. Themes are cheap and needed to resolve token
+// colors, so they are registered eagerly.
+const createHighlighter: Effect.Effect<HighlighterCore, Error> = Effect.gen(
+  function* () {
+    if (!isNativeEngineAvailable()) {
+      yield* Effect.fail(
+        new Error("react-native-shiki-engine native module is unavailable."),
+      );
+    }
+    return yield* Effect.tryPromise({
+      try: () =>
+        createHighlighterCore({
+          langs: [],
+          themes: [githubLight, githubDark],
+          engine: createNativeEngine(),
+        }),
+      catch: (error) =>
+        error instanceof Error ? error : new Error(String(error)),
+    });
+  },
+);
 
 function getOrCreateInitPromise(): Promise<HighlighterCore> {
   if (!initializationPromise) {
-    initializationPromise = createHighlighter().catch((err) => {
-      initializationError = err instanceof Error ? err : new Error(String(err));
-      throw err;
-    });
+    initializationPromise = Effect.runPromise(
+      createHighlighter.pipe(
+        Effect.tapError((err) =>
+          Effect.sync(() => {
+            initializationError = err;
+          }),
+        ),
+      ),
+    );
   }
   return initializationPromise;
 }
@@ -184,12 +200,27 @@ function ensureLangLoaded(shikiLang: string): Promise<void> {
   // No loader means plain text or unsupported — nothing to register.
   if (!loader || !highlighterInstance) return Promise.resolve();
 
-  const promise = (async () => {
-    const mod = await loader();
-    await highlighterInstance!.loadLanguage(mod.default);
-    loadedLangs.add(shikiLang);
-    loadingLangPromises.delete(shikiLang);
-  })();
+  const promise = Effect.runPromise(
+    Effect.gen(function* () {
+      const mod = yield* Effect.tryPromise({
+        try: () => loader(),
+        catch: (error) =>
+          error instanceof Error ? error : new Error(String(error)),
+      });
+      yield* Effect.tryPromise({
+        try: () => highlighterInstance!.loadLanguage(mod.default),
+        catch: (error) =>
+          error instanceof Error ? error : new Error(String(error)),
+      });
+      loadedLangs.add(shikiLang);
+    }).pipe(
+      Effect.ensuring(
+        Effect.sync(() => {
+          loadingLangPromises.delete(shikiLang);
+        }),
+      ),
+    ),
+  );
   loadingLangPromises.set(shikiLang, promise);
   return promise;
 }
@@ -227,27 +258,24 @@ export function HighlighterProvider({
     };
   }, []);
 
-  const value = React.useMemo<HighlighterContextValue>(
-    () => ({
-      ready,
-      error,
-      tokenize: async (code, lang, theme) => {
+  const value: HighlighterContextValue = {
+    ready,
+    error,
+    tokenize: async (code, lang, theme) => {
+      try {
         if (!highlighterInstance) return null;
         const shikiLang = resolveShikiLang(lang);
         await ensureLangLoaded(shikiLang);
         if (!highlighterInstance) return null;
-        try {
-          return highlighterInstance.codeToTokensBase(code, {
-            lang: shikiLang,
-            theme,
-          });
-        } catch {
-          return null;
-        }
-      },
-    }),
-    [ready, error],
-  );
+        return highlighterInstance.codeToTokensBase(code, {
+          lang: shikiLang,
+          theme,
+        });
+      } catch {
+        return null;
+      }
+    },
+  };
 
   return (
     <HighlighterContext.Provider value={value}>
