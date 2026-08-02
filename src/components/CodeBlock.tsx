@@ -189,7 +189,7 @@ export default function CodeBlock({
         )}
       >
         <Text className="font-mono-bold text-sm text-gray-800 dark:text-gray-100">
-          {lang ? LANG_TO_READABLE_LANG[lang] : lang}
+          {lang ? LANG_TO_READABLE_LANG[lang] : "Unknown Language"}
         </Text>
         {runnable && (
           <Pressable
