@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from "react";
 import {
+  Pressable,
   ScrollView,
   Text,
   View,
   useColorScheme,
   type TextStyle,
 } from "react-native";
+import { PlayIcon } from "phosphor-react-native";
 import type { ThemedToken } from "@shikijs/core";
 import { cn } from "cnfast";
 import { useHighlighter } from "@/src/providers/highlightProvider";
@@ -13,7 +15,63 @@ import { useHighlighter } from "@/src/providers/highlightProvider";
 interface CodeBlockProps {
   code: string;
   lang?: string;
+  lineNumbers?: boolean;
+  /** When true, renders a "Run" button beneath the code. */
+  runnable?: boolean;
 }
+
+const LANG_TO_READABLE_LANG: Record<string, string> = {
+  x86: "x86",
+  aarch64: "AArch64",
+  adb: "Ada",
+  mips: "MIPS",
+  sh: "Bash",
+  c: "C",
+  cc: "C++",
+  cs: "C#",
+  css: "CSS",
+  dart: "Dart",
+  f95: "Fortran",
+  go: "Go",
+  html: "HTML",
+  hs: "Haskell",
+  java: "Java",
+  js: "JavaScript (Node)",
+  jsweb: "JavaScript (Web)",
+  jsx: "JSX",
+  json: "JSON",
+  jl: "Julia",
+  karel: "Karel",
+  kt: "Kotlin",
+  tex: "LaTeX",
+  lisp: "Lisp",
+  lua: "Lua",
+  mysql: "MySQL",
+  nim: "Nim",
+  ml: "OCaml",
+  m: "Octave",
+  php: "PHP",
+  sql: "Postgres",
+  pro: "Prolog",
+  py: "Python",
+  arr: "Pyret",
+  r: "R",
+  rkt: "Racket",
+  rb: "Ruby",
+  rs: "Rust",
+  sage: "Sage",
+  scala: "Scala",
+  dl: "Soufflé",
+  sqlite: "SQLite",
+  svelte: "Svelte",
+  swift: "Swift",
+  txt: "Text",
+  ts: "Typescript",
+  vb: "VB",
+  v: "Verilog",
+  vue: "Vue",
+  yaml: "Yaml",
+};
 
 // FontStyle bitmask values from vscode-textmate.
 const FONT_ITALIC = 1;
@@ -37,13 +95,25 @@ function decodeFontStyle(fontStyle?: number): TextStyle {
   return style;
 }
 
-function renderLine(line: ThemedToken[], lineKey: string): React.ReactNode {
+// Shared style code lines as each line is a sibling <Text>.
+const CODE_LINE_CLASSNAME =
+  "font-mono text-sm text-gray-800 dark:text-gray-100";
+
+function renderLine(
+  line: ThemedToken[],
+  lineKey: string,
+  lineNumbers?: boolean,
+): React.ReactNode {
   if (line.length === 0) {
-    // Preserve blank lines so line spacing stays correct.
-    return <Text key={lineKey}> </Text>;
+    // Preserve blank lines so vertical spacing stays correct.
+    return (
+      <Text key={lineKey} className={CODE_LINE_CLASSNAME}>
+        {" "}
+      </Text>
+    );
   }
   return (
-    <Text key={lineKey} selectable>
+    <Text key={lineKey} className={CODE_LINE_CLASSNAME} selectable>
       {line.map((token, i) => (
         <Text
           key={`${lineKey}-${i}`}
@@ -52,6 +122,7 @@ function renderLine(line: ThemedToken[], lineKey: string): React.ReactNode {
             ...decodeFontStyle(token.fontStyle),
           }}
         >
+          {lineNumbers && i === 0 ? `${parseInt(lineKey) + 1} ` : ""}
           {token.content}
         </Text>
       ))}
@@ -59,7 +130,12 @@ function renderLine(line: ThemedToken[], lineKey: string): React.ReactNode {
   );
 }
 
-export default function CodeBlock({ code, lang }: CodeBlockProps) {
+export default function CodeBlock({
+  code,
+  lang,
+  lineNumbers,
+  runnable,
+}: CodeBlockProps) {
   const { ready, error, tokenize } = useHighlighter();
   const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? "github-dark" : "github-light";
@@ -95,33 +171,55 @@ export default function CodeBlock({ code, lang }: CodeBlockProps) {
       ? result.tokens
       : null;
 
-  if (error || !tokens) {
-    return (
-      <View className="my-2 rounded-lg bg-gray-200 p-3 dark:bg-gray-800">
-        <Text
-          className="font-mono text-sm text-gray-800 dark:text-gray-100"
-          selectable
-        >
-          {code}
-        </Text>
-      </View>
-    );
-  }
-
+  const handleRun = () => {
+    // TODO: invoke the EdStem code-run API and render the result.
+  };
+  console.log("LineNumbers", lineNumbers);
   return (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      className={cn(
-        "my-2 rounded-lg p-3",
-        theme === "github-dark" ? "bg-gray-900" : "bg-gray-50",
-      )}
-    >
-      <View>
-        <Text className="font-mono text-sm text-gray-800 dark:text-gray-100">
-          {tokens.map((line, i) => renderLine(line, `cb-line-${i}`))}
+    <View className="my-2">
+      <View
+        className={cn(
+          "flex w-full flex-row justify-between rounded-t-lg p-3",
+          theme === "github-dark" ? "bg-gray-900" : "bg-gray-50",
+        )}
+      >
+        <Text className="font-mono-bold text-sm text-gray-800 dark:text-gray-100">
+          {lang ? LANG_TO_READABLE_LANG[lang] : lang}
         </Text>
+        {runnable && (
+          <Pressable
+            onPress={handleRun}
+            className="flex-row items-center gap-x-1 self-start rounded-lg bg-[#70069f] px-3 py-1.5"
+          >
+            <Text className="text-sm font-semibold text-white">Run</Text>
+            <PlayIcon size={14} color="white" weight="fill" />
+          </Pressable>
+        )}
       </View>
-    </ScrollView>
+
+      {tokens ? (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          className={cn(
+            "rounded-b-lg p-3",
+            theme === "github-dark" ? "bg-gray-900" : "bg-gray-50",
+          )}
+        >
+          <View>
+            {tokens.map((line, i) => renderLine(line, `${i}`, lineNumbers))}
+          </View>
+        </ScrollView>
+      ) : (
+        <View className="rounded-lg bg-gray-200 p-3 dark:bg-gray-800">
+          <Text
+            className="font-mono text-sm text-gray-800 dark:text-gray-100"
+            selectable
+          >
+            {code}
+          </Text>
+        </View>
+      )}
+    </View>
   );
 }
