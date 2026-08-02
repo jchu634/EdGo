@@ -1,6 +1,6 @@
 ## 1.0 Features
 
-- Support code snipped running
+- Support code snippet running
 - Support input + replying
 
 ## Potential Features
