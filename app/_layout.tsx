@@ -13,6 +13,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { KeyProvider } from "@/src/providers/keyProvider";
 import { DbProvider } from "@/src/providers/dbProvider";
 import { getCachedCourses } from "@/src/lib/storage";
+import { HighlighterProvider } from "@/src/providers/highlightProvider";
 import { ModalProvider, useSearchModal } from "@/src/providers/modalProvider";
 import { NotificationProvider } from "@/src/providers/notificationProvider";
 import { NetworkProvider } from "@/src/providers/networkProvider";
@@ -77,27 +78,29 @@ export default function RootLayout() {
         <DbProvider>
           <NotificationProvider>
             <NetworkProvider>
-              <ModalProvider>
-                <View style={{ flex: 1 }}>
-                  <OfflineBanner />
-                  <Stack
-                    screenOptions={{
-                      headerStyle: {
-                        backgroundColor: "#70069e",
-                      },
-                      headerTintColor: "white",
-                      headerTitle: "",
-                      headerBackVisible: true,
-                      headerLeft: () => <HeaderLeft />,
-                      headerRight: () => <HeaderRight />,
-                      contentStyle: {
-                        paddingBottom:
-                          Platform.OS === "android" ? insets.bottom : 0,
-                      },
-                    }}
-                  />
-                </View>
-              </ModalProvider>
+              <HighlighterProvider>
+                <ModalProvider>
+                  <View style={{ flex: 1 }}>
+                    <OfflineBanner />
+                    <Stack
+                      screenOptions={{
+                        headerStyle: {
+                          backgroundColor: "#70069e",
+                        },
+                        headerTintColor: "white",
+                        headerTitle: "",
+                        headerBackVisible: true,
+                        headerLeft: () => <HeaderLeft />,
+                        headerRight: () => <HeaderRight />,
+                        contentStyle: {
+                          paddingBottom:
+                            Platform.OS === "android" ? insets.bottom : 0,
+                        },
+                      }}
+                    />
+                  </View>
+                </ModalProvider>
+              </HighlighterProvider>
             </NetworkProvider>
           </NotificationProvider>
         </DbProvider>

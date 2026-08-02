@@ -41,6 +41,7 @@ export default function ThreadPage() {
     usersMap,
     parsedXmlMap,
     loading,
+    isHidden,
   } = useThreadDetail(courseIdNum, threadNumber);
   const {
     isStarred,
@@ -52,7 +53,7 @@ export default function ThreadPage() {
     toggleStar,
     toggleVote,
     toggleCommentVote,
-  } = useThreadVotes(t, db);
+  } = useThreadVotes(t, db, isHidden);
 
   if (loading && !t) {
     return (
@@ -66,7 +67,9 @@ export default function ThreadPage() {
     return (
       <View className="flex h-full items-center justify-center">
         <Text className="font-display text-gray-500">
-          Thread not found, You may be offline
+          {isHidden
+            ? "This thread has been deleted or made private."
+            : "Thread not found, You may be offline"}
         </Text>
       </View>
     );

@@ -1,0 +1,1 @@
+ALTER TABLE `threads` ADD `is_hidden` integer DEFAULT false NOT NULL;

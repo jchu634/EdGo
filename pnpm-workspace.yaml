@@ -16,4 +16,12 @@ minimumReleaseAgeExclude:
   - expo-system-ui@57.0.2
   - expo-task-manager@57.0.7
   - eslint-config-expo@57.0.1
+  - '@expo/cli@57.0.11'
+  - '@expo/inline-modules@0.1.4'
+  - '@expo/local-build-cache-provider@57.0.5'
+  - '@expo/prebuild-config@57.0.10'
+  - babel-preset-expo@57.0.5
+  - expo-asset@57.0.8
+  - expo-modules-core@57.0.8
+  - expo@57.0.9
 nodeLinker: hoisted

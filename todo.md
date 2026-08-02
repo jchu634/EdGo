@@ -1,8 +1,6 @@
 ## 1.0 Features
 
-- Add more xml rendering formats
-  - Code
-  - Latex
+- Support code snippet running
 - Support input + replying
 
 ## Potential Features

@@ -9,6 +9,10 @@ module.exports = defineConfig([
   {
     rules: {
       "react/no-unescaped-entities": "off",
+      "import/no-unresolved": [
+        "error",
+        { ignore: ["^@shikijs/langs/", "^@shikijs/themes/"] },
+      ],
     },
   },
 ]);

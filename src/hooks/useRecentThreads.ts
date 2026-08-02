@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { desc, sql } from "drizzle-orm";
+import { desc, eq, sql } from "drizzle-orm";
 import { useLiveQuery } from "drizzle-orm/expo-sqlite";
 import { Effect } from "effect";
 import { threadsTable } from "@/src/db/schema";
@@ -15,6 +15,7 @@ export function useRecentThreads(courses: { id: number }[] | undefined) {
     db
       .select()
       .from(threadsTable)
+      .where(eq(threadsTable.isHidden, false))
       .orderBy(
         desc(
           sql`COALESCE(${threadsTable.updatedAt}, ${threadsTable.createdAt})`,

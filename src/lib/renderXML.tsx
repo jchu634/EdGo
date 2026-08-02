@@ -1,7 +1,12 @@
 import { View, Text, Image } from "react-native";
+import { withUniwind } from "uniwind";
 import React from "react";
+import CodeBlock from "@/src/components/CodeBlock";
 import LinkText from "@/src/components/LinkText";
 import SpoilerText from "@/src/components/SpoilerText";
+import { RaTeXView } from "ratex-react-native";
+
+const StyledRaTeXView = withUniwind(RaTeXView);
 
 interface XmlTextNode {
   type: "text";
@@ -83,6 +88,30 @@ function mergeAdjacentRuns(runs: InlineRun[]): InlineRun[] {
   }
 
   return merged;
+}
+
+const BLOCKED =
+  /\\(?:def|gdef|edef|xdef|let|global|newcommand|renewcommand|newenvironment|renewenvironment)\*?(?![A-Za-z@])/;
+
+function validateAndCleanLaTeX(input: any): string {
+  if (typeof input !== "string") return "";
+
+  const latex = input.slice(0, 5_000);
+
+  return BLOCKED.test(latex) ? "\\text{Invalid formatting detected.}" : latex;
+}
+
+function extractRawText(nodes: XmlNode[]): string {
+  let out = "";
+  const walk = (n: XmlNode) => {
+    if (n.type === "text") {
+      out += n.value;
+    } else {
+      for (const child of n.children) walk(child);
+    }
+  };
+  for (const n of nodes) walk(n);
+  return out;
 }
 
 function extractRunsFromNode(node: XmlNode, marks: InlineMarks): InlineRun[] {
@@ -298,6 +327,7 @@ const LIST_BLOCK_TAGS = new Set([
   "heading",
   "pre",
   "codeblock",
+  "snippet",
   "image",
   "spoiler",
 ]);
@@ -520,6 +550,23 @@ export function renderXmlNode(
             <Text className="font-mono text-sm">{children()}</Text>
           </View>
         );
+      case "snippet": {
+        // <snippet> wraps a <snippet-file> that contains the source text.
+        const fileNode = node.children.find(
+          (c): c is XmlElementNode =>
+            c.type === "element" && c.tag === "snippet-file",
+        );
+        const code = extractRawText((fileNode ?? node).children);
+        return (
+          <CodeBlock
+            key={keyPrefix}
+            code={code}
+            lang={node.attrs.language}
+            lineNumbers={node.attrs["line-numbers"] === "true"}
+            runnable={node.attrs.runnable === "true"}
+          />
+        );
+      }
       case "list": {
         // API workaround: if this is a degenerate single-item wrapper list,
         // skip it and render the list it wraps at the same depth.
@@ -616,6 +663,23 @@ export function renderXmlNode(
             {renderBlockChildren(node, keyPrefix)}
           </SpoilerText>
         );
+      case "math": {
+        const textChild = node.children.find(
+          (child): child is XmlTextNode => child.type === "text",
+        );
+        if (!textChild) return null;
+
+        return (
+          <StyledRaTeXView
+            key={keyPrefix}
+            latex={validateAndCleanLaTeX(textChild.value)}
+            fontSize={24}
+            colorClassName="accent-gray-900 dark:accent-gray-100"
+            onError={(e) => console.warn("LaTeX error:", e.nativeEvent.error)}
+          />
+        );
+      }
+
       default: {
         console.log("Unhandled Node Tag:", node.tag);
         return <React.Fragment key={keyPrefix}>{children()}</React.Fragment>;

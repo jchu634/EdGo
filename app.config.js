@@ -21,10 +21,6 @@ export default {
     predictiveBackGestureEnabled: false,
     package: IS_DEV ? "com.edgo.dev" : "com.edgo",
   },
-  web: {
-    output: "static",
-    favicon: "./assets/images/favicon.png",
-  },
   plugins: [
     "expo-router",
     [
