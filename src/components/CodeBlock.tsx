@@ -102,18 +102,24 @@ const CODE_LINE_CLASSNAME =
 function renderLine(
   line: ThemedToken[],
   lineKey: string,
-  lineNumbers?: boolean,
+  lineNumbers: boolean,
 ): React.ReactNode {
+  const gutter = lineNumbers ? (
+    <Text className="text-gray-400 dark:text-gray-500">
+      {`${parseInt(lineKey) + 1}`.padStart(3, " ") + " "}
+    </Text>
+  ) : null;
   if (line.length === 0) {
     // Preserve blank lines so vertical spacing stays correct.
     return (
-      <Text key={lineKey} className={CODE_LINE_CLASSNAME}>
-        {" "}
+      <Text key={lineKey} className={CODE_LINE_CLASSNAME} selectable>
+        {gutter}{" "}
       </Text>
     );
   }
   return (
     <Text key={lineKey} className={CODE_LINE_CLASSNAME} selectable>
+      {gutter}
       {line.map((token, i) => (
         <Text
           key={`${lineKey}-${i}`}
@@ -122,7 +128,6 @@ function renderLine(
             ...decodeFontStyle(token.fontStyle),
           }}
         >
-          {lineNumbers && i === 0 ? `${parseInt(lineKey) + 1} ` : ""}
           {token.content}
         </Text>
       ))}
