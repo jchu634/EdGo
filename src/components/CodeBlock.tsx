@@ -173,48 +173,61 @@ const langConfig = {
     run_command: "mono main.exe",
     build_command: "mcs main.cs",
   },
-  css: { run_command: "" }, // CSS cannot run
-  dart: { run_command: "" },
-  f95: { run_command: "" },
-  go: { run_command: "" },
-  html: { run_command: "" },
-  hs: { run_command: "" },
-  java: { run_command: "" },
-  js: { run_command: "" },
-  jsweb: { run_command: "" },
-  jsx: { run_command: "" },
-  json: { run_command: "" },
-  jl: { run_command: "" },
-  karel: { run_command: "" },
-  kt: { run_command: "" },
-  tex: { run_command: "" },
-  lisp: { run_command: "" },
-  lua: { run_command: "" },
-  mysql: { run_command: "" },
-  nim: { run_command: "" },
-  ml: { run_command: "" },
-  m: { run_command: "" },
-  php: { run_command: "" },
-  sql: { run_command: "" },
-  pro: { run_command: "" },
+  css: { run_command: "" }, // Cannot run
+  dart: {
+    run_command: "./main",
+    build_command: "dart compile exe main.dart -o main",
+  },
+  f95: { run_command: "./main", build_command: "gfortran main.f95 -o main" },
+  go: { run_command: "./main", build_command: "go build main.go" },
+  html: { run_command: "" }, // Cannot run
+  hs: { run_command: "runhaskell main.hs" },
+  java: { run_command: "java Main", build_command: "javac Main.java" },
+  js: { run_command: "node main.js" },
+  jsweb: { run_command: "" }, // Cannot run
+  jsx: { run_command: "" }, // Cannot run
+  json: { run_command: "" }, // Cannot run
+  jl: { run_command: "julia main.jl" },
+  karel: { run_command: "" }, // Cannot run: Relies on Custom Local Renderer
+  kt: {
+    run_command: "java -jar main.jar",
+    build_command: "kotlinc main.kt -include-runtime -d main.jar",
+  },
+  tex: {
+    run_command: "true",
+    build_command:
+      "pdflatex -interaction=nonstopmode -file-line-error main.tex",
+  },
+  lisp: { run_command: "clisp main.lisp" },
+  lua: { run_command: "lua main.lua" },
+  mysql: { run_command: "" }, // TODO: MySQL Support (Different Code Path)
+  nim: { run_command: "./main", build_command: "nim c main.nim" },
+  ml: { run_command: "ocaml main.ml" },
+  m: { run_command: "octave -q main.m" },
+  php: { run_command: "php -f main.php" },
+  sql: { run_command: "" }, // TODO: PostGres Support (Different Code Path)
+  pro: { run_command: "swipl -q -s main.pro" },
   py: { run_command: 'bash -c "python3 main.py"' },
-  arr: { run_command: "" },
-  r: { run_command: "" },
-  rkt: { run_command: "" },
-  rb: { run_command: "" },
-  rs: { run_command: "" },
-  sage: { run_command: "" },
-  scala: { run_command: "" },
-  dl: { run_command: "" },
-  sqlite: { run_command: "" },
-  svelte: { run_command: "" },
-  swift: { run_command: "" },
-  txt: { run_command: "" },
-  ts: { run_command: "" },
-  vb: { run_command: "" },
-  v: { run_command: "" },
-  vue: { run_command: "" },
-  yaml: { run_command: "" },
+  arr: { run_command: "pyret -q main.arr" },
+  r: { run_command: "Rscript main.r" },
+  rkt: { run_command: "racket -f main.rkt" },
+  rb: { run_command: "ruby main.rb" },
+  rs: { run_command: "./main", build_command: "rustc main.rs" },
+  sage: { run_command: 'bash -c "mkdir -m 0700 .sage && sage main.sage"' },
+  scala: { run_command: "scala3 main.scala" },
+  dl: { run_command: "./main", build_command: "souffle main.dl -o main" },
+  sqlite: {
+    run_command:
+      'bash -c "sqlite3 /tmp/sqlite.sqlite3 -column -init schema.sql < main.sqlite"',
+  },
+  svelte: { run_command: "" }, // Cannot run
+  swift: { run_command: "swift main.swift" },
+  txt: { run_command: "" }, // Cannot run
+  ts: { run_command: "node main.js", build_command: "tsc main.ts" },
+  vb: { run_command: "mono main.exe", build_command: "vbnc main.vb" },
+  v: { run_command: "" }, // Cannot run
+  vue: { run_command: "" }, // Cannot run
+  yaml: { run_command: "" }, // Cannot run
 };
 
 const getApiKeyEffect = Effect.tryPromise({
@@ -410,8 +423,12 @@ export default function CodeBlock({
   const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? "github-dark" : "github-light";
   const resolvedLang = lang ?? "text";
-  // Karel requires a custom renderer and cannot be run directly.
-  const canRun = runnable && resolvedLang !== "karel";
+  /*
+    Karel requires a custom renderer and cannot be run directly.
+    SQL dialects require a different code path
+  */
+
+  const canRun = runnable && !["karel", "mysql"].includes(resolvedLang);
 
   // The effect only mutates state from the async callback (never synchronously),
   // so staleness is detected during render by comparing the stored inputs.

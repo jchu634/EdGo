@@ -8,6 +8,7 @@
 - Render ANSI color codes in code-run output (currently stripped)
 - Support deeper nested lists
 - Support running Karel snippets (requires a custom renderer)
+- Support running SQL dialect snippets (Requires different code path)
 
 ## Known Bugs
 
