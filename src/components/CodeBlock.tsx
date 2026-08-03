@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Pressable,
   ScrollView,
@@ -8,9 +8,19 @@ import {
   type TextStyle,
 } from "react-native";
 import { PlayIcon } from "phosphor-react-native";
+import { useGlobalSearchParams } from "expo-router";
+import { Effect, Fiber, Schema } from "effect";
+import {
+  FetchHttpClient,
+  HttpClient,
+  HttpClientRequest,
+  HttpClientResponse,
+} from "effect/unstable/http";
 import type { ThemedToken } from "@shikijs/core";
 import { cn } from "cnfast";
 import { useHighlighter } from "@/src/providers/highlightProvider";
+import { interruptFiber } from "@/src/lib/utils";
+import { getApiKey, settings } from "@/src/lib/storage";
 
 interface CodeBlockProps {
   code: string;
@@ -99,10 +109,191 @@ function decodeFontStyle(fontStyle?: number): TextStyle {
 const CODE_LINE_CLASSNAME =
   "font-mono text-sm text-gray-800 dark:text-gray-100";
 
+const CodeRunReceiptResponse = Schema.Struct({
+  ticket: Schema.String,
+});
+
+const CodeRunResult = Schema.Struct({
+  stdout: Schema.String,
+  stderr: Schema.String,
+  exit_code: Schema.Number, // 0 = success, 1 = error
+});
+
+const RunFrameData = Schema.Struct({
+  type: Schema.String, // "stdout" | "stderr" | ...
+  data: Schema.String, // base64-encoded
+});
+
+const RunExitStatus = Schema.Struct({
+  type: Schema.String, // observed as "normal" even on error
+  value: Schema.Number, // 0 = success, 1 = error
+  wall_time: Schema.Number,
+  wait_status: Schema.Number,
+});
+
+const RunExitData = Schema.Struct({
+  exit_status: RunExitStatus,
+});
+
+/** Decodes a base64 string to UTF-8 text. */
+function decodeB64(value: string): string {
+  const binary = atob(value);
+  const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
+  return new TextDecoder().decode(bytes);
+}
+
+function stripAnsi(value: string): string {
+  // Matches common CSI ANSI escape sequences, though main target is color codes like `\x1b[35m`).
+  return value.replace(/\x1b\[[0-9;?]*[A-Za-z]/g, "");
+}
+
+const getApiKeyEffect = Effect.tryPromise({
+  try: () => getApiKey(),
+  catch: (error) => new Error(`Failed to read API key: ${String(error)}`),
+}).pipe(
+  Effect.flatMap((apiKey) =>
+    apiKey ? Effect.succeed(apiKey) : Effect.fail(new Error("Missing API Key")),
+  ),
+);
+
+function submitCodeRun(courseId: number, code: string, lang: string) {
+  return Effect.gen(function* () {
+    const apiKey = yield* getApiKeyEffect;
+    const client = yield* HttpClient.HttpClient;
+
+    const request = yield* HttpClientRequest.bodyJson(
+      HttpClientRequest.post(
+        `https://edstem.org/api/courses/${courseId}/snippets/run`,
+      ).pipe(
+        HttpClientRequest.bearerToken(apiKey),
+        HttpClientRequest.acceptJson,
+      ),
+      {
+        snippet: {
+          type: "code",
+          // Unnecessary part of the header
+          // pty_size: {
+          //   cols: ,
+          //   rows: ,
+          // },
+          run_command: 'bash -c "python3 main.py"',
+          files: {
+            "main.py": code,
+          },
+          dump_files: true,
+        },
+      },
+    );
+
+    const response = yield* client.execute(request);
+    return yield* HttpClientResponse.schemaBodyJson(CodeRunReceiptResponse)(
+      response,
+    );
+  }).pipe(Effect.provide(FetchHttpClient.layer));
+}
+
+type MsgTypes =
+  | "status_created"
+  | "status_built"
+  | "dump_files"
+  | "run_frame"
+  | "run_exit";
+
+function streamCodeRunResult(ticket: string) {
+  return Effect.tryPromise({
+    try: () =>
+      new Promise<Schema.Schema.Type<typeof CodeRunResult>>(
+        (resolve, reject) => {
+          // Ticket acts as OTP
+          const socket = new WebSocket(
+            `wss://sahara.${settings?.getString("user.default_region")}.edstem.org/run?ticket=${ticket}`,
+          );
+
+          let stdout = "";
+          let stderr = "";
+          let exitCode = 0;
+
+          socket.onmessage = (event) => {
+            let msg: { type?: MsgTypes; data?: unknown }; // Data will have several formats depending on MsgType
+            try {
+              msg = JSON.parse(event.data as string);
+            } catch {
+              console.debug("Non-JSON message ignored:");
+              return;
+            }
+            switch (msg.type) {
+              case "run_frame": {
+                // data: { type: "stdout" | "stderr", data: "<base64>" }
+                try {
+                  const frame = Schema.decodeUnknownSync(RunFrameData)(
+                    msg.data,
+                  );
+                  const text = decodeB64(frame.data);
+                  console.log("TEXT", text);
+
+                  if (frame.type === "stderr") stderr += text;
+                  else stdout += text;
+                } catch {
+                  console.error(
+                    "Received Malformed run_frame message: ",
+                    msg.data,
+                  );
+                }
+                return;
+              }
+              case "run_exit": {
+                try {
+                  const exit = Schema.decodeUnknownSync(RunExitData)(msg.data);
+                  exitCode = exit.exit_status.value;
+                } catch {
+                  console.error(
+                    "Received Malformed run_exit message: ",
+                    msg.data,
+                  );
+                }
+
+                socket.close();
+                resolve(
+                  Schema.decodeUnknownSync(CodeRunResult)({
+                    stdout: stripAnsi(stdout),
+                    stderr: stripAnsi(stderr),
+                    exit_code: exitCode,
+                  }),
+                );
+                return;
+              }
+              // Ignore status_created, status_built, dump_files as they are not necessary
+            }
+          };
+
+          socket.onerror = (error) => {
+            reject(
+              error instanceof Error
+                ? error
+                : new Error(`Code-run websocket error: ${String(error)}`),
+            );
+          };
+        },
+      ),
+    catch: (error) =>
+      error instanceof Error
+        ? error
+        : new Error(`Code-run stream failed: ${String(error)}`),
+  });
+}
+
+/** Runs code end-to-end: submit, then stream the result. */
+function runCode(courseId: number, code: string, lang: string) {
+  return Effect.gen(function* () {
+    const { ticket } = yield* submitCodeRun(courseId, code, lang);
+    return yield* streamCodeRunResult(ticket);
+  });
+}
+
 function renderLine(
   line: ThemedToken[],
   lineKey: string,
-  lineNumbers: boolean,
+  lineNumbers?: boolean,
 ): React.ReactNode {
   const gutter = lineNumbers ? (
     <Text className="text-gray-400 dark:text-gray-500">
@@ -155,18 +346,65 @@ export default function CodeBlock({
     tokens: ThemedToken[][] | null;
   } | null>(null);
 
+  const [runResult, setRunResult] = useState<Schema.Schema.Type<
+    typeof CodeRunResult
+  > | null>(null);
+  const [runError, setRunError] = useState<string | null>(null);
+  const [running, setRunning] = useState(false);
+
+  const runFiberRef = useRef<Fiber.Fiber<any, any> | null>(null);
+
   useEffect(() => {
     if (!ready || error) return;
-    let cancelled = false;
-    tokenize(code, resolvedLang, theme).then((tokenResult) => {
-      if (!cancelled) {
-        setResult({ code, lang: resolvedLang, theme, tokens: tokenResult });
-      }
+    const program = Effect.gen(function* () {
+      const tokenResult = yield* Effect.tryPromise({
+        try: () => tokenize(code, resolvedLang, theme),
+        catch: (err) => (err instanceof Error ? err : new Error(String(err))),
+      });
+      setResult({ code, lang: resolvedLang, theme, tokens: tokenResult });
     });
+    const fiber = Effect.runFork(program);
     return () => {
-      cancelled = true;
+      Effect.runFork(Fiber.interrupt(fiber));
     };
   }, [code, resolvedLang, theme, ready, error, tokenize]);
+
+  const { courseid } = useGlobalSearchParams();
+  const courseIdNum = courseid
+    ? Number(Array.isArray(courseid) ? courseid[0] : courseid)
+    : NaN;
+
+  const handleRun = () => {
+    if (runFiberRef.current) return;
+    if (Number.isNaN(courseIdNum)) return;
+    setRunning(true);
+    setRunResult(null);
+    setRunError(null);
+    const program = runCode(courseIdNum, code, resolvedLang).pipe(
+      Effect.tap((res) => Effect.sync(() => setRunResult(res))),
+      Effect.tapError((err) =>
+        Effect.sync(() => {
+          const message = err instanceof Error ? err.message : String(err);
+          setRunError(message);
+          console.warn("Code run failed:", err);
+        }),
+      ),
+      Effect.ensuring(
+        Effect.sync(() => {
+          runFiberRef.current = null;
+          setRunning(false);
+        }),
+      ),
+    );
+    runFiberRef.current = Effect.runFork(program);
+  };
+
+  useEffect(
+    () => () => {
+      interruptFiber(runFiberRef);
+    },
+    [],
+  );
 
   const tokens =
     result &&
@@ -175,10 +413,6 @@ export default function CodeBlock({
     result.theme === theme
       ? result.tokens
       : null;
-
-  const handleRun = () => {
-    // TODO: invoke the EdStem code-run API and render the result.
-  };
 
   return (
     <View className="my-2">
@@ -194,9 +428,12 @@ export default function CodeBlock({
         {runnable && (
           <Pressable
             onPress={handleRun}
+            disabled={running}
             className="flex-row items-center gap-x-1 self-start rounded-lg bg-[#70069f] px-3 py-1.5"
           >
-            <Text className="text-sm font-semibold text-white">Run</Text>
+            <Text className="text-sm font-semibold text-white">
+              {running ? "Running..." : "Run"}
+            </Text>
             <PlayIcon size={14} color="white" weight="fill" />
           </Pressable>
         )}
@@ -216,15 +453,75 @@ export default function CodeBlock({
           </View>
         </ScrollView>
       ) : (
-        <View className="rounded-lg bg-gray-200 p-3 dark:bg-gray-800">
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          className="rounded-lg bg-gray-200 p-3 dark:bg-gray-800"
+        >
           <Text
             className="font-mono text-sm text-gray-800 dark:text-gray-100"
             selectable
           >
             {code}
           </Text>
-        </View>
+        </ScrollView>
       )}
+
+      {running ? (
+        <View className="mt-2 rounded-lg bg-gray-900 p-3">
+          <Text className="font-mono text-sm text-gray-400">Running…</Text>
+        </View>
+      ) : null}
+
+      {runResult ? (
+        <View className="mt-2 overflow-hidden rounded-lg">
+          <View
+            className={cn(
+              "px-3 py-1.5",
+              runResult.exit_code === 0 ? "bg-green-900" : "bg-red-900",
+            )}
+          >
+            <Text className="font-mono-bold text-xs tracking-wide text-gray-100 uppercase">
+              {runResult.exit_code === 0 ? "Success" : "Failed"} · exit{" "}
+              {runResult.exit_code}
+            </Text>
+          </View>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            className="bg-gray-900 p-3"
+          >
+            <View>
+              {runResult.stdout ? (
+                <Text className="font-mono text-sm text-gray-100" selectable>
+                  {runResult.stdout}
+                </Text>
+              ) : null}
+              {runResult.stderr ? (
+                <Text className="font-mono text-sm text-red-400" selectable>
+                  {runResult.stderr}
+                </Text>
+              ) : null}
+              {!runResult.stdout && !runResult.stderr ? (
+                <Text className="font-mono text-sm text-gray-500">
+                  (no output)
+                </Text>
+              ) : null}
+            </View>
+          </ScrollView>
+        </View>
+      ) : null}
+
+      {runError ? (
+        <View className="mt-2 rounded-lg bg-red-950 p-3">
+          <Text className="font-mono-bold mb-1 text-xs tracking-wide text-red-300 uppercase">
+            Error
+          </Text>
+          <Text className="font-mono text-sm text-red-300" selectable>
+            {runError}
+          </Text>
+        </View>
+      ) : null}
     </View>
   );
 }

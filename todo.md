@@ -5,6 +5,7 @@
 
 ## Potential Features
 
+- Render ANSI color codes in code-run output (currently stripped)
 - Support deeper nested lists
 
 ## Known Bugs
