@@ -179,7 +179,7 @@ export default function CodeBlock({
   const handleRun = () => {
     // TODO: invoke the EdStem code-run API and render the result.
   };
-  console.log("LineNumbers", lineNumbers);
+
   return (
     <View className="my-2">
       <View
