@@ -293,17 +293,52 @@ type MsgTypes =
 
 function streamCodeRunResult(ticket: string) {
   return Effect.tryPromise({
-    try: () =>
+    try: (signal: AbortSignal) =>
       new Promise<Schema.Schema.Type<typeof CodeRunResult>>(
         (resolve, reject) => {
+          // Fail clearly if no region (or no settings store) is available
+          const region = settings?.getString("user.default_region");
+          if (!region) {
+            reject(
+              new Error(
+                "No default region configured; cannot start code-run stream.",
+              ),
+            );
+            return;
+          }
+
           // Ticket acts as OTP
           const socket = new WebSocket(
-            `wss://sahara.${settings?.getString("user.default_region")}.edstem.org/run?ticket=${ticket}`,
+            `wss://sahara.${region}.edstem.org/run?ticket=${ticket}`,
           );
 
           let stdout = "";
           let stderr = "";
           let exitCode = 0;
+          // Guard against the promise being settled more than once across
+          // run_exit / onerror / onclose / abort handlers.
+          let settled = false;
+          const settleOnce = (action: () => void) => {
+            if (settled) return;
+            settled = true;
+            action();
+          };
+
+          const onAbort = () => {
+            try {
+              socket.close();
+            } catch {
+              /* ignore */
+            }
+            settleOnce(() =>
+              reject(new Error("Code-run stream was interrupted.")),
+            );
+          };
+          if (signal.aborted) {
+            onAbort();
+            return;
+          }
+          signal.addEventListener("abort", onAbort, { once: true });
 
           socket.onmessage = (event) => {
             let msg: { type?: MsgTypes; data?: unknown }; // Data will have several formats depending on MsgType
@@ -344,14 +379,20 @@ function streamCodeRunResult(ticket: string) {
                   );
                 }
 
-                socket.close();
-                resolve(
-                  Schema.decodeUnknownSync(CodeRunResult)({
-                    stdout: stripAnsi(stdout),
-                    stderr: stripAnsi(stderr),
-                    exit_code: exitCode,
-                  }),
-                );
+                settleOnce(() => {
+                  try {
+                    socket.close();
+                  } catch {
+                    /* ignore */
+                  }
+                  resolve(
+                    Schema.decodeUnknownSync(CodeRunResult)({
+                      stdout: stripAnsi(stdout),
+                      stderr: stripAnsi(stderr),
+                      exit_code: exitCode,
+                    }),
+                  );
+                });
                 return;
               }
               // Ignore status_created, status_built, dump_files as they are not necessary
@@ -359,10 +400,22 @@ function streamCodeRunResult(ticket: string) {
           };
 
           socket.onerror = (error) => {
-            reject(
-              error instanceof Error
-                ? error
-                : new Error(`Code-run websocket error: ${String(error)}`),
+            settleOnce(() =>
+              reject(
+                error instanceof Error
+                  ? error
+                  : new Error(`Code-run websocket error: ${String(error)}`),
+              ),
+            );
+          };
+
+          socket.onclose = () => {
+            settleOnce(() =>
+              reject(
+                new Error(
+                  "Code-run websocket closed before the run completed.",
+                ),
+              ),
             );
           };
         },
@@ -474,11 +527,20 @@ export default function CodeBlock({
 
   const handleRun = () => {
     if (runFiberRef.current) return;
-    if (Number.isNaN(courseIdNum)) return;
+    if (Number.isNaN(courseIdNum)) {
+      setRunError("Cannot run code: course ID is unavailable in this context.");
+      return;
+    }
     setRunning(true);
     setRunResult(null);
     setRunError(null);
+    let fiber: Fiber.Fiber<any, any> | null = null;
+    let completedDuringFork = false;
     const program = runCode(courseIdNum, code, resolvedLang).pipe(
+      // Bound the whole run so a hung submit or silent websocket close can't
+      // spin forever; the timeout failure is interrupted, which also triggers
+      // the AbortSignal cleanup inside streamCodeRunResult.
+      Effect.timeout("180 seconds"),
       Effect.tap((res) => Effect.sync(() => setRunResult(res))),
       Effect.tapError((err) =>
         Effect.sync(() => {
@@ -489,12 +551,19 @@ export default function CodeBlock({
       ),
       Effect.ensuring(
         Effect.sync(() => {
-          runFiberRef.current = null;
+          if (fiber === null) {
+            completedDuringFork = true;
+          } else if (runFiberRef.current === fiber) {
+            runFiberRef.current = null;
+          }
           setRunning(false);
         }),
       ),
     );
-    runFiberRef.current = Effect.runFork(program);
+    fiber = Effect.runFork(program);
+    if (!completedDuringFork) {
+      runFiberRef.current = fiber;
+    }
   };
 
   useEffect(
