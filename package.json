@@ -24,7 +24,7 @@
     "babel-preset-expo": "~57.0.4",
     "cnfast": "^0.0.8",
     "drizzle-orm": "^0.45.2",
-    "effect": "^4.0.0-beta.57",
+    "effect": "4.0.0-beta.102",
     "eslint-import-resolver-typescript": "^4.4.5",
     "expo": "^57.0.9",
     "expo-background-task": "~57.0.7",
