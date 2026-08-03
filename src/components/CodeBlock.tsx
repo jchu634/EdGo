@@ -182,7 +182,11 @@ const langConfig = {
   go: { run_command: "./main", build_command: "go build main.go" },
   html: { run_command: "" }, // Cannot run
   hs: { run_command: "runhaskell main.hs" },
-  java: { run_command: "java Main", build_command: "javac Main.java" },
+  java: {
+    file_name: "Main.java",
+    run_command: "java Main",
+    build_command: "javac Main.java",
+  },
   js: { run_command: "node main.js" },
   jsweb: { run_command: "" }, // Cannot run
   jsx: { run_command: "" }, // Cannot run
@@ -244,6 +248,7 @@ function submitCodeRun(courseId: number, code: string, lang: string) {
     const apiKey = yield* getApiKeyEffect;
     const client = yield* HttpClient.HttpClient;
     const config = langConfig[lang as keyof typeof langConfig];
+    const fileName = "file_name" in config ? config.file_name : `main.${lang}`;
 
     const request = yield* HttpClientRequest.bodyJson(
       HttpClientRequest.post(
@@ -265,7 +270,7 @@ function submitCodeRun(courseId: number, code: string, lang: string) {
             ? { build_command: config.build_command }
             : {}),
           files: {
-            [`main.${lang}`]: code,
+            [fileName]: code,
           },
           dump_files: true,
         },
