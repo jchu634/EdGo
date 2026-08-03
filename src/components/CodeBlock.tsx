@@ -160,7 +160,7 @@ const langConfig = {
     build_command: "gnat make main.adb",
   },
   mips: { run_command: "mipsy main.mips" },
-  sh: { run_command: "mipsy main.mips" },
+  sh: { run_command: "bash main.sh" },
   c: {
     run_command: "./main",
     build_command: "clang -std=c11 main.c -lm -lpthread -lcs50 -o main",
