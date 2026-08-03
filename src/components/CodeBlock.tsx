@@ -147,6 +147,76 @@ function stripAnsi(value: string): string {
   return value.replace(/\x1b\[[0-9;?]*[A-Za-z]/g, "");
 }
 
+const langConfig = {
+  x86: {
+    run_command: 'bash -c "nasm main.x86 -felf64 && ld main.o && ./a.out"',
+  },
+  aarch64: {
+    run_command:
+      'bash -c "echo "" >> main.aarch64 && mv main.aarch64 main.s && aarch64-linux-gnu-gcc -Wall -static -s main.s -o main && qemu-aarch64 main"',
+  },
+  adb: {
+    run_command: "./main",
+    build_command: "gnat make main.adb",
+  },
+  mips: { run_command: "mipsy main.mips" },
+  sh: { run_command: "mipsy main.mips" },
+  c: {
+    run_command: "./main",
+    build_command: "clang -std=c11 main.c -lm -lpthread -lcs50 -o main",
+  },
+  cc: {
+    run_command: "./main",
+    build_command: "clang++ -std=c++11 main.cc -lm -lpthread -lcs50 -o main",
+  },
+  cs: {
+    run_command: "mono main.exe",
+    build_command: "mcs main.cs",
+  },
+  css: { run_command: "" }, // CSS cannot run
+  dart: { run_command: "" },
+  f95: { run_command: "" },
+  go: { run_command: "" },
+  html: { run_command: "" },
+  hs: { run_command: "" },
+  java: { run_command: "" },
+  js: { run_command: "" },
+  jsweb: { run_command: "" },
+  jsx: { run_command: "" },
+  json: { run_command: "" },
+  jl: { run_command: "" },
+  karel: { run_command: "" },
+  kt: { run_command: "" },
+  tex: { run_command: "" },
+  lisp: { run_command: "" },
+  lua: { run_command: "" },
+  mysql: { run_command: "" },
+  nim: { run_command: "" },
+  ml: { run_command: "" },
+  m: { run_command: "" },
+  php: { run_command: "" },
+  sql: { run_command: "" },
+  pro: { run_command: "" },
+  py: { run_command: 'bash -c "python3 main.py"' },
+  arr: { run_command: "" },
+  r: { run_command: "" },
+  rkt: { run_command: "" },
+  rb: { run_command: "" },
+  rs: { run_command: "" },
+  sage: { run_command: "" },
+  scala: { run_command: "" },
+  dl: { run_command: "" },
+  sqlite: { run_command: "" },
+  svelte: { run_command: "" },
+  swift: { run_command: "" },
+  txt: { run_command: "" },
+  ts: { run_command: "" },
+  vb: { run_command: "" },
+  v: { run_command: "" },
+  vue: { run_command: "" },
+  yaml: { run_command: "" },
+};
+
 const getApiKeyEffect = Effect.tryPromise({
   try: () => getApiKey(),
   catch: (error) => new Error(`Failed to read API key: ${String(error)}`),
@@ -160,6 +230,7 @@ function submitCodeRun(courseId: number, code: string, lang: string) {
   return Effect.gen(function* () {
     const apiKey = yield* getApiKeyEffect;
     const client = yield* HttpClient.HttpClient;
+    const config = langConfig[lang as keyof typeof langConfig];
 
     const request = yield* HttpClientRequest.bodyJson(
       HttpClientRequest.post(
@@ -176,9 +247,12 @@ function submitCodeRun(courseId: number, code: string, lang: string) {
           //   cols: ,
           //   rows: ,
           // },
-          run_command: 'bash -c "python3 main.py"',
+          run_command: config.run_command,
+          ...("build_command" in config
+            ? { build_command: config.build_command }
+            : {}),
           files: {
-            "main.py": code,
+            [`main.${lang}`]: code,
           },
           dump_files: true,
         },
@@ -336,6 +410,8 @@ export default function CodeBlock({
   const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? "github-dark" : "github-light";
   const resolvedLang = lang ?? "text";
+  // Karel requires a custom renderer and cannot be run directly.
+  const canRun = runnable && resolvedLang !== "karel";
 
   // The effect only mutates state from the async callback (never synchronously),
   // so staleness is detected during render by comparing the stored inputs.
@@ -425,7 +501,7 @@ export default function CodeBlock({
         <Text className="font-mono-bold text-sm text-gray-800 dark:text-gray-100">
           {lang ? LANG_TO_READABLE_LANG[lang] : "Unknown Language"}
         </Text>
-        {runnable && (
+        {canRun && (
           <Pressable
             onPress={handleRun}
             disabled={running}
