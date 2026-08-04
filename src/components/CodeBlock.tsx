@@ -356,8 +356,6 @@ function streamCodeRunResult(ticket: string) {
                     msg.data,
                   );
                   const text = decodeB64(frame.data);
-                  console.log("TEXT", text);
-
                   if (frame.type === "stderr") stderr += text;
                   else stdout += text;
                 } catch {
