@@ -12,4 +12,5 @@
 ## Known Bugs
 
 - Diagnose bug that occasionally shows no threads
+- Offline banner lacks refresh
 - Fix login + logout too quick db bug

@@ -683,6 +683,11 @@ export function renderXmlNode(
             key={keyPrefix}
             className={`my-2 rounded-lg border-l-4 p-3 ${containerClass}`}
           >
+            <View>
+              <Text className={`font-display-bold-italic ${textClass}`}>
+                {node.attrs.type.toUpperCase()}
+              </Text>
+            </View>
             <Text className={`font-display ${textClass}`} selectable>
               {renderInlineRuns(runs, keyPrefix)}
             </Text>
