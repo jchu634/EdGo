@@ -330,6 +330,7 @@ const LIST_BLOCK_TAGS = new Set([
   "snippet",
   "image",
   "spoiler",
+  "callout",
 ]);
 
 /**
@@ -648,6 +649,51 @@ export function renderXmlNode(
       case "figure": {
         return <View key={keyPrefix}>{children()}</View>;
       }
+      case "callout": {
+        let containerClass: string;
+        let textClass: string;
+
+        switch (node.attrs.type) {
+          case "success":
+            containerClass =
+              "border-emerald-600 bg-emerald-50 dark:border-emerald-400 dark:bg-emerald-950";
+            textClass = "text-emerald-950 dark:text-emerald-50";
+            break;
+          case "warning":
+            containerClass =
+              "border-amber-600 bg-amber-50 dark:border-amber-400 dark:bg-amber-950";
+            textClass = "text-amber-950 dark:text-amber-50";
+            break;
+          case "error":
+            containerClass =
+              "border-red-600 bg-red-50 dark:border-red-400 dark:bg-red-950";
+            textClass = "text-red-950 dark:text-red-50";
+            break;
+          case "info":
+          default:
+            containerClass =
+              "border-blue-600 bg-blue-50 dark:border-blue-400 dark:bg-blue-950";
+            textClass = "text-blue-950 dark:text-blue-50";
+        }
+
+        const runs = collectInlineRuns(node.children);
+
+        return (
+          <View
+            key={keyPrefix}
+            className={`my-2 rounded-lg border-l-4 p-3 ${containerClass}`}
+          >
+            <View>
+              <Text className={`font-display-bold-italic ${textClass}`}>
+                {node.attrs.type.toUpperCase()}
+              </Text>
+            </View>
+            <Text className={`font-display ${textClass}`} selectable>
+              {renderInlineRuns(runs, keyPrefix)}
+            </Text>
+          </View>
+        );
+      }
       case "link": {
         return (
           <LinkText key={keyPrefix} href={node.attrs.href}>
@@ -679,7 +725,6 @@ export function renderXmlNode(
           />
         );
       }
-
       default: {
         console.log("Unhandled Node Tag:", node.tag);
         return <React.Fragment key={keyPrefix}>{children()}</React.Fragment>;
