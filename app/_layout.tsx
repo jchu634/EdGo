@@ -9,6 +9,7 @@ import { Suspense } from "react";
 import { Stack, useGlobalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 import { KeyProvider } from "@/src/providers/keyProvider";
 import { DbProvider } from "@/src/providers/dbProvider";
@@ -73,38 +74,40 @@ export default function RootLayout() {
   const insets = useSafeAreaInsets();
 
   return (
-    <Suspense fallback={<ActivityIndicator size="large" />}>
-      <KeyProvider>
-        <DbProvider>
-          <NotificationProvider>
-            <NetworkProvider>
-              <HighlighterProvider>
-                <ModalProvider>
-                  <View style={{ flex: 1 }}>
-                    <OfflineBanner />
-                    <Stack
-                      screenOptions={{
-                        headerStyle: {
-                          backgroundColor: "#70069e",
-                        },
-                        headerTintColor: "white",
-                        headerTitle: "",
-                        headerBackVisible: true,
-                        headerLeft: () => <HeaderLeft />,
-                        headerRight: () => <HeaderRight />,
-                        contentStyle: {
-                          paddingBottom:
-                            Platform.OS === "android" ? insets.bottom : 0,
-                        },
-                      }}
-                    />
-                  </View>
-                </ModalProvider>
-              </HighlighterProvider>
-            </NetworkProvider>
-          </NotificationProvider>
-        </DbProvider>
-      </KeyProvider>
-    </Suspense>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <Suspense fallback={<ActivityIndicator size="large" />}>
+        <KeyProvider>
+          <DbProvider>
+            <NotificationProvider>
+              <NetworkProvider>
+                <HighlighterProvider>
+                  <ModalProvider>
+                    <View style={{ flex: 1 }}>
+                      <OfflineBanner />
+                      <Stack
+                        screenOptions={{
+                          headerStyle: {
+                            backgroundColor: "#70069e",
+                          },
+                          headerTintColor: "white",
+                          headerTitle: "",
+                          headerBackVisible: true,
+                          headerLeft: () => <HeaderLeft />,
+                          headerRight: () => <HeaderRight />,
+                          contentStyle: {
+                            paddingBottom:
+                              Platform.OS === "android" ? insets.bottom : 0,
+                          },
+                        }}
+                      />
+                    </View>
+                  </ModalProvider>
+                </HighlighterProvider>
+              </NetworkProvider>
+            </NotificationProvider>
+          </DbProvider>
+        </KeyProvider>
+      </Suspense>
+    </GestureHandlerRootView>
   );
 }
