@@ -1,4 +1,4 @@
-import { View, Text, Image } from "react-native";
+import { View, Text } from "react-native";
 import { withUniwind } from "uniwind";
 import React from "react";
 import CodeBlock from "@/src/components/CodeBlock";
@@ -7,6 +7,7 @@ import LinkText from "@/src/components/LinkText";
 import SpoilerText from "@/src/components/SpoilerText";
 import VideoComponent from "@/src/components/VideoComponent";
 import WebSnippetComponent from "@/src/components/WebSnippetComponent";
+import ContentImage from "@/src/components/ContentImage";
 import { RaTeXView } from "ratex-react-native";
 
 const StyledRaTeXView = withUniwind(RaTeXView);
@@ -490,19 +491,15 @@ export function renderXmlNode(
 
           if (src) {
             return (
-              <Image
+              <ContentImage
                 key={keyPrefix}
-                source={{ uri: src }}
-                style={{
-                  aspectRatio:
-                    Number.isFinite(calculatedAspectRatio) &&
-                    calculatedAspectRatio > 0
-                      ? calculatedAspectRatio
-                      : 1,
-                }}
-                className="my-2 w-full rounded-lg"
-                resizeMethod="auto"
-                resizeMode="contain"
+                uri={src}
+                aspectRatio={
+                  Number.isFinite(calculatedAspectRatio) &&
+                  calculatedAspectRatio > 0
+                    ? calculatedAspectRatio
+                    : 1
+                }
               />
             );
           }
