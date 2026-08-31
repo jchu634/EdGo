@@ -13,7 +13,7 @@ export default function LinkText({ href, children }: LinkTextProps) {
 
   return (
     <Text
-      className="text-blue-700 underline"
+      className="text-blue-700 underline dark:text-blue-500"
       onPress={() => openLink(href)}
       onLongPress={() => showMenu(href)}
       selectable={false}
