@@ -1,6 +1,7 @@
 import { View, Text, Image } from "react-native";
 import { withUniwind } from "uniwind";
 import React from "react";
+import { WebView } from "react-native-webview";
 import CodeBlock from "@/src/components/CodeBlock";
 import LinkText from "@/src/components/LinkText";
 import SpoilerText from "@/src/components/SpoilerText";
@@ -329,9 +330,133 @@ const LIST_BLOCK_TAGS = new Set([
   "codeblock",
   "snippet",
   "image",
+  "file",
+  "video",
+  "web-snippet",
   "spoiler",
   "callout",
 ]);
+
+function fileComponent(
+  node: XmlElementNode,
+  keyPrefix: string,
+): React.ReactNode {
+  const url = node.attrs.url;
+  const filename = node.attrs.filename || "Download file";
+
+  if (!url) return null;
+
+  return (
+    <View
+      key={keyPrefix}
+      className="my-2 rounded-lg border border-slate-300 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-900"
+    >
+      <Text className="font-display dark:text-slate-100">
+        File: <LinkText href={url}>{filename}</LinkText>
+      </Text>
+    </View>
+  );
+}
+
+type EmbeddedVideoSource =
+  | { kind: "youtube"; uri: string }
+  | { kind: "web"; uri: string };
+
+function getEmbeddedVideoSource(src: string): EmbeddedVideoSource | null {
+  let url: URL;
+
+  try {
+    url = new URL(src);
+  } catch {
+    return null;
+  }
+
+  if (url.protocol !== "https:" && url.protocol !== "http:") return null;
+
+  const hostname = url.hostname.toLowerCase().replace(/^www\./, "");
+  const pathParts = url.pathname.split("/").filter(Boolean);
+  let youtubeId: string | null = null;
+
+  if (hostname === "youtu.be") {
+    youtubeId = pathParts[0] ?? null;
+  } else if (
+    hostname === "youtube.com" ||
+    hostname === "m.youtube.com" ||
+    hostname === "music.youtube.com" ||
+    hostname === "youtube-nocookie.com"
+  ) {
+    if (["embed", "live", "shorts"].includes(pathParts[0])) {
+      youtubeId = pathParts[1] ?? null;
+    } else {
+      youtubeId = url.searchParams.get("v");
+    }
+  }
+
+  if (youtubeId && /^[A-Za-z0-9_-]{6,64}$/.test(youtubeId)) {
+    return {
+      kind: "youtube",
+      uri: `https://www.youtube-nocookie.com/embed/${youtubeId}?playsinline=1`,
+    };
+  }
+
+  return { kind: "web", uri: url.toString() };
+}
+
+function videoComponent(
+  node: XmlElementNode,
+  keyPrefix: string,
+): React.ReactNode {
+  const src = node.attrs.src;
+  if (!src) return null;
+
+  const videoSource = getEmbeddedVideoSource(src);
+  if (!videoSource) return null;
+
+  const width = Number(node.attrs.width);
+  const height = Number(node.attrs.height);
+  const calculatedAspectRatio = width / height;
+  const aspectRatio =
+    Number.isFinite(calculatedAspectRatio) && calculatedAspectRatio > 0
+      ? calculatedAspectRatio
+      : 16 / 9;
+
+  return (
+    <View
+      key={keyPrefix}
+      className="my-2 w-full overflow-hidden rounded-lg bg-slate-950"
+      style={{ aspectRatio }}
+    >
+      <WebView
+        source={
+          videoSource.kind === "youtube"
+            ? {
+                uri: videoSource.uri,
+                headers: {
+                  Referer: "https://com.edgo",
+                },
+              }
+            : { uri: videoSource.uri }
+        }
+        style={{ flex: 1, backgroundColor: "transparent" }}
+        allowsFullscreenVideo
+        allowsInlineMediaPlayback
+        mediaPlaybackRequiresUserAction
+        setSupportMultipleWindows={false}
+      />
+    </View>
+  );
+}
+
+function webSnippetComponent(keyPrefix: string): React.ReactNode {
+  return (
+    <Text
+      key={keyPrefix}
+      className="my-2 text-slate-500 italic dark:text-slate-400"
+    >
+      Web snippets are not supported. Please view this post on the website.
+    </Text>
+  );
+}
 
 /**
  * Workaround for an upstream API bug: A list can be wrapped in a degenerate
@@ -500,7 +625,28 @@ export function renderXmlNode(
               />
             );
           }
+          return null;
         }
+        case "file":
+          const url = node.attrs.url;
+          const filename = node.attrs.filename || "Download file";
+
+          if (!url) return null;
+
+          return (
+            <View
+              key={keyPrefix}
+              className="my-2 rounded-lg border border-slate-300 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-900"
+            >
+              <Text className="font-display dark:text-slate-100">
+                File: <LinkText href={url}>{filename}</LinkText>
+              </Text>
+            </View>
+          );
+        case "video":
+          return videoComponent(node, keyPrefix);
+        case "web-snippet":
+          return webSnippetComponent(keyPrefix);
       }
 
       return null;
@@ -568,6 +714,12 @@ export function renderXmlNode(
           />
         );
       }
+      case "file":
+        return fileComponent(node, keyPrefix);
+      case "video":
+        return videoComponent(node, keyPrefix);
+      case "web-snippet":
+        return webSnippetComponent(keyPrefix);
       case "list": {
         // API workaround: if this is a degenerate single-item wrapper list,
         // skip it and render the list it wraps at the same depth.
