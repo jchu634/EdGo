@@ -20,7 +20,7 @@ function getEmbeddedVideoSource(src: string): EmbeddedVideoSource | null {
     return null;
   }
 
-  if (url.protocol !== "https:" && url.protocol !== "http:") return null;
+  if (url.protocol !== "https:") return null;
 
   const hostname = url.hostname.toLowerCase().replace(/^www\./, "");
   const pathParts = url.pathname.split("/").filter(Boolean);
