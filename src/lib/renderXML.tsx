@@ -2,8 +2,11 @@ import { View, Text, Image } from "react-native";
 import { withUniwind } from "uniwind";
 import React from "react";
 import CodeBlock from "@/src/components/CodeBlock";
+import FileComponent from "@/src/components/FileComponent";
 import LinkText from "@/src/components/LinkText";
 import SpoilerText from "@/src/components/SpoilerText";
+import VideoComponent from "@/src/components/VideoComponent";
+import WebSnippetComponent from "@/src/components/WebSnippetComponent";
 import { RaTeXView } from "ratex-react-native";
 
 const StyledRaTeXView = withUniwind(RaTeXView);
@@ -13,7 +16,7 @@ interface XmlTextNode {
   value: string;
 }
 
-interface XmlElementNode {
+export interface XmlElementNode {
   type: "element" | "document";
   tag: string;
   attrs: Record<string, string>;
@@ -329,6 +332,9 @@ const LIST_BLOCK_TAGS = new Set([
   "codeblock",
   "snippet",
   "image",
+  "file",
+  "video",
+  "web-snippet",
   "spoiler",
   "callout",
 ]);
@@ -500,7 +506,14 @@ export function renderXmlNode(
               />
             );
           }
+          return null;
         }
+        case "file":
+          return <FileComponent key={keyPrefix} node={node} />;
+        case "video":
+          return <VideoComponent key={keyPrefix} node={node} />;
+        case "web-snippet":
+          return <WebSnippetComponent key={keyPrefix} />;
       }
 
       return null;
@@ -568,6 +581,12 @@ export function renderXmlNode(
           />
         );
       }
+      case "file":
+        return <FileComponent key={keyPrefix} node={node} />;
+      case "video":
+        return <VideoComponent key={keyPrefix} node={node} />;
+      case "web-snippet":
+        return <WebSnippetComponent key={keyPrefix} />;
       case "list": {
         // API workaround: if this is a degenerate single-item wrapper list,
         // skip it and render the list it wraps at the same depth.
