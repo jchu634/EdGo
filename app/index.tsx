@@ -294,7 +294,7 @@ export default function Index() {
           </View>
           <View className="flex flex-row items-center justify-between">
             <Text
-              className="font-display line-clamp-1 w-80 truncate text-xs"
+              className="font-display line-clamp-1 w-70 truncate text-xs"
               style={{ color: colour }}
             >
               {courseInfo?.code}
