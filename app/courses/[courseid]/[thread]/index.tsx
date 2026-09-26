@@ -23,6 +23,8 @@ import { settings } from "@/src/lib/storage";
 import { useDb } from "@/src/providers/dbProvider";
 import { useThreadDetail } from "@/src/hooks/useThreadDetail";
 import { useThreadVotes } from "@/src/hooks/useThreadVotes";
+import { useCourseLayout } from "@/src/providers/courseLayoutProvider";
+import ThreadFullscreenButton from "@/src/components/ThreadFullscreenButton";
 import {
   AnimatedToggleIcon,
   renderComment,
@@ -31,6 +33,7 @@ import {
 import "@/global.css";
 
 export default function ThreadPage() {
+  const { isWide } = useCourseLayout();
   const { courseid, thread } = useLocalSearchParams();
   const courseIdNum = Number(Array.isArray(courseid) ? courseid[0] : courseid);
   const threadNumber = Number(Array.isArray(thread) ? thread[0] : thread);
@@ -57,7 +60,7 @@ export default function ThreadPage() {
 
   if (loading && !t) {
     return (
-      <View className="flex h-full items-center justify-center">
+      <View className="flex h-full items-center justify-center bg-white dark:bg-black">
         <ActivityIndicator size="large" color="#70069e" />
       </View>
     );
@@ -65,7 +68,7 @@ export default function ThreadPage() {
 
   if (!t) {
     return (
-      <View className="flex h-full items-center justify-center">
+      <View className="flex h-full items-center justify-center bg-white dark:bg-black">
         <Text className="font-display text-gray-500">
           {isHidden
             ? "This thread has been deleted or made private."
@@ -91,9 +94,13 @@ export default function ThreadPage() {
             {t.title}
           </Text>
           {t.is_pinned && <PushPinIcon size={18} color="#70069e" />}
+          <ThreadFullscreenButton />
         </View>
 
-        <View className="mb-3 flex-row items-center gap-x-2">
+        <View
+          className="mb-3 flex-row items-center gap-x-2"
+          style={isWide ? { flexWrap: "wrap", rowGap: 8 } : undefined}
+        >
           {!t.is_anonymous && author?.avatar ? (
             <Image
               source={{
@@ -112,7 +119,10 @@ export default function ThreadPage() {
           <Text className="font-display-semibold dark:text-slate-100">
             {t.is_anonymous ? "Anonymous" : (author?.name ?? "Unknown")}
           </Text>
-          <View className="flex flex-row items-center gap-x-4">
+          <View
+            className="flex flex-row items-center gap-x-4"
+            style={isWide ? { flexWrap: "wrap" } : undefined}
+          >
             <Text className="font-display dark:text-slate-100">
               {t.updated_at
                 ? `Updated: ${new Date(t.updated_at).toLocaleDateString()}`
