@@ -8,6 +8,7 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "lint": "expo lint",
+    "test": "node --test tests/*.test.cjs",
     "postinstall": "patch-package"
   },
   "dependencies": {
@@ -77,6 +78,7 @@
     "eslint-plugin-prettier": "^5.5.5",
     "prettier": "^3.8.3",
     "prettier-plugin-tailwindcss": "^0.7.3",
+    "react-test-renderer": "19.2.3",
     "typescript": "~6.0.3"
   },
   "private": true,
