@@ -1,8 +1,97 @@
-import { useMemo, useRef, useState } from "react";
-import { PanResponder, Platform, View } from "react-native";
+import { useMemo, useState } from "react";
+import { Platform, View, type ViewStyle } from "react-native";
+import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  type SharedValue,
+} from "react-native-reanimated";
+import { scheduleOnRN } from "react-native-worklets";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useCourseLayout } from "@/src/providers/courseLayoutProvider";
 import CourseThreadList from "@/src/components/CourseThreadList";
+
+function clampSidebarFraction(fraction: number) {
+  "worklet";
+  return Math.min(0.5, Math.max(0.2, fraction));
+}
+
+function CoursePaneDivider({
+  paneWidth,
+  sidebarFraction,
+  visible,
+}: {
+  paneWidth: SharedValue<number>;
+  sidebarFraction: SharedValue<number>;
+  visible: boolean;
+}) {
+  const dragStartFraction = useSharedValue(0.4);
+  const [percent, setPercent] = useState(40);
+
+  const dividerGesture = useMemo(
+    () =>
+      Gesture.Pan()
+        .enabled(visible)
+        .minDistance(0)
+        .maxPointers(1)
+        .onBegin(() => {
+          dragStartFraction.set(sidebarFraction.get());
+        })
+        .onUpdate((event) => {
+          const width = paneWidth.get();
+          if (width > 0) {
+            sidebarFraction.set(
+              clampSidebarFraction(
+                dragStartFraction.get() + event.translationX / width,
+              ),
+            );
+          }
+        })
+        .onFinalize(() => {
+          // React only needs the settled accessibility value, not every frame.
+          scheduleOnRN(setPercent, Math.round(sidebarFraction.get() * 100));
+        }),
+    [dragStartFraction, paneWidth, sidebarFraction, visible],
+  );
+
+  return (
+    <GestureDetector gesture={dividerGesture}>
+      <Animated.View
+        accessible
+        accessibilityRole="adjustable"
+        accessibilityLabel="Course pane width"
+        accessibilityHint="Drag left or right to resize the course pane"
+        accessibilityValue={{
+          min: 20,
+          max: 50,
+          now: percent,
+          text: `${percent} percent`,
+        }}
+        accessibilityActions={[
+          { name: "increment", label: "Widen course pane" },
+          { name: "decrement", label: "Narrow course pane" },
+        ]}
+        onAccessibilityAction={(event) => {
+          const action = event.nativeEvent.actionName;
+          if (action !== "increment" && action !== "decrement") return;
+          const fraction = clampSidebarFraction(
+            sidebarFraction.get() + (action === "increment" ? 0.05 : -0.05),
+          );
+          sidebarFraction.set(fraction);
+          setPercent(Math.round(fraction * 100));
+        }}
+        hitSlop={{ left: 10, right: 10 }}
+        className="items-center justify-center bg-black"
+        style={{ width: 24, display: visible ? "flex" : "none" }}
+      >
+        <View
+          className="rounded-full bg-gray-400 dark:bg-neutral-500"
+          style={{ width: 4, height: 40 }}
+        />
+      </Animated.View>
+    </GestureDetector>
+  );
+}
 
 export default function CourseFrame({
   children,
@@ -14,88 +103,39 @@ export default function CourseFrame({
   const { courseId, isWide, isFullscreen } = useCourseLayout();
   const insets = useSafeAreaInsets();
   const showCourseLayout = isWide && courseId !== null;
-  const [paneWidth, setPaneWidth] = useState(0);
-  const [sidebarFraction, setSidebarFraction] = useState(0.4);
-  const currentFraction = useRef(0.4);
-  const dragStartFraction = useRef(0.4);
-
-  function resizeSidebar(fraction: number) {
-    const clamped = Math.min(0.5, Math.max(0.2, fraction));
-    currentFraction.current = clamped;
-    setSidebarFraction(clamped);
-  }
-
-  const dividerGesture = useMemo(
-    () =>
-      // eslint-disable-next-line react-hooks/refs -- PanResponder stores these callbacks; refs are only read during gestures.
-      PanResponder.create({
-        onStartShouldSetPanResponder: () => true,
-        onMoveShouldSetPanResponder: () => true,
-        onPanResponderGrant: () => {
-          dragStartFraction.current = currentFraction.current;
-        },
-        onPanResponderMove: (_, gesture) => {
-          if (paneWidth > 0) {
-            resizeSidebar(dragStartFraction.current + gesture.dx / paneWidth);
-          }
-        },
-      }),
-    [paneWidth],
-  );
+  const paneWidth = useSharedValue(0);
+  const sidebarFraction = useSharedValue(0.4);
+  const sidebarStyle = useAnimatedStyle<ViewStyle>(() => ({
+    width: `${sidebarFraction.get() * 100}%`,
+  }));
 
   return (
     <View style={{ flex: 1 }}>
       {showCourseLayout && header}
       <View
         style={{ flex: 1, flexDirection: "row" }}
-        onLayout={(event) => setPaneWidth(event.nativeEvent.layout.width)}
+        onLayout={(event) => paneWidth.set(event.nativeEvent.layout.width)}
       >
         {showCourseLayout && (
-          <View
+          <Animated.View
             className="border-r border-gray-200 bg-white dark:border-neutral-700 dark:bg-black"
-            style={{
-              display: isFullscreen ? "none" : "flex",
-              width: `${sidebarFraction * 100}%`,
-              paddingLeft: insets.left,
-              paddingBottom: Platform.OS === "android" ? insets.bottom : 0,
-            }}
+            style={[
+              {
+                display: isFullscreen ? "none" : "flex",
+                paddingLeft: insets.left,
+                paddingBottom: Platform.OS === "android" ? insets.bottom : 0,
+              },
+              sidebarStyle,
+            ]}
           >
             <CourseThreadList key={courseId} courseId={courseId} sidebar />
-          </View>
+          </Animated.View>
         )}
-        {showCourseLayout && !isFullscreen && (
-          <View
-            {...dividerGesture.panHandlers}
-            accessible
-            accessibilityRole="adjustable"
-            accessibilityLabel="Course pane width"
-            accessibilityHint="Drag left or right to resize the course pane"
-            accessibilityValue={{
-              min: 20,
-              max: 50,
-              now: Math.round(sidebarFraction * 100),
-              text: `${Math.round(sidebarFraction * 100)} percent`,
-            }}
-            accessibilityActions={[
-              { name: "increment", label: "Widen course pane" },
-              { name: "decrement", label: "Narrow course pane" },
-            ]}
-            onAccessibilityAction={(event) => {
-              if (event.nativeEvent.actionName === "increment")
-                resizeSidebar(currentFraction.current + 0.05);
-              if (event.nativeEvent.actionName === "decrement")
-                resizeSidebar(currentFraction.current - 0.05);
-            }}
-            hitSlop={{ left: 10, right: 10 }}
-            className="items-center justify-center bg-black"
-            style={{ width: 24 }}
-          >
-            <View
-              className="rounded-full bg-gray-400 dark:bg-neutral-500"
-              style={{ width: 4, height: 40 }}
-            />
-          </View>
-        )}
+        <CoursePaneDivider
+          paneWidth={paneWidth}
+          sidebarFraction={sidebarFraction}
+          visible={showCourseLayout && !isFullscreen}
+        />
         {/* Keep this container and navigator mounted through every layout change. */}
         <View
           key="navigator"
