@@ -19,7 +19,8 @@ function useCourseLayoutState() {
   const availableWidth = width - insets.left - insets.right;
   const isWide = availableWidth >= 720;
   const hasThread = courseId !== null && params.thread !== undefined;
-  const [fullscreenCourseId, setFullscreenCourseId] = useState<number | null>(
+  const activeThreadKey = hasThread ? `${courseId}:${params.thread}` : null;
+  const [fullscreenThreadKey, setFullscreenThreadKey] = useState<string | null>(
     null,
   );
   const [searchRequest, setSearchRequest] = useState(0);
@@ -30,7 +31,8 @@ function useCourseLayoutState() {
     Record<number, string | undefined>
   >({});
   const scrollOffsets = useRef(new Map<string, number>());
-  const isFullscreen = isWide && hasThread && fullscreenCourseId === courseId;
+  const isFullscreen =
+    isWide && activeThreadKey !== null && fullscreenThreadKey === activeThreadKey;
 
   return {
     courseId,
@@ -46,10 +48,10 @@ function useCourseLayoutState() {
       setCategories((previous) => ({ ...previous, [course]: category }));
     },
     toggleFullscreen() {
-      setFullscreenCourseId(isFullscreen ? null : courseId);
+      setFullscreenThreadKey(isFullscreen ? null : activeThreadKey);
     },
     openSidebarSearch() {
-      setFullscreenCourseId(null);
+      setFullscreenThreadKey(null);
       setSearchOpenCourseId(courseId);
       setSearchRequest((previous) => previous + 1);
     },
