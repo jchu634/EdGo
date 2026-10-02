@@ -33,6 +33,8 @@ type InlineMarks = {
   bold?: boolean;
   italic?: boolean;
   underline?: boolean;
+  strikethrough?: boolean;
+  highlight?: boolean;
   code?: boolean;
   href?: string;
   heading?: number;
@@ -66,6 +68,8 @@ function sameMarks(a: InlineMarks, b: InlineMarks): boolean {
     a.bold === b.bold &&
     a.italic === b.italic &&
     a.underline === b.underline &&
+    a.strikethrough === b.strikethrough &&
+    a.highlight === b.highlight &&
     a.code === b.code &&
     a.href === b.href &&
     a.heading === b.heading
@@ -136,6 +140,14 @@ function extractRunsFromNode(node: XmlNode, marks: InlineMarks): InlineRun[] {
     case "underline":
     case "u":
       return collectInlineRuns(node.children, { ...marks, underline: true });
+    case "strikethrough":
+    case "strike":
+      return collectInlineRuns(node.children, { ...marks, strikethrough: true });
+    case "highlight":
+    case "mark":
+      return collectInlineRuns(node.children, { ...marks, highlight: true });
+    case "code":
+      return collectInlineRuns(node.children, { ...marks, code: true });
     case "link":
       if (node.children.length > 0 && node.children[0].type === "text") {
         return collectInlineRuns(node.children, {
@@ -302,6 +314,8 @@ function renderInlineRuns(
     }
 
     if (run.marks.underline) classNames.push("underline");
+    if (run.marks.strikethrough) classNames.push("line-through");
+    if (run.marks.highlight) classNames.push("bg-yellow-200", "text-gray-900");
     if (run.marks.heading) classNames.push(headingSizeClass(run.marks.heading));
 
     const className = classNames.join(" ");
@@ -701,7 +715,7 @@ export function renderXmlNode(
           >
             <View>
               <Text className={`font-display-bold-italic ${textClass}`}>
-                {node.attrs.type.toUpperCase()}
+                {(node.attrs.type ?? "info").toUpperCase()}
               </Text>
             </View>
             <Text className={`font-display ${textClass}`} selectable>
