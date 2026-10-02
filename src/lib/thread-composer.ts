@@ -12,6 +12,32 @@ export interface ThreadDraft {
   isAnonymous: boolean;
 }
 
+export type ThreadDraftTarget =
+  | { kind: "create"; courseId: number }
+  | { kind: "edit"; courseId: number; threadId: number };
+
+/** Unfinished drafts may contain invalid XML; validate their shape on read. */
+export function isThreadDraft(value: unknown): value is ThreadDraft {
+  return (
+    !!value &&
+    typeof value === "object" &&
+    "title" in value &&
+    typeof value.title === "string" &&
+    "content" in value &&
+    typeof value.content === "string" &&
+    "type" in value &&
+    (value.type === "question" || value.type === "post") &&
+    "category" in value &&
+    typeof value.category === "string" &&
+    "subcategory" in value &&
+    typeof value.subcategory === "string" &&
+    "subsubcategory" in value &&
+    typeof value.subsubcategory === "string" &&
+    "isAnonymous" in value &&
+    typeof value.isAnonymous === "boolean"
+  );
+}
+
 export interface UploadedThreadAttachment {
   kind: "file" | "image";
   url: string;

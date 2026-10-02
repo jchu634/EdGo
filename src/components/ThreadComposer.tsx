@@ -30,6 +30,8 @@ import {
 export interface ThreadComposerProps {
   mode: "create" | "edit";
   initialValue?: ThreadDraft;
+  submitLabel?: string;
+  cancelLabel?: string;
   onSubmit: (draft: ThreadDraft) => Promise<void>;
   onCancel: () => void;
   onDraftChange?: (draft: ThreadDraft) => void;
@@ -88,6 +90,8 @@ function Button({
 export default function ThreadComposer({
   mode,
   initialValue = EMPTY_THREAD_DRAFT,
+  submitLabel,
+  cancelLabel = "Cancel",
   onSubmit,
   onCancel,
   onDraftChange,
@@ -623,14 +627,13 @@ export default function ThreadComposer({
             label={
               operation === "saving"
                 ? "Saving…"
-                : mode === "create"
-                  ? "Create thread"
-                  : "Save changes"
+                : (submitLabel ??
+                  (mode === "create" ? "Create thread" : "Save changes"))
             }
             disabled={busy || preview.kind === "loading"}
             onPress={submit}
           />
-          <Button label="Cancel" disabled={busy} onPress={onCancel} />
+          <Button label={cancelLabel} disabled={busy} onPress={onCancel} />
         </View>
       </ScrollView>
     </KeyboardAvoidingView>

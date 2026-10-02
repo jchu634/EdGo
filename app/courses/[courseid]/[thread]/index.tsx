@@ -25,6 +25,7 @@ import { useThreadDetail } from "@/src/hooks/useThreadDetail";
 import { useThreadVotes } from "@/src/hooks/useThreadVotes";
 import { useCourseLayout } from "@/src/providers/courseLayoutProvider";
 import ThreadFullscreenButton from "@/src/components/ThreadFullscreenButton";
+import { EditThreadButton } from "@/src/components/ThreadComposerActions";
 import {
   AnimatedToggleIcon,
   renderComment,
@@ -89,11 +90,18 @@ export default function ThreadPage() {
   return (
     <ScrollView className="flex h-full bg-white dark:bg-black">
       <View className="p-4">
-        <View className="mb-3 flex-row items-start justify-between">
+        <View className="mb-3 flex-row flex-wrap items-start justify-between gap-2">
           <Text className="font-display-bold mr-2 flex-1 text-xl dark:text-slate-100">
             {t.title}
           </Text>
           {t.is_pinned && <PushPinIcon size={18} color="#70069e" />}
+          {!isHidden && (
+            <EditThreadButton
+              key={`${courseIdNum}-${t.id}`}
+              courseId={courseIdNum}
+              thread={t}
+            />
+          )}
           <ThreadFullscreenButton />
         </View>
 

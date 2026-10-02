@@ -3,6 +3,11 @@ import { createMMKV, type MMKV } from "react-native-mmkv";
 import * as SecureStore from "expo-secure-store";
 import { Course, CourseCategory, ThreadDetailResponse } from "@/src/lib/schema";
 import * as Crypto from "expo-crypto";
+import {
+  isThreadDraft,
+  type ThreadDraft,
+  type ThreadDraftTarget,
+} from "@/src/lib/thread-composer";
 
 let courseCache: MMKV | null = null;
 let threadCache: MMKV | null = null;
@@ -73,6 +78,39 @@ export function clearCourseCache(): void {
 
 export function clearThreadCache(): void {
   requireStore(threadCache, "threadCache").clearAll();
+}
+
+function threadDraftKey(target: ThreadDraftTarget): string {
+  return target.kind === "create"
+    ? `thread-draft-${target.courseId}-new`
+    : `thread-draft-${target.courseId}-edit-${target.threadId}`;
+}
+
+export function saveThreadComposerDraft(
+  target: ThreadDraftTarget,
+  draft: ThreadDraft,
+): void {
+  requireStore(threadCache, "threadCache").set(
+    threadDraftKey(target),
+    JSON.stringify(draft),
+  );
+}
+
+export function getThreadComposerDraft(
+  target: ThreadDraftTarget,
+): ThreadDraft | null {
+  const cache = requireStore(threadCache, "threadCache");
+  const key = threadDraftKey(target);
+  const raw = cache.getString(key);
+  if (!raw) return null;
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    if (isThreadDraft(parsed)) return parsed;
+  } catch {
+    // Corrupt drafts cannot be resumed; leave the original thread untouched.
+  }
+  cache.remove(key);
+  return null;
 }
 
 export function cacheCourses(

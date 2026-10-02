@@ -30,6 +30,7 @@ import { useSearchSync } from "@/src/hooks/useSearchSync";
 import { type ThreadUser } from "@/src/db/schema";
 import { useSearchQuery } from "@/src/providers/modalProvider";
 import { useCourseLayout } from "@/src/providers/courseLayoutProvider";
+import { CreateThreadButton } from "@/src/components/ThreadComposerActions";
 
 import "@/global.css";
 
@@ -310,6 +311,9 @@ export default function CourseThreadList({
         sidebar ? "flex-1 bg-white dark:bg-black" : "flex h-full dark:bg-black"
       }
     >
+      <View className="items-start border-b border-gray-200 p-3 dark:border-neutral-700">
+        <CreateThreadButton courseId={courseIdNum} />
+      </View>
       {sidebar && isSearchOpen && (
         <View className="gap-2 border-b border-gray-200 p-3 dark:border-neutral-700">
           <View className="flex-row items-center justify-between">
@@ -466,7 +470,7 @@ export default function CourseThreadList({
         onEndReached={isSearchMode ? undefined : fetchMore}
         onRefresh={isSearchMode ? undefined : refresh}
         refreshing={isSearchMode ? false : refreshing}
-        className={sidebar ? "flex-1" : "h-full"}
+        className="flex-1"
         contentOffset={{ x: 0, y: initialOffset }}
         onScroll={(event) =>
           scrollOffsets.current.set(
