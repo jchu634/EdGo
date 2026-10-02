@@ -52,6 +52,7 @@
     "expo-web-browser": "~57.0.3",
     "fast-xml-parser": "^5.11.2",
     "install": "^0.13.0",
+    "katex": "0.16.25",
     "patch-package": "^8.0.1",
     "phosphor-react-native": "^3.0.4",
     "ratex-react-native": "^0.1.14",

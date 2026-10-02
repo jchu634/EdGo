@@ -1,6 +1,56 @@
 import { XMLParser, XMLValidator } from "fast-xml-parser";
 
 import type { ThreadDetail } from "@/src/lib/thread-detail";
+import type { Schema } from "effect";
+import type { CourseCategory } from "@/src/lib/schema";
+
+export type ThreadCourseCategory = Schema.Schema.Type<typeof CourseCategory>;
+
+export function threadSubcategories(
+  categories: readonly ThreadCourseCategory[],
+  category: string,
+) {
+  return (
+    categories.find((option) => option.name === category)?.subcategories ?? []
+  );
+}
+
+export function threadSubsubcategories(
+  categories: readonly ThreadCourseCategory[],
+  category: string,
+  subcategory: string,
+) {
+  const selected = threadSubcategories(categories, category).find(
+    (option) => option.name === subcategory,
+  );
+  return selected?.subcategories ?? selected?.subsubcategories ?? [];
+}
+
+export function validateThreadCategories(
+  draft: ThreadDraft,
+  categories: readonly ThreadCourseCategory[],
+): string | null {
+  if (
+    draft.category &&
+    !categories.some((option) => option.name === draft.category)
+  )
+    return "Choose a category from this course.";
+  if (
+    draft.subcategory &&
+    !threadSubcategories(categories, draft.category).some(
+      (option) => option.name === draft.subcategory,
+    )
+  )
+    return "Choose a subcategory from this course.";
+  if (
+    draft.subsubcategory &&
+    !threadSubsubcategories(categories, draft.category, draft.subcategory).some(
+      (option) => option.name === draft.subsubcategory,
+    )
+  )
+    return "Choose a second subcategory from this course.";
+  return null;
+}
 
 export interface ThreadDraft {
   title: string;
@@ -121,7 +171,7 @@ function hasThreadContent(value: unknown): boolean {
   return false;
 }
 
-export function validateThreadContent(content: string): string | null {
+export function validateThreadXml(content: string): string | null {
   if (/<!DOCTYPE|<!ENTITY/i.test(content)) {
     return "Document declarations and custom entities are not supported.";
   }
@@ -132,6 +182,12 @@ export function validateThreadContent(content: string): string | null {
   if (!/^\s*<document(?:\s[^>]*)?>[\s\S]*<\/document>\s*$/.test(content)) {
     return "Content must have a single <document> root.";
   }
+  return null;
+}
+
+export function validateThreadContent(content: string): string | null {
+  const invalid = validateThreadXml(content);
+  if (invalid) return invalid;
   const parsed: unknown = contentParser.parse(content);
   if (!hasThreadContent(parsed)) {
     return "Add some text, code, math, or an attachment.";

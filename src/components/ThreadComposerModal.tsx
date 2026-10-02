@@ -6,6 +6,7 @@ import ThreadComposer from "@/src/components/ThreadComposer";
 import {
   getThreadComposerDraft,
   saveThreadComposerDraft,
+  getCachedCourseCategory,
 } from "@/src/lib/storage";
 import {
   EMPTY_THREAD_DRAFT,
@@ -64,6 +65,7 @@ export default function ThreadComposerModal({
           <ThreadComposer
             mode={target.kind}
             initialValue={initialDraft}
+            courseCategories={getCachedCourseCategory(target.courseId) ?? []}
             submitLabel="Save draft"
             cancelLabel="Close"
             onDraftChange={(draft) => saveThreadComposerDraft(target, draft)}

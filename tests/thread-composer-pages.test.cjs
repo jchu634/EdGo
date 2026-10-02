@@ -24,6 +24,7 @@ function load(filename, mocks = {}) {
     {
       exports: module.exports,
       require: (name) => mocks[name] ?? require(name),
+      __DEV__: true,
       AbortController,
       Error,
     },
@@ -85,6 +86,10 @@ async function fixture() {
     "expo-crypto": {},
   });
   await storage.initStorage();
+  storage.getCachedCourseCategory = () => [
+    { name: "Homework" },
+    { name: "General" },
+  ];
   const base = {
     "react-native": native,
     "expo-router": {
@@ -100,6 +105,7 @@ async function fixture() {
   };
   const Composer = load(path.resolve("src/components/ThreadComposer.tsx"), {
     ...base,
+    "./ThreadRichEditor": require("./native-rich-editor.cjs"),
     "expo-document-picker": {},
     "react-native-turboxml": {},
     "@/src/lib/renderXML": {},
@@ -236,7 +242,15 @@ async function fixture() {
   const field = (label) =>
     renderer.root
       .findAllByType("TextInput")
-      .find((node) => node.props.accessibilityLabel === label);
+      .find((node) => node.props.accessibilityLabel === label) ??
+    (label === "Thread content XML"
+      ? {
+          props: {
+            value: renderer.root.findByType("RichEditor").props.content,
+            onChangeText: renderer.root.findByType("RichEditor").props.onChange,
+          },
+        }
+      : undefined);
   const enter = (label, value) =>
     act(() => field(label).props.onChangeText(value));
   const press = async (label) =>
@@ -289,7 +303,10 @@ test("course composer keeps typed content through folding and resumes after clos
   const f = await fixture();
   f.params.compose = "new";
   f.mount();
-  assert.equal(f.field("Category").props.value, "Homework");
+  assert.equal(
+    f.button("Category: Homework").props.accessibilityState.selected,
+    true,
+  );
   f.enter("Thread title", "My unfinished question");
   f.enter("Thread content XML", "<document>unfinished");
   const composerInstance = f.renderer.root.findAllByType("Modal")[0];

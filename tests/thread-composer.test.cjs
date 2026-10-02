@@ -10,7 +10,7 @@ const { XMLParser } = require("fast-xml-parser");
 
 global.IS_REACT_ACT_ENVIRONMENT = true;
 
-function load(filename, mocks = {}) {
+function load(filename, mocks = {}, dev = true) {
   const module = { exports: {} };
   const code = ts.transpileModule(fs.readFileSync(filename, "utf8"), {
     compilerOptions: {
@@ -25,6 +25,7 @@ function load(filename, mocks = {}) {
     {
       exports: module.exports,
       require: (name) => mocks[name] ?? require(name),
+      __DEV__: dev,
       AbortController,
       Error,
     },
@@ -36,6 +37,21 @@ function load(filename, mocks = {}) {
 const model = load(path.resolve("src/lib/thread-composer.ts"));
 const content = "<document><paragraph>Hello world</paragraph></document>";
 const draft = { ...model.EMPTY_THREAD_DRAFT, title: "A question", content };
+
+test("course schema retains nested categories and accepts older cached categories", () => {
+  const { Schema } = require("effect");
+  const { CourseCategory } = load(path.resolve("src/lib/schema.ts"));
+  const parse = Schema.decodeUnknownSync(CourseCategory);
+  const nested = {
+    name: "Homework",
+    subcategories: [{ name: "Week 1", subcategories: [{ name: "Q1" }] }],
+  };
+  assert.equal(JSON.stringify(parse(nested)), JSON.stringify(nested));
+  assert.equal(parse({ name: "General" }).name, "General");
+  assert.throws(() =>
+    parse({ name: "General", subcategories: [{ name: 123 }] }),
+  );
+});
 
 test("editing preserves unknown XML and rejects unsupported thread types", () => {
   const thread = {
@@ -151,43 +167,49 @@ test("attachment URLs and filenames round trip and local URIs are rejected", () 
 
 // Run the component through React. Only device-owned modules are substituted.
 function fixture(props = {}, native = {}) {
-  const Composer = load(path.resolve("src/components/ThreadComposer.tsx"), {
-    "@/src/lib/thread-composer": model,
-    "react-native": {
-      ActivityIndicator: "ActivityIndicator",
-      KeyboardAvoidingView: "KeyboardAvoidingView",
-      Platform: { OS: "ios" },
-      Pressable: "Pressable",
-      ScrollView: "ScrollView",
-      Switch: "Switch",
-      Text: "Text",
-      TextInput: "TextInput",
-      View: "View",
+  const Composer = load(
+    path.resolve("src/components/ThreadComposer.tsx"),
+    {
+      "@/src/lib/thread-composer": model,
+      "./ThreadRichEditor": require("./native-rich-editor.cjs"),
+      "react-native": {
+        ActivityIndicator: "ActivityIndicator",
+        KeyboardAvoidingView: "KeyboardAvoidingView",
+        Platform: { OS: "ios" },
+        Pressable: "Pressable",
+        ScrollView: "ScrollView",
+        Switch: "Switch",
+        Text: "Text",
+        TextInput: "TextInput",
+        View: "View",
+      },
+      "expo-document-picker": {
+        getDocumentAsync: native.pick ?? (async () => ({ canceled: true })),
+      },
+      "react-native-turboxml": {
+        parseXml:
+          native.parse ??
+          (async () => ({
+            type: "element",
+            tag: "document",
+            attrs: {},
+            children: [],
+          })),
+      },
+      "@/src/lib/renderXML": {
+        isXmlNode: (node) =>
+          node?.type === "element" && Array.isArray(node.children),
+        renderXmlNode: (node) => React.createElement("Preview", { node }),
+      },
     },
-    "expo-document-picker": {
-      getDocumentAsync: native.pick ?? (async () => ({ canceled: true })),
-    },
-    "react-native-turboxml": {
-      parseXml:
-        native.parse ??
-        (async () => ({
-          type: "element",
-          tag: "document",
-          attrs: {},
-          children: [],
-        })),
-    },
-    "@/src/lib/renderXML": {
-      isXmlNode: (node) =>
-        node?.type === "element" && Array.isArray(node.children),
-      renderXmlNode: (node) => React.createElement("Preview", { node }),
-    },
-  }).default;
+    native.dev ?? true,
+  ).default;
   let renderer;
   act(() => {
     renderer = create(
       React.createElement(Composer, {
         mode: "create",
+        courseCategories: [],
         initialValue: draft,
         onCancel() {},
         onSubmit: async () => {},
@@ -202,7 +224,15 @@ function fixture(props = {}, native = {}) {
   const field = (label) =>
     renderer.root
       .findAllByType("TextInput")
-      .find((node) => node.props.accessibilityLabel === label);
+      .find((node) => node.props.accessibilityLabel === label) ??
+    (label === "Thread content XML"
+      ? {
+          props: {
+            value: renderer.root.findByType("RichEditor").props.content,
+            onChangeText: renderer.root.findByType("RichEditor").props.onChange,
+          },
+        }
+      : undefined);
   const press = async (label) => {
     await act(async () => {
       await button(label).props.onPress();
@@ -242,6 +272,7 @@ test("invalid XML never reaches the save adapter", async () => {
       called = true;
     },
   });
+  await f.press("Source");
   f.enter("Thread content XML", "<document>unfinished");
   await f.press("Create thread");
   assert.equal(called, false);
@@ -300,30 +331,80 @@ test("double save presses call the adapter only once while saving", async () => 
   f.close();
 });
 
-test("a stale preview response cannot replace newer source edits", async () => {
-  let finish;
-  const f = fixture(
-    {},
-    {
-      parse: () =>
-        new Promise((resolve) => {
-          finish = resolve;
-        }),
-    },
+test("preview is the editable default and Source is debug-only", async () => {
+  const f = fixture({}, { dev: false });
+  assert.equal(f.button("Source"), undefined);
+  assert.equal(f.button("Preview").props.accessibilityState.selected, true);
+  f.enter("Thread content XML", content.replace("Hello", "Edited"));
+  assert.equal(
+    f.renderer.root.findByType("RichEditor").props.content,
+    content.replace("Hello", "Edited"),
   );
-  let preview;
-  await act(async () => {
-    preview = f.button("Preview").props.onPress();
-  });
-  await f.press("Source");
-  f.enter("Thread content XML", content.replace("Hello", "Newer"));
-  await act(async () => {
-    finish({ type: "element", tag: "document", attrs: {}, children: [] });
-    await preview;
-  });
-  assert.equal(f.renderer.root.findAllByType("Preview").length, 0);
-  assert.ok(f.field("Thread content XML").props.value.includes("Newer"));
+  assert.equal(f.button("Preview").props.accessibilityState.selected, true);
   f.close();
+  const debug = fixture();
+  await debug.press("Source");
+  assert.equal(debug.renderer.root.findAllByType("RichEditor").length, 0);
+  debug.enter("Thread content XML", content.replace("Hello", "Source edit"));
+  await debug.press("Preview");
+  assert.ok(
+    debug.renderer.root
+      .findByType("RichEditor")
+      .props.content.includes("Source edit"),
+  );
+  debug.close();
+});
+
+test("course choices validate every level and reset children on parent changes", async () => {
+  const categories = [
+    {
+      name: "Homework",
+      subcategories: [{ name: "Week 1", subcategories: [{ name: "Q1" }] }],
+    },
+    { name: "General" },
+  ];
+  const received = [];
+  const f = fixture({
+    courseCategories: categories,
+    onSubmit: async (draft) => received.push(draft),
+  });
+  assert.equal(f.field("Category"), undefined);
+  await f.press("Category: Homework");
+  await f.press("Subcategory: Week 1");
+  await f.press("Second subcategory: Q1");
+  await f.press("Create thread");
+  assert.equal(received[0].subsubcategory, "Q1");
+  await f.press("Category: General");
+  await f.press("Create thread");
+  assert.equal(received[1].subcategory, "");
+  assert.equal(received[1].subsubcategory, "");
+  f.close();
+  assert.match(
+    model.validateThreadCategories(
+      { ...draft, category: "Invented" },
+      categories,
+    ),
+    /course/,
+  );
+  assert.match(
+    model.validateThreadCategories(
+      { ...draft, category: "Homework", subcategory: "Invented" },
+      categories,
+    ),
+    /subcategory/,
+  );
+  assert.match(
+    model.validateThreadCategories(
+      {
+        ...draft,
+        category: "Homework",
+        subcategory: "Week 1",
+        subsubcategory: "Invented",
+      },
+      categories,
+    ),
+    /second subcategory/,
+  );
 });
 
 test("partial upload failure keeps completed attachments and the draft", async () => {

@@ -44,10 +44,25 @@ const userSettings = Schema.Struct({
   deactivated: Schema.Boolean,
 });
 
+const CourseSubsubcategory = Schema.Struct({
+  name: Schema.String,
+});
+
+const CourseSubcategory = Schema.Struct({
+  name: Schema.String,
+  subcategories: Schema.optionalKey(
+    Schema.NullOr(Schema.Array(CourseSubsubcategory)),
+  ),
+  subsubcategories: Schema.optionalKey(
+    Schema.NullOr(Schema.Array(CourseSubsubcategory)),
+  ),
+});
+
 export const CourseCategory = Schema.Struct({
   name: Schema.String,
-  // Don't want to deal with those yet, those are a pita
-  // subcategories:
+  subcategories: Schema.optionalKey(
+    Schema.NullOr(Schema.Array(CourseSubcategory)),
+  ),
 });
 
 export const UserResponseUser = Schema.Struct({

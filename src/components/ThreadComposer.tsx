@@ -11,15 +11,21 @@ import {
   View,
 } from "react-native";
 import * as DocumentPicker from "expo-document-picker";
-import { parseXml } from "react-native-turboxml";
+import ThreadRichEditor, {
+  type ThreadEditorFormat,
+  type ThreadRichEditorHandle,
+} from "./ThreadRichEditor";
 
-import { isXmlNode, renderXmlNode, type XmlNode } from "@/src/lib/renderXML";
 import {
   EMPTY_THREAD_DRAFT,
   appendThreadBlock,
   escapeXml,
   threadAttachmentXml,
-  validateThreadContent,
+  validateThreadXml,
+  validateThreadCategories,
+  threadSubcategories,
+  threadSubsubcategories,
+  type ThreadCourseCategory,
   validateThreadDraft,
   wrapThreadSelection,
   type TextSelection,
@@ -29,6 +35,7 @@ import {
 
 export interface ThreadComposerProps {
   mode: "create" | "edit";
+  courseCategories: readonly ThreadCourseCategory[];
   initialValue?: ThreadDraft;
   submitLabel?: string;
   cancelLabel?: string;
@@ -51,21 +58,18 @@ type InsertKind =
   | "link"
   | "spoiler"
   | "callout";
-type PreviewState =
-  | { kind: "source" }
-  | { kind: "loading" }
-  | { kind: "ready"; node: XmlNode };
-
 const INPUT_CLASS =
   "font-display rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 dark:border-neutral-700 dark:bg-neutral-900 dark:text-slate-100";
 
 function Button({
   label,
+  accessibilityLabel = label,
   onPress,
   disabled = false,
   selected = false,
 }: {
   label: string;
+  accessibilityLabel?: string;
   onPress: () => void;
   disabled?: boolean;
   selected?: boolean;
@@ -73,7 +77,7 @@ function Button({
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={label}
+      accessibilityLabel={accessibilityLabel}
       accessibilityState={{ disabled, selected }}
       disabled={disabled}
       onPress={onPress}
@@ -86,9 +90,44 @@ function Button({
   );
 }
 
+function CategoryChoices({
+  label,
+  options,
+  value,
+  disabled,
+  onSelect,
+}: {
+  label: string;
+  options: readonly { readonly name: string }[];
+  value: string;
+  disabled: boolean;
+  onSelect: (value: string) => void;
+}) {
+  return (
+    <View className="gap-2">
+      <Text className="font-display text-gray-600 dark:text-slate-300">
+        {label}
+      </Text>
+      <View className="flex-row flex-wrap gap-2">
+        {["", ...options.map((option) => option.name)].map((name) => (
+          <Button
+            key={name}
+            label={name || "None"}
+            accessibilityLabel={`${label}: ${name || "None"}`}
+            selected={value === name}
+            disabled={disabled}
+            onPress={() => onSelect(name)}
+          />
+        ))}
+      </View>
+    </View>
+  );
+}
+
 /** Mount with a new key when switching threads; initialValue is read once. */
 export default function ThreadComposer({
   mode,
+  courseCategories,
   initialValue = EMPTY_THREAD_DRAFT,
   submitLabel,
   cancelLabel = "Cancel",
@@ -115,7 +154,8 @@ export default function ThreadComposer({
     end: initialCursor,
   });
   const selectionRef = useRef(selection);
-  const [preview, setPreview] = useState<PreviewState>({ kind: "source" });
+  const [editorView, setEditorView] = useState<"preview" | "source">("preview");
+  const richEditor = useRef<ThreadRichEditorHandle>(null);
   const [operation, setOperation] = useState<"idle" | "saving" | "attaching">(
     "idle",
   );
@@ -127,7 +167,12 @@ export default function ThreadComposer({
   const [linkUrl, setLinkUrl] = useState("");
   const mounted = useRef(true);
   const uploadController = useRef<AbortController | null>(null);
-  const previewRequest = useRef(0);
+  const subcategories = threadSubcategories(courseCategories, draft.category);
+  const subsubcategories = threadSubsubcategories(
+    courseCategories,
+    draft.category,
+    draft.subcategory,
+  );
   const busy = operation !== "idle";
 
   useEffect(() => {
@@ -149,8 +194,6 @@ export default function ThreadComposer({
       undo: past.current.length > 0,
       redo: future.current.length > 0,
     });
-    previewRequest.current++;
-    setPreview({ kind: "source" });
     setError(null);
     onDraftChange?.(next);
   }
@@ -166,7 +209,11 @@ export default function ThreadComposer({
     selectionRef.current = { start: 0, end: 0 };
   }
 
-  function format(tag: string, attributes = "") {
+  function format(tag: ThreadEditorFormat, attributes = "") {
+    if (editorView === "preview") {
+      richEditor.current?.format(tag);
+      return;
+    }
     const result = wrapThreadSelection(
       draftRef.current.content,
       selectionRef.current,
@@ -187,7 +234,7 @@ export default function ThreadComposer({
     setError(null);
   }
 
-  function insert() {
+  async function insert() {
     if (!insertKind || !insertText.trim()) {
       setError("Enter content to insert.");
       return;
@@ -233,6 +280,7 @@ export default function ThreadComposer({
         break;
     }
     try {
+      await flushPreview();
       change({
         ...draftRef.current,
         content: appendThreadBlock(draftRef.current.content, block),
@@ -245,29 +293,32 @@ export default function ThreadComposer({
     }
   }
 
-  async function showPreview() {
-    const content = draftRef.current.content;
-    const invalid = validateThreadContent(content);
+  function showPreview() {
+    const invalid = validateThreadXml(draftRef.current.content);
     if (invalid) {
       setError(invalid);
       return;
     }
-    const request = ++previewRequest.current;
-    setPreview({ kind: "loading" });
     setError(null);
+    setEditorView("preview");
+  }
+
+  async function flushPreview() {
+    if (editorView !== "preview") return;
+    if (!richEditor.current)
+      throw new Error("The editor is still loading. Please try again.");
+    const content = await richEditor.current.flush();
+    if (content !== draftRef.current.content)
+      change({ ...draftRef.current, content });
+  }
+
+  async function showSource() {
     try {
-      const parsed = await parseXml(content);
-      const node = isXmlNode(parsed) ? parsed : parsed.document;
-      if (!isXmlNode(node)) throw new Error("Unable to preview this document.");
-      if (mounted.current && request === previewRequest.current)
-        setPreview({ kind: "ready", node });
+      await flushPreview();
+      setEditorView("source");
     } catch (cause) {
-      if (!mounted.current || request !== previewRequest.current) return;
-      setPreview({ kind: "source" });
       setError(
-        cause instanceof Error
-          ? cause.message
-          : "Unable to preview this document.",
+        cause instanceof Error ? cause.message : "Unable to open source.",
       );
     }
   }
@@ -314,15 +365,18 @@ export default function ThreadComposer({
 
   async function submit() {
     if (operationRef.current !== "idle") return;
-    const invalid = validateThreadDraft(draftRef.current);
-    if (invalid) {
-      setError(invalid);
-      return;
-    }
     operationRef.current = "saving";
     setOperation("saving");
     setError(null);
     try {
+      await flushPreview();
+      const invalid =
+        validateThreadDraft(draftRef.current) ??
+        validateThreadCategories(draftRef.current, courseCategories);
+      if (invalid) {
+        setError(invalid);
+        return;
+      }
       await onSubmit({
         ...draftRef.current,
         title: draftRef.current.title.trim(),
@@ -373,17 +427,12 @@ export default function ThreadComposer({
           ))}
         </View>
         <View className="gap-2">
-          <Text className="font-display text-gray-600 dark:text-slate-300">
-            Category
-          </Text>
-          <TextInput
-            accessibilityLabel="Category"
-            placeholder="Category, optional"
-            placeholderTextColor="#9ca3af"
-            className={INPUT_CLASS}
+          <CategoryChoices
+            label="Category"
+            options={courseCategories}
             value={draft.category}
-            editable={!busy}
-            onChangeText={(category) =>
+            disabled={busy}
+            onSelect={(category) =>
               change({
                 ...draftRef.current,
                 category,
@@ -392,28 +441,33 @@ export default function ThreadComposer({
               })
             }
           />
-          <TextInput
-            accessibilityLabel="Subcategory"
-            placeholder="Subcategory, optional"
-            placeholderTextColor="#9ca3af"
-            className={INPUT_CLASS}
-            value={draft.subcategory}
-            editable={!busy && !!draft.category}
-            onChangeText={(subcategory) =>
-              change({ ...draftRef.current, subcategory, subsubcategory: "" })
-            }
-          />
-          <TextInput
-            accessibilityLabel="Second subcategory"
-            placeholder="Second subcategory, optional"
-            placeholderTextColor="#9ca3af"
-            className={INPUT_CLASS}
-            value={draft.subsubcategory}
-            editable={!busy && !!draft.subcategory}
-            onChangeText={(subsubcategory) =>
-              change({ ...draftRef.current, subsubcategory })
-            }
-          />
+          {subcategories.length > 0 && (
+            <CategoryChoices
+              label="Subcategory"
+              options={subcategories}
+              value={draft.subcategory}
+              disabled={busy}
+              onSelect={(subcategory) =>
+                change({ ...draftRef.current, subcategory, subsubcategory: "" })
+              }
+            />
+          )}
+          {subsubcategories.length > 0 && (
+            <CategoryChoices
+              label="Second subcategory"
+              options={subsubcategories}
+              value={draft.subsubcategory}
+              disabled={busy}
+              onSelect={(subsubcategory) =>
+                change({ ...draftRef.current, subsubcategory })
+              }
+            />
+          )}
+          {courseCategories.length === 0 && (
+            <Text className="font-display text-sm text-gray-500 dark:text-slate-400">
+              No course categories are available.
+            </Text>
+          )}
         </View>
         <View className="flex-row items-center justify-between">
           <Text className="font-display text-gray-900 dark:text-slate-100">
@@ -429,19 +483,18 @@ export default function ThreadComposer({
           />
         </View>
         <View className="flex-row flex-wrap gap-2">
-          <Button
-            label="Source"
-            disabled={busy}
-            selected={preview.kind === "source"}
-            onPress={() => {
-              previewRequest.current++;
-              setPreview({ kind: "source" });
-            }}
-          />
+          {__DEV__ && (
+            <Button
+              label="Source"
+              disabled={busy}
+              selected={editorView === "source"}
+              onPress={showSource}
+            />
+          )}
           <Button
             label="Preview"
-            disabled={busy || preview.kind === "loading"}
-            selected={preview.kind === "ready"}
+            disabled={busy}
+            selected={editorView === "preview"}
             onPress={showPreview}
           />
           <Button
@@ -455,29 +508,32 @@ export default function ThreadComposer({
             onPress={() => moveHistory("redo")}
           />
         </View>
-        {preview.kind === "source" && (
-          <>
+        <>
+          {editorView === "source" && (
             <Text className="font-display text-sm text-gray-500 dark:text-slate-400">
-              Edit Ed XML. Select text to format it, or add a block below. Use
-              Preview to see the result.
+              Edit Ed XML, or switch to Preview to edit the formatted content.
             </Text>
-            <View className="flex-row flex-wrap gap-2">
-              {[
+          )}
+          <View className="flex-row flex-wrap gap-2">
+            {(
+              [
                 { label: "Bold", tag: "bold" },
                 { label: "Italic", tag: "italic" },
                 { label: "Underline", tag: "underline" },
                 { label: "Strike", tag: "strikethrough" },
                 { label: "Inline code", tag: "code" },
                 { label: "Highlight", tag: "mark" },
-              ].map(({ label, tag }) => (
-                <Button
-                  key={tag}
-                  label={label}
-                  disabled={busy}
-                  onPress={() => format(tag)}
-                />
-              ))}
-            </View>
+              ] satisfies { label: string; tag: ThreadEditorFormat }[]
+            ).map(({ label, tag }) => (
+              <Button
+                key={tag}
+                label={label}
+                disabled={busy}
+                onPress={() => format(tag)}
+              />
+            ))}
+          </View>
+          {editorView === "source" && __DEV__ ? (
             <TextInput
               ref={input}
               accessibilityLabel="Thread content XML"
@@ -498,45 +554,53 @@ export default function ThreadComposer({
                 change({ ...draftRef.current, content })
               }
             />
-            <View className="flex-row flex-wrap gap-2">
-              {(
-                [
-                  { kind: "paragraph", label: "Paragraph" },
-                  { kind: "heading", label: "Heading" },
-                  { kind: "list", label: "Bullet list" },
-                  { kind: "numbered-list", label: "Numbered list" },
-                  { kind: "code", label: "Code block" },
-                  { kind: "math", label: "LaTeX" },
-                  { kind: "link", label: "Link" },
-                  { kind: "spoiler", label: "Spoiler" },
-                  { kind: "callout", label: "Callout" },
-                ] satisfies { kind: InsertKind; label: string }[]
-              ).map(({ kind, label }) => (
-                <Button
-                  key={kind}
-                  label={label}
-                  disabled={busy}
-                  onPress={() => openInsert(kind)}
-                />
-              ))}
+          ) : (
+            <ThreadRichEditor
+              ref={richEditor}
+              content={draft.content}
+              editable={!busy}
+              onChange={(content) => change({ ...draftRef.current, content })}
+              onError={setError}
+            />
+          )}
+          <View className="flex-row flex-wrap gap-2">
+            {(
+              [
+                { kind: "paragraph", label: "Paragraph" },
+                { kind: "heading", label: "Heading" },
+                { kind: "list", label: "Bullet list" },
+                { kind: "numbered-list", label: "Numbered list" },
+                { kind: "code", label: "Code block" },
+                { kind: "math", label: "LaTeX" },
+                { kind: "link", label: "Link" },
+                { kind: "spoiler", label: "Spoiler" },
+                { kind: "callout", label: "Callout" },
+              ] satisfies { kind: InsertKind; label: string }[]
+            ).map(({ kind, label }) => (
               <Button
-                label={
-                  operation === "attaching"
-                    ? "Attaching files…"
-                    : "Add files or images"
-                }
-                disabled={busy || !onUploadAttachment}
-                onPress={attachFiles}
+                key={kind}
+                label={label}
+                disabled={busy}
+                onPress={() => openInsert(kind)}
               />
-            </View>
-            {!onUploadAttachment && (
-              <Text className="font-display text-sm text-gray-500 dark:text-slate-400">
-                File attachments require an upload connection.
-              </Text>
-            )}
-          </>
-        )}
-        {insertKind && preview.kind === "source" && (
+            ))}
+            <Button
+              label={
+                operation === "attaching"
+                  ? "Attaching files…"
+                  : "Add files or images"
+              }
+              disabled={busy || !onUploadAttachment}
+              onPress={attachFiles}
+            />
+          </View>
+          {!onUploadAttachment && (
+            <Text className="font-display text-sm text-gray-500 dark:text-slate-400">
+              File attachments require an upload connection.
+            </Text>
+          )}
+        </>
+        {insertKind && (
           <View className="gap-3 rounded-xl border border-purple-300 p-3 dark:border-purple-800">
             <Text className="font-display-bold text-gray-900 dark:text-slate-100">
               Add {insertKind.replaceAll("-", " ")} at the end of the document
@@ -594,17 +658,6 @@ export default function ThreadComposer({
             </View>
           </View>
         )}
-        {preview.kind === "loading" && (
-          <ActivityIndicator
-            accessibilityLabel="Preparing preview"
-            color="#70069e"
-          />
-        )}
-        {preview.kind === "ready" && (
-          <View className="min-h-64 rounded-xl border border-gray-300 p-3 dark:border-neutral-700">
-            {renderXmlNode(preview.node, "composer-preview")}
-          </View>
-        )}
         {error && (
           <Text
             accessibilityRole="alert"
@@ -630,7 +683,7 @@ export default function ThreadComposer({
                 : (submitLabel ??
                   (mode === "create" ? "Create thread" : "Save changes"))
             }
-            disabled={busy || preview.kind === "loading"}
+            disabled={busy}
             onPress={submit}
           />
           <Button label={cancelLabel} disabled={busy} onPress={onCancel} />
