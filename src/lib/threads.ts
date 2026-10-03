@@ -4,7 +4,7 @@ import {
   HttpClient,
   HttpClientRequest,
   HttpClientResponse,
-} from "effect/unstable/http";
+} from "effect/http";
 import { and, eq, inArray, not, sql } from "drizzle-orm";
 
 import { threadsTable, type NewThread } from "@/src/db/schema";

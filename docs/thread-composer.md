@@ -34,13 +34,19 @@ attachment button is disabled and explains why.
 Preview is the default and supports typing and inline formatting. Source is
 available only in debug builds through `__DEV__`. Adding a block appends it to the
 document. Equations and code blocks have edit controls in Preview. Math uses
-KaTeX MathML, and code uses the existing Shiki highlighter.
+native RaTeX views, and code uses the existing Shiki highlighter.
 
 `ThreadRichEditor` embeds a local contenteditable document in WebView. It parses
 Ed XML as data and maps supported text nodes to editable HTML. Unknown nodes and
 existing attachments retain their XML as indivisible blocks. Untouched content
 returns the original XML string; visual edits retain root attributes, comments,
 and unsupported nodes. Incoming XML never becomes executable HTML.
+
+Equation areas report their positions to React Native. `RaTeXView` draws over
+these areas without intercepting touches, and its measured height updates the
+space reserved in the document. Layout messages run once per animation frame
+and skip unchanged positions. Native equations hide while an editor dialog is
+open so they cannot draw over it. Parsing failures display the original LaTeX.
 
 Saving and opening Source flush the WebView before reading the draft. Flushing
 also applies changes in an open equation or code dialog. Undo and redo use the
@@ -90,9 +96,10 @@ Preview defaults, save errors, XML validation, block insertion, undo/redo,
 attachments, and page draft persistence through folding.
 
 `tests/thread-editor-browser.cjs` exports a browser verification function. Run it
-against the actual `THREAD_EDITOR_HTML` document, passing KaTeX MathML output.
+against the actual `THREAD_EDITOR_HTML` document.
 It checks visual typing and formatting, XML preservation, code and equation
-editing, pending-dialog flush, readonly state, and invalid XML recovery.
+editing, native equation positioning and measurements, pending-dialog flush,
+readonly state, and invalid XML recovery.
 
 Android Metro bundling and lint pass. TypeScript still reports the repository's
 existing missing declarations for `@/global.css`; the composer has no type

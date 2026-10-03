@@ -24,7 +24,17 @@ dialog{width:calc(100% - 20px);max-width:700px;background:var(--bg);color:var(--
   let original='<document><paragraph></paragraph></document>',dirty=false,savedRange=null,counter=0,editingBlock=null,readOnly=false;
   const serializer=new XMLSerializer();
   function send(message){if(window.ReactNativeWebView)window.ReactNativeWebView.postMessage(JSON.stringify(message));else window.dispatchEvent(new CustomEvent('editor-message',{detail:message}));}
-  function height(){send({type:'height',height:Math.max(280,document.body.scrollHeight)});}
+  let layoutFrame=0,lastMathLayout='';
+  function mathLayout(){
+    layoutFrame=0;
+    const slots=dialog.open?[]:Array.from(editor.querySelectorAll('[data-ed-tag="math"]')).map(block=>{
+      const rect=block.querySelector('.block-preview').getBoundingClientRect();
+      return {id:block.id,source:block.dataset.source,top:rect.top,left:rect.left,width:rect.width,height:rect.height};
+    });
+    const next=JSON.stringify(slots);if(next!==lastMathLayout){lastMathLayout=next;send({type:'math-layout',slots});}
+  }
+  function scheduleMathLayout(){if(!layoutFrame)layoutFrame=requestAnimationFrame(mathLayout);}
+  function height(){send({type:'height',height:Math.max(280,document.body.scrollHeight)});scheduleMathLayout();}
   function xmlParse(xml){if(/<!DOCTYPE|<!ENTITY/i.test(xml))throw Error('Document declarations and custom entities are not supported.');const doc=new DOMParser().parseFromString(xml,'application/xml');if(doc.querySelector('parsererror')||doc.documentElement.tagName!=='document')throw Error('This draft contains invalid XML. Its content has been preserved.');return doc;}
   function attrsOf(node){return Object.fromEntries(Array.from(node.attributes).map(a=>[a.name,a.value]));}
   function metadata(html,xml){html.dataset.edTag=xml.tagName;html.dataset.edAttrs=JSON.stringify(attrsOf(xml));return html;}
@@ -37,7 +47,7 @@ dialog{width:calc(100% - 20px);max-width:700px;background:var(--bg);color:var(--
       const code=document.createElement('code'),pre=document.createElement('pre');code.textContent=(xml.querySelector('snippet-file')||xml).textContent;pre.appendChild(code);preview.appendChild(pre);
       block.dataset.source=code.textContent;send({type:'decorate',id:block.id,kind:'code',source:code.textContent,language:xml.getAttribute('language')||'txt'});
     }else if(tag==='math'){
-      preview.textContent=xml.textContent;block.dataset.source=xml.textContent;send({type:'decorate',id:block.id,kind:'math',source:xml.textContent});
+      preview.textContent=xml.textContent;preview.style.height=(block.dataset.mathHeight||72)+'px';block.dataset.source=xml.textContent;
     }else if(tag==='image'){
       const image=document.createElement('img');const src=xml.getAttribute('src')||'';if(src.startsWith('https://'))image.src=src;image.alt=xml.getAttribute('alt')||'Attached image';preview.appendChild(image);
     }else if(tag==='file'){
@@ -112,7 +122,7 @@ dialog{width:calc(100% - 20px);max-width:700px;background:var(--bg);color:var(--
       for(const child of doc.documentElement.childNodes)editor.appendChild(renderNode(child));
       if(!editor.querySelector('p,h1,h2,h3,h4,li'))editor.appendChild(document.createElement('p'));
       problem.style.display='none';editor.querySelectorAll('[data-atomic]').forEach(decorateBlock);height();
-    }catch(error){original=content;dirty=false;editor.replaceChildren();problem.textContent=error.message;problem.style.display='block';send({type:'error',message:error.message});}
+    }catch(error){original=content;dirty=false;editor.replaceChildren();problem.textContent=error.message;problem.style.display='block';send({type:'error',message:error.message});height();}
   }
   function restoreSelection(){
     editor.focus();const selection=window.getSelection();
@@ -131,7 +141,7 @@ dialog{width:calc(100% - 20px);max-width:700px;background:var(--bg);color:var(--
     if(readOnly)return;editingBlock=block;
     const xml=new DOMParser().parseFromString(block.dataset.edXml,'application/xml').documentElement;
     const math=xml.tagName==='math';document.getElementById('block-label').textContent=math?'LaTeX equation':'Code';document.getElementById('language-label').hidden=math;
-    blockText.value=(xml.querySelector('snippet-file')||xml).textContent;blockLanguage.value=xml.getAttribute('language')||'txt';dialog.showModal();blockText.focus();
+    blockText.value=(xml.querySelector('snippet-file')||xml).textContent;blockLanguage.value=xml.getAttribute('language')||'txt';dialog.showModal();blockText.focus();height();
   }
   function applyBlock(){
     if(!editingBlock)return;
@@ -141,18 +151,21 @@ dialog{width:calc(100% - 20px);max-width:700px;background:var(--bg);color:var(--
     }else{xml.textContent=blockText.value;if(xml.tagName!=='math')xml.setAttribute('language',blockLanguage.value||'txt');}
     editingBlock.dataset.edXml=serializer.serializeToString(xml);decorateBlock(editingBlock);publish();editingBlock=null;
   }
-  dialog.addEventListener('close',()=>{if(dialog.returnValue==='apply')applyBlock();else editingBlock=null;});
+  dialog.addEventListener('close',()=>{if(dialog.returnValue==='apply')applyBlock();else editingBlock=null;height();});
   editor.addEventListener('input',publish);
   editor.addEventListener('paste',event=>{event.preventDefault();if(!readOnly)document.execCommand('insertText',false,event.clipboardData.getData('text/plain'));});
   editor.addEventListener('click',event=>{if(event.target.closest('a'))event.preventDefault();});
   document.addEventListener('selectionchange',()=>{const selection=window.getSelection();if(selection.rangeCount&&editor.contains(selection.anchorNode))savedRange=selection.getRangeAt(0).cloneRange();});
   new ResizeObserver(height).observe(editor);
+  window.addEventListener('scroll',scheduleMathLayout);
+  editor.addEventListener('load',height,true);
   window.threadEditor={
     setContent,getContent,format,
+    setMathHeight(id,source,value){const block=document.getElementById(id);if(block&&block.dataset.source===source&&Number.isFinite(value)){const size=Math.max(32,Math.min(2000,value));block.dataset.mathHeight=size;block.querySelector('.block-preview').style.height=size+'px';height();}},
     setTheme(value){document.documentElement.dataset.theme=value;},
     refreshDecorations(){editor.querySelectorAll('[data-atomic]').forEach(decorateBlock);},
     setReadOnly(value){readOnly=value;editor.contentEditable=String(!value);editor.querySelectorAll('button').forEach(button=>button.disabled=value);},
-    decorate(id,source,html){const block=document.getElementById(id);if(block&&block.dataset.source===source){const preview=block.querySelector('.block-preview');preview.innerHTML=html;height();}},
+    decorate(id,source,html){const block=document.getElementById(id);if(block&&block.dataset.edTag!=='math'&&block.dataset.source===source){const preview=block.querySelector('.block-preview');preview.innerHTML=html;height();}},
     flush(requestId){if(dialog.open){applyBlock();dialog.close();}send({type:'flush',requestId,content:getContent()});}
   };
   send({type:'ready'});

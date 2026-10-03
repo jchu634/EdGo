@@ -3,7 +3,7 @@ import {
   HttpClient,
   HttpClientRequest,
   HttpClientResponse,
-} from "effect/unstable/http";
+} from "effect/http";
 
 import { Effect, Schedule, Schema, Duration, Fiber } from "effect";
 import { useState, useEffect, useMemo, useCallback } from "react";

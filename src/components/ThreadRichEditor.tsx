@@ -5,9 +5,9 @@ import {
   useRef,
   useState,
 } from "react";
-import { View } from "react-native";
+import { Text, View } from "react-native";
 import WebView, { type WebViewMessageEvent } from "react-native-webview";
-import { renderToString } from "katex";
+import { RaTeXView } from "ratex-react-native";
 import { useUniwind } from "uniwind";
 
 import { THREAD_EDITOR_HTML } from "@/src/lib/thread-editor-document";
@@ -26,16 +26,107 @@ export interface ThreadRichEditorHandle {
   flush: () => Promise<string>;
 }
 
+interface MathSlot {
+  id: string;
+  source: string;
+  top: number;
+  left: number;
+  width: number;
+  height: number;
+}
+
+function parseMathSlot(value: unknown): MathSlot | null {
+  if (
+    !value ||
+    typeof value !== "object" ||
+    !("id" in value) ||
+    typeof value.id !== "string" ||
+    !("source" in value) ||
+    typeof value.source !== "string" ||
+    !("top" in value) ||
+    typeof value.top !== "number" ||
+    !Number.isFinite(value.top) ||
+    !("left" in value) ||
+    typeof value.left !== "number" ||
+    !Number.isFinite(value.left) ||
+    !("width" in value) ||
+    typeof value.width !== "number" ||
+    !Number.isFinite(value.width) ||
+    value.width <= 0 ||
+    !("height" in value) ||
+    typeof value.height !== "number" ||
+    !Number.isFinite(value.height) ||
+    value.height <= 0
+  )
+    return null;
+  return {
+    id: value.id,
+    source: value.source,
+    top: value.top,
+    left: value.left,
+    width: value.width,
+    height: value.height,
+  };
+}
+
+function NativeEquation({
+  slot,
+  dark,
+  onHeight,
+}: {
+  slot: MathSlot;
+  dark: boolean;
+  onHeight: (height: number) => void;
+}) {
+  const [error, setError] = useState<string | null>(null);
+  return (
+    <View
+      pointerEvents="none"
+      style={{
+        position: "absolute",
+        top: slot.top,
+        left: slot.left,
+        width: slot.width,
+        height: slot.height,
+        overflow: "hidden",
+        backgroundColor: dark ? "#262626" : "#f3f4f6",
+      }}
+    >
+      {error ? (
+        <Text
+          style={{ color: dark ? "#f1f5f9" : "#111827" }}
+          accessibilityLabel={`Equation could not be rendered: ${error}`}
+        >
+          {slot.source}
+        </Text>
+      ) : (
+        <RaTeXView
+          latex={slot.source.slice(0, 5000)}
+          fontSize={24}
+          color={dark ? "#f1f5f9" : "#111827"}
+          style={{ width: slot.width, height: slot.height }}
+          onContentSizeChange={(event) => {
+            const height = event.nativeEvent.height;
+            if (Number.isFinite(height) && height > 0) onHeight(height + 4);
+          }}
+          onError={(event) => setError(event.nativeEvent.error)}
+        />
+      )}
+    </View>
+  );
+}
+
 type EditorMessage =
   | { type: "ready" }
   | { type: "change"; content: string }
   | { type: "flush"; content: string; requestId: number }
   | { type: "height"; height: number }
+  | { type: "math-layout"; slots: MathSlot[] }
   | { type: "error"; message: string }
   | {
       type: "decorate";
       id: string;
-      kind: "math" | "code";
+      kind: "code";
       source: string;
       language: string;
     };
@@ -67,6 +158,16 @@ function parseEditorMessage(raw: string): EditorMessage | null {
       return "message" in value && typeof value.message === "string"
         ? { type: "error", message: value.message }
         : null;
+    case "math-layout": {
+      if (!("slots" in value) || !Array.isArray(value.slots)) return null;
+      const slots: MathSlot[] = [];
+      for (const candidate of value.slots) {
+        const slot = parseMathSlot(candidate);
+        if (!slot) return null;
+        slots.push(slot);
+      }
+      return { type: "math-layout", slots };
+    }
     case "decorate":
       if (
         !("id" in value) ||
@@ -74,7 +175,7 @@ function parseEditorMessage(raw: string): EditorMessage | null {
         !("source" in value) ||
         typeof value.source !== "string" ||
         !("kind" in value) ||
-        (value.kind !== "math" && value.kind !== "code")
+        value.kind !== "code"
       )
         return null;
       return {
@@ -105,6 +206,7 @@ const ThreadRichEditor = forwardRef<
 >(function ThreadRichEditor({ content, editable, onChange, onError }, ref) {
   const web = useRef<WebView>(null);
   const [height, setHeight] = useState(280);
+  const [mathSlots, setMathSlots] = useState<MathSlot[]>([]);
   const [ready, setReady] = useState(false);
   const lastContent = useRef(content);
   const requestId = useRef(0);
@@ -182,24 +284,12 @@ const ThreadRichEditor = forwardRef<
     message: Extract<EditorMessage, { type: "decorate" }>,
   ) {
     const version = decorationVersion.current;
-    let html: string;
-    if (message.kind === "math") {
-      html = renderToString(message.source.slice(0, 5000), {
-        output: "mathml",
-        displayMode: true,
-        throwOnError: false,
-        trust: false,
-        maxExpand: 200,
-        maxSize: 20,
-      });
-    } else {
-      const tokens = await tokenize(
-        message.source,
-        message.language,
-        theme === "dark" ? "github-dark" : "github-light",
-      );
-      html = `<pre><code>${tokens ? tokens.map((line) => line.map((token) => `<span style="color:${/^#[0-9a-f]{3,8}$/i.test(token.color ?? "") ? token.color : "inherit"}">${escapeXml(token.content)}</span>`).join("")).join("\n") : escapeXml(message.source)}</code></pre>`;
-    }
+    const tokens = await tokenize(
+      message.source,
+      message.language,
+      theme === "dark" ? "github-dark" : "github-light",
+    );
+    const html = `<pre><code>${tokens ? tokens.map((line) => line.map((token) => `<span style="color:${/^#[0-9a-f]{3,8}$/i.test(token.color ?? "") ? token.color : "inherit"}">${escapeXml(token.content)}</span>`).join("")).join("\n") : escapeXml(message.source)}</code></pre>`;
     if (version === decorationVersion.current)
       inject("decorate", message.id, message.source, html);
   }
@@ -228,6 +318,9 @@ const ThreadRichEditor = forwardRef<
           }
           break;
         }
+        case "math-layout":
+          setMathSlots(message.slots);
+          break;
         case "height":
           setHeight(Math.max(280, Math.min(20000, message.height)));
           break;
@@ -266,6 +359,16 @@ const ThreadRichEditor = forwardRef<
         keyboardDisplayRequiresUserAction={false}
         hideKeyboardAccessoryView={false}
       />
+      {mathSlots.map((slot) => (
+        <NativeEquation
+          key={`${slot.id}:${slot.source}`}
+          slot={slot}
+          dark={theme === "dark"}
+          onHeight={(height) =>
+            inject("setMathHeight", slot.id, slot.source, height)
+          }
+        />
+      ))}
     </View>
   );
 });

@@ -20,7 +20,8 @@ function fixture() {
   });
   const module = { exports: {} };
   const mocks = {
-    "react-native": { View: "View" },
+    "react-native": { View: "View", Text: "Text" },
+    "ratex-react-native": { RaTeXView: "RaTeXView" },
     uniwind: { useUniwind: () => ({ theme: "light" }) },
     "react-native-webview": { __esModule: true, default: WebView },
     "@/src/lib/thread-editor-document": { THREAD_EDITOR_HTML: "<html></html>" },
@@ -127,20 +128,45 @@ test("flush resolves only its response and closing rejects outstanding saves", a
   await rejection;
 });
 
-test("bridge decorates math safely, escapes code and applies readonly state", async () => {
+test("bridge renders equations with native RaTeX, escapes code and applies readonly state", async () => {
   const f = fixture();
   await f.message({ type: "ready" });
-  await f.message({
-    type: "decorate",
+  const slot = {
     id: "math1",
-    kind: "math",
     source: String.raw`\frac{a}{b}`,
-  });
+    top: 100,
+    left: 14,
+    width: 300,
+    height: 72,
+  };
+  await f.message({ type: "math-layout", slots: [slot] });
+  const equation = f.renderer.root.findByType("RaTeXView");
+  assert.equal(equation.props.latex, slot.source);
+  assert.equal(equation.props.fontSize, 24);
+  assert.equal(equation.parent.props.pointerEvents, "none");
+  act(() =>
+    equation.props.onContentSizeChange({
+      nativeEvent: { width: 40, height: 48 },
+    }),
+  );
   assert.ok(
-    f.scripts.some(
-      (script) => script.includes("MathML") && script.includes("mfrac"),
+    f.scripts.some((script) =>
+      script.startsWith("window.threadEditor.setMathHeight("),
     ),
   );
+  const scriptsBefore = f.scripts.length;
+  await f.message({
+    type: "math-layout",
+    slots: [{ ...slot, width: "invalid" }],
+  });
+  assert.equal(f.renderer.root.findAllByType("RaTeXView").length, 1);
+  assert.equal(f.scripts.length, scriptsBefore);
+  act(() =>
+    equation.props.onError({ nativeEvent: { error: "Invalid equation" } }),
+  );
+  assert.equal(f.renderer.root.findByType("Text").props.children, slot.source);
+  await f.message({ type: "math-layout", slots: [] });
+  assert.equal(f.renderer.root.findAllByType("RaTeXView").length, 0);
   await f.message({
     type: "decorate",
     id: "code1",

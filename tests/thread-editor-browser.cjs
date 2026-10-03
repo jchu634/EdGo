@@ -1,5 +1,5 @@
 // Run against THREAD_EDITOR_HTML in the collaborative browser.
-module.exports = function verifyThreadEditor(mathHtml) {
+module.exports = async function verifyThreadEditor() {
   const checks = [];
   function check(name, condition) {
     if (!condition) throw new Error(name);
@@ -19,8 +19,8 @@ module.exports = function verifyThreadEditor(mathHtml) {
     api.getContent() === original,
   );
   check(
-    "math and code request decoration",
-    messages.filter((message) => message.type === "decorate").length === 2,
+    "only code requests HTML decoration",
+    messages.filter((message) => message.type === "decorate").length === 1,
   );
   function select(start, end) {
     const node = editor.querySelector("p").firstChild;
@@ -56,11 +56,52 @@ module.exports = function verifyThreadEditor(mathHtml) {
   const math = editor.querySelector('[data-ed-tag="math"]');
   api.decorate(math.id, "stale", "<b>stale</b>");
   check("stale decoration is ignored", !math.textContent.includes("stale"));
-  api.decorate(math.id, "x < y", mathHtml);
-  check("math preview renders MathML", !!math.querySelector("math mfrac"));
+  const frame = () => new Promise((resolve) => requestAnimationFrame(resolve));
+  await frame();
+  let slots = messages
+    .filter((message) => message.type === "math-layout")
+    .at(-1).slots;
+  check(
+    "math geometry is sent to the native renderer",
+    slots.length === 1 && slots[0].source === "x < y" && slots[0].width > 0,
+  );
+  api.setMathHeight(math.id, "stale", 120);
+  check(
+    "stale native measurements are ignored",
+    math.querySelector(".block-preview").style.height === "72px",
+  );
+  api.setMathHeight(math.id, "x < y", 120);
+  await frame();
+  slots = messages
+    .filter((message) => message.type === "math-layout")
+    .at(-1).slots;
+  check(
+    "native equation height updates the editor layout",
+    slots[0].height === 120,
+  );
+  const previousTop = slots[0].top;
+  editor.querySelector("p").style.height = "200px";
+  editor.dispatchEvent(new Event("input"));
+  await frame();
+  slots = messages
+    .filter((message) => message.type === "math-layout")
+    .at(-1).slots;
+  check("native equations track edits above them", slots[0].top > previousTop);
   math.querySelector("button").click();
+  await frame();
+  check(
+    "native equations are hidden beneath the edit dialog",
+    messages.filter((message) => message.type === "math-layout").at(-1).slots
+      .length === 0,
+  );
   document.getElementById("block-text").value = String.raw`\frac{a}{b}`;
   api.flush(123);
+  await frame();
+  check(
+    "native equations return after closing the edit dialog",
+    messages.filter((message) => message.type === "math-layout").at(-1).slots
+      .length === 1,
+  );
   const reply = messages.find(
     (message) => message.type === "flush" && message.requestId === 123,
   );
@@ -122,6 +163,12 @@ module.exports = function verifyThreadEditor(mathHtml) {
     api.getContent().includes("Typed &lt;text&gt; &amp; more"),
   );
   api.setContent("<document>unfinished");
+  await frame();
+  check(
+    "invalid XML clears native equation overlays",
+    messages.filter((message) => message.type === "math-layout").at(-1).slots
+      .length === 0,
+  );
   check(
     "invalid existing draft remains intact",
     api.getContent() === "<document>unfinished",
@@ -131,10 +178,5 @@ module.exports = function verifyThreadEditor(mathHtml) {
     document.getElementById("problem").style.display === "block",
   );
   api.setContent(original);
-  api.decorate(
-    editor.querySelector('[data-ed-tag="math"]').id,
-    "x < y",
-    mathHtml,
-  );
   return { passed: checks.length, checks };
 };

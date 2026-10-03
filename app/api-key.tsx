@@ -14,7 +14,7 @@ import {
   HttpClient,
   HttpClientRequest,
   HttpClientResponse,
-} from "effect/unstable/http";
+} from "effect/http";
 import { Effect } from "effect";
 import { useUniwind } from "uniwind";
 

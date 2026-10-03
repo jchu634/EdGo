@@ -15,7 +15,7 @@ import {
   HttpClient,
   HttpClientRequest,
   HttpClientResponse,
-} from "effect/unstable/http";
+} from "effect/http";
 import type { ThemedToken } from "@shikijs/core";
 import { cn } from "cnfast";
 import { useHighlighter } from "@/src/providers/highlightProvider";
