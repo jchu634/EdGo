@@ -13,6 +13,10 @@ export interface MigrationBundle {
 
 export interface SqliteQueryClient {
   getAllAsync<T>(source: string): Promise<T[]>;
+  runAsync?(
+    source: string,
+    params: (string | number | null)[],
+  ): Promise<unknown>;
 }
 
 const TIMESTAMP_PREFIX_RE = /^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})/;
@@ -160,5 +164,80 @@ export async function validateLegacyMigrationHistory(
     throw new Error(
       `Cannot upgrade legacy migrations table: ${unmatched.length} unmatched row(s) (${unmatched.join(", ")})`,
     );
+  }
+}
+
+export async function reconcileLegacyMigrationNames(
+  client: SqliteQueryClient,
+  bundle: MigrationBundle,
+  normalizedMigrations: Record<string, string>,
+  migrationsTable = "__drizzle_migrations",
+): Promise<void> {
+  if (!bundle.journal?.entries || !client.runAsync) {
+    return;
+  }
+
+  const tableExists = await client.getAllAsync<{ name: string }>(
+    `SELECT name FROM sqlite_master WHERE type = 'table' AND name = '${migrationsTable}'`,
+  );
+  if (tableExists.length === 0) {
+    return;
+  }
+
+  const columns = await client.getAllAsync<{ name: string }>(
+    `PRAGMA table_info("${migrationsTable}")`,
+  );
+  if (!columns.some((col) => col.name === "name")) {
+    return;
+  }
+
+  const legacyToNormalized = new Map<
+    string,
+    { name: string; millis: number }
+  >();
+  for (const entry of bundle.journal.entries) {
+    const legacyKey = `m${String(entry.idx).padStart(4, "0")}`;
+    const prefixedName = TIMESTAMP_PREFIX_RE.test(entry.tag)
+      ? entry.tag
+      : `${formatUtcTimestampPrefix(entry.when)}_${entry.tag}`;
+    if (!(prefixedName in normalizedMigrations)) {
+      continue;
+    }
+    const target = {
+      name: prefixedName,
+      millis: parseTimestampPrefixToMillis(prefixedName),
+    };
+    legacyToNormalized.set(legacyKey, target);
+    if (entry.tag !== prefixedName) {
+      legacyToNormalized.set(entry.tag, target);
+    }
+  }
+
+  if (legacyToNormalized.size === 0) {
+    return;
+  }
+
+  const dbRows = await client.getAllAsync<{
+    id: number;
+    name: string | null;
+    created_at: number | string | null;
+  }>(`SELECT id, name, created_at FROM "${migrationsTable}" ORDER BY id ASC`);
+
+  const existingNames = new Set(
+    dbRows
+      .map((row) => row.name)
+      .filter((name): name is string => Boolean(name)),
+  );
+
+  for (const row of dbRows) {
+    if (!row.name) continue;
+    const target = legacyToNormalized.get(row.name);
+    if (!target || existingNames.has(target.name)) continue;
+
+    await client.runAsync(
+      `UPDATE "${migrationsTable}" SET "name" = ?, "created_at" = COALESCE("created_at", ?) WHERE "id" = ?`,
+      [target.name, target.millis, row.id],
+    );
+    existingNames.add(target.name);
   }
 }

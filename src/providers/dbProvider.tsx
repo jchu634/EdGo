@@ -11,6 +11,7 @@ import { ActivityIndicator, View } from "react-native";
 import migrations from "@/drizzle/migrations";
 import {
   normalizeMigrations,
+  reconcileLegacyMigrationNames,
   validateLegacyMigrationHistory,
 } from "@/src/lib/migrations";
 
@@ -45,6 +46,7 @@ export function DbProvider({ children }: { children: React.ReactNode }) {
       try {
         const normalized = normalizeMigrations(migrations);
         await validateLegacyMigrationHistory(expoDb, normalized);
+        await reconcileLegacyMigrationNames(expoDb, migrations, normalized);
         await migrate(db, { migrations: normalized });
         if (!cancelled) {
           setMigrationState({ success: true });

@@ -44,6 +44,9 @@ function createSqliteClient(sqliteDb) {
     async getAllAsync(sqlText, params = []) {
       return sqliteDb.prepare(sqlText).all(...params);
     },
+    async runAsync(sqlText, params = []) {
+      return sqliteDb.prepare(sqlText).run(...params);
+    },
   };
 }
 
@@ -188,4 +191,57 @@ test("refuses legacy upgrade before running SQL when a row is unmatched", async 
     columns.some((c) => c.name === "name"),
     false,
   );
+});
+
+test("reconciles legacy m0000-style named rows without replaying migrations", async () => {
+  const {
+    normalizeMigrations,
+    reconcileLegacyMigrationNames,
+    validateLegacyMigrationHistory,
+  } = loadMigrationsHelper();
+
+  const sqliteDb = new DatabaseSync(":memory:");
+  const client = createSqliteClient(sqliteDb);
+  const bundle = loadRealBundle();
+  const normalized = normalizeMigrations(bundle);
+
+  sqliteDb.exec(`
+    CREATE TABLE __drizzle_migrations (
+      id INTEGER PRIMARY KEY,
+      hash TEXT NOT NULL,
+      created_at numeric,
+      name TEXT,
+      applied_at TEXT
+    );
+  `);
+
+  const insertLegacyNamed = sqliteDb.prepare(
+    "INSERT INTO __drizzle_migrations (id, hash, created_at, name, applied_at) VALUES (?, '', NULL, ?, '2026-11-25T14:02:15.542Z')",
+  );
+  for (const entry of bundle.journal.entries) {
+    const key = `m${String(entry.idx).padStart(4, "0")}`;
+    const statements = bundle.migrations[key].split("--> statement-breakpoint");
+    for (const stmt of statements) {
+      if (stmt.trim()) {
+        sqliteDb.exec(stmt);
+      }
+    }
+    insertLegacyNamed.run(entry.idx + 1, key);
+  }
+
+  await validateLegacyMigrationHistory(client, normalized);
+  await reconcileLegacyMigrationNames(client, bundle, normalized);
+  await runDrizzleMigrate(sqliteDb, normalized);
+
+  const rows = sqliteDb
+    .prepare(
+      "SELECT id, name, created_at FROM __drizzle_migrations ORDER BY id ASC",
+    )
+    .all();
+  assert.equal(rows.length, bundle.journal.entries.length);
+  assert.deepEqual(
+    rows.map((r) => r.name),
+    Object.keys(normalized).sort(),
+  );
+  assert.ok(rows.every((r) => r.created_at !== null));
 });
