@@ -270,13 +270,15 @@ export default function Index() {
         </Text>
 
         <View className="flex flex-row items-center justify-between">
-          <Text className="font-display dark:text-slate-100">Larger Card</Text>
+          <Text className="font-display dark:text-slate-100">
+            Compact Cards
+          </Text>
           <Switch
             trackColor={{ false: "#767577", true: "#81b0ff" }}
-            thumbColor={largerCards ? "#f5dd4b" : "#f4f3f4"}
+            thumbColor={!largerCards ? "#f5dd4b" : "#f4f3f4"}
             ios_backgroundColor="#3e3e3e"
-            onValueChange={(v) => setLargerCards(v)}
-            value={largerCards ?? false}
+            onValueChange={(v) => setLargerCards(!v)}
+            value={!largerCards}
           />
         </View>
       </View>
