@@ -6,15 +6,15 @@ import {
   HttpClientResponse,
 } from "effect/http";
 import { useRouter } from "expo-router";
-import { ChatsIcon, EyeIcon, HeartIcon } from "phosphor-react-native";
-import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  FlatList,
-  Pressable,
-  Text,
-  useWindowDimensions,
-  View,
-} from "react-native";
+  CaretDownIcon,
+  CaretRightIcon,
+  ChatsIcon,
+  EyeIcon,
+  HeartIcon,
+} from "phosphor-react-native";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { FlatList, Pressable, Text, View } from "react-native";
 import { useMMKVBoolean } from "react-native-mmkv";
 import { useUniwind } from "uniwind";
 import { useRecentThreads } from "@/src/hooks/useRecentThreads";
@@ -26,6 +26,7 @@ import {
   settings,
 } from "@/src/lib/storage";
 import { getUnreadCounts, type UnreadCountEntry } from "@/src/lib/stream";
+import { useCourseLayout } from "@/src/providers/courseLayoutProvider";
 import { useNetwork } from "@/src/providers/networkProvider";
 
 import "@/global.css";
@@ -37,12 +38,17 @@ const colourForCourse = (id: number) =>
 
 type CourseListItem =
   | { kind: "course"; course: Schema.Schema.Type<typeof Course> }
-  | { kind: "archivedHeader" };
+  | { kind: "archivedHeader"; count: number };
 
 export default function Index() {
   const { theme } = useUniwind();
+  const { isWide } = useCourseLayout();
   const [largerCards = false] = useMMKVBoolean(
     "ui.larger_cards",
+    settings ?? undefined,
+  );
+  const [archivedCollapsed = false, setArchivedCollapsed] = useMMKVBoolean(
+    "ui.archived_courses_collapsed",
     settings ?? undefined,
   );
 
@@ -57,10 +63,10 @@ export default function Index() {
     Record<string, UnreadCountEntry> | undefined
   >();
 
-  const { width: windowWidth } = useWindowDimensions();
-
-  const { threads: recentThreads, loading: recentLoading } =
-    useRecentThreads(courses);
+  const { threads: recentThreads, loading: recentLoading } = useRecentThreads(
+    courses,
+    isWide ? 30 : 5,
+  );
 
   const courseMap = useMemo(() => {
     const map = new Map<number, { code: string }>();
@@ -250,34 +256,29 @@ export default function Index() {
 
       return (
         <Pressable
-          className="ml-1.5 flex h-24 w-max flex-row justify-between gap-x-2 rounded-2xl bg-gray-300 p-3 px-2.5 dark:bg-neutral-800"
+          className="mx-1 flex h-24 flex-row items-center justify-between gap-x-2.5 rounded-2xl bg-gray-300 p-3 px-2.5 dark:bg-neutral-800"
           onPress={() => router.navigate(`/courses/${course.id}`)}
         >
           <View
-            className="h-full w-3 rounded-4xl"
+            className="h-full w-3 shrink-0 rounded-4xl"
             style={{ backgroundColor: colourForCourse(course.id) }}
           />
-          <View className="w-max flex-1 flex-row">
-            <View
-              className="justify-center"
-              style={{ width: windowWidth * 0.8 - 32 }}
+          <View className="min-w-0 flex-1 justify-center">
+            <Text
+              className="font-display-bold text-lg dark:text-slate-100"
+              numberOfLines={1}
             >
-              <Text
-                className="font-display-bold text-lg text-ellipsis dark:text-slate-100"
-                numberOfLines={1}
-              >
-                {course.code}
-              </Text>
-              <Text
-                numberOfLines={1}
-                className="font-display text-sm dark:text-slate-100"
-              >
-                {course.name}
-              </Text>
-            </View>
+              {course.code}
+            </Text>
+            <Text
+              numberOfLines={1}
+              className="font-display text-sm dark:text-slate-100"
+            >
+              {course.name}
+            </Text>
           </View>
           {showBadge && (
-            <View className="size-10 items-center justify-center rounded-lg bg-blue-700">
+            <View className="size-10 shrink-0 items-center justify-center rounded-lg bg-blue-700">
               <Text className="font-display-semibold text-center text-xs text-white">
                 {loaded ? wrapNumbers(count) : "…"}
               </Text>
@@ -286,7 +287,14 @@ export default function Index() {
         </Pressable>
       );
     },
-    [windowWidth, unreadCounts, isOnline, router],
+    [
+      archivedCollapsed,
+      setArchivedCollapsed,
+      theme,
+      unreadCounts,
+      isOnline,
+      router,
+    ],
   );
 
   const renderRecentThreadItem = useCallback(
@@ -304,25 +312,31 @@ export default function Index() {
             router.navigate(`/courses/${thread.courseId}/${thread.number}`)
           }
         >
-          <View className="w-2.5" style={{ backgroundColor: colour }} />
+          <View
+            className="w-2.5 shrink-0"
+            style={{ backgroundColor: colour }}
+          />
           <View
             className={
-              largerCards ? "flex-1 p-4 pl-3" : "flex-1 px-3 py-2 pl-2.5"
+              largerCards
+                ? "min-w-0 flex-1 p-4 pl-3"
+                : "min-w-0 flex-1 px-3 py-2 pl-2.5"
             }
           >
-            <View className="flex w-max flex-row justify-between">
+            <Text
+              className="font-display-bold dark:text-white"
+              numberOfLines={1}
+            >
+              {thread.title}
+            </Text>
+            <View className="flex-row items-center justify-between gap-x-2">
               <Text
-                className="font-display-bold max-h-30 w-100 truncate dark:text-white"
+                className="font-display min-w-0 flex-1 text-xs text-gray-600 dark:text-slate-300"
                 numberOfLines={1}
               >
-                {thread.title}
-              </Text>
-            </View>
-            <View className="flex flex-row items-center justify-between">
-              <Text className="font-display line-clamp-1 w-70 truncate text-xs text-gray-600 dark:text-slate-300">
                 {courseInfo?.code}
               </Text>
-              <View className="flex flex-row">
+              <View className="shrink-0 flex-row">
                 {thread.replyCount !== 0 && (
                   <View className="flex min-w-10 flex-row items-center">
                     <Text className="font-display pl-2 dark:text-white">
@@ -369,48 +383,67 @@ export default function Index() {
     );
   }
 
+  const coursesList = (
+    <FlatList
+      data={listData}
+      keyExtractor={(item) =>
+        item.kind === "course" ? item.course.id.toString() : "archived-header"
+      }
+      renderItem={renderListItem}
+      contentContainerStyle={{
+        paddingHorizontal: 8,
+        paddingVertical: 8,
+        gap: 6,
+      }}
+    />
+  );
+
+  const recentThreadsSection = (
+    <>
+      <Text
+        className={
+          isWide
+            ? "font-display-bold px-4 pt-3 pb-2 text-sm text-gray-600 dark:text-slate-100"
+            : "font-display-bold px-4 pb-1 text-sm text-gray-600 dark:text-slate-100"
+        }
+      >
+        Recent Threads
+      </Text>
+      {recentLoading && recentThreads.length === 0 ? (
+        <View className="flex gap-y-2 px-4">
+          {Array.from({ length: isWide ? 6 : 3 }).map((_, i) => (
+            <View
+              key={i}
+              className="h-20 rounded-2xl bg-gray-200 dark:bg-neutral-800"
+              style={{ opacity: Math.max(0.2, 1 - i * 0.15) }}
+            />
+          ))}
+        </View>
+      ) : (
+        <FlatList
+          data={recentThreads}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={renderRecentThreadItem}
+          contentContainerStyle={{ paddingHorizontal: 4, paddingBottom: 8 }}
+        />
+      )}
+    </>
+  );
+
+  if (isWide) {
+    return (
+      <View className="flex-1 flex-row dark:bg-black">
+        <View className="flex-3">{coursesList}</View>
+        <View className="w-px bg-gray-300 dark:bg-neutral-800" />
+        <View className="flex-2">{recentThreadsSection}</View>
+      </View>
+    );
+  }
+
   return (
     <View className="flex-1 dark:bg-black">
-      <View className="flex-5">
-        <FlatList
-          data={listData}
-          keyExtractor={(item) =>
-            item.kind === "course"
-              ? item.course.id.toString()
-              : "archived-header"
-          }
-          renderItem={renderListItem}
-          contentContainerStyle={{
-            paddingHorizontal: 8,
-            paddingVertical: 8,
-            gap: 6,
-          }}
-        />
-      </View>
-
-      <View className="flex-4">
-        <Text className="font-display-bold px-4 pb-1 text-sm text-gray-600 dark:text-slate-100">
-          Recent Messages
-        </Text>
-        {recentLoading && recentThreads.length === 0 ? (
-          <View className="flex gap-y-2 px-4">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <View
-                key={i}
-                className="h-20 rounded-2xl bg-gray-200"
-                style={{ opacity: 1 - i * 0.2 }}
-              />
-            ))}
-          </View>
-        ) : (
-          <FlatList
-            data={recentThreads}
-            keyExtractor={(item) => item.id.toString()}
-            renderItem={renderRecentThreadItem}
-            contentContainerStyle={{ paddingHorizontal: 4, paddingBottom: 8 }}
-          />
-        )}
-      </View>
+      <View className="flex-5">{coursesList}</View>
+      <View className="flex-4">{recentThreadsSection}</View>
     </View>
   );
 }
