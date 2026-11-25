@@ -120,6 +120,7 @@ test("renders blockquote with paragraph children", () => {
   const quoteView = tree.children[0];
   assert.equal(quoteView.type, "View");
   assert.match(quoteView.props.className, /border-l-4/);
+  assert.match(quoteView.props.className, /\bml-4\b/);
 });
 
 test("renders blockquote with direct inline children", () => {
@@ -174,4 +175,68 @@ test("renders callouts with edge icon and without type label text", () => {
     assert.equal(edgeView.type, "View");
     assert.equal(edgeView.children[0].type, expectedIcon);
   }
+});
+
+test("omits bare marker on list-item that only wraps a nested list", () => {
+  const { renderXmlNode } = loadRenderXml();
+  const listNode = {
+    type: "element",
+    tag: "list",
+    attrs: { style: "bullet" },
+    children: [
+      {
+        type: "element",
+        tag: "list-item",
+        attrs: {},
+        children: [
+          {
+            type: "element",
+            tag: "list",
+            attrs: { style: "bullet" },
+            children: [
+              {
+                type: "element",
+                tag: "list-item",
+                attrs: { value: "1" },
+                children: [
+                  {
+                    type: "element",
+                    tag: "paragraph",
+                    attrs: {},
+                    children: [{ type: "text", value: "Nested item" }],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+      {
+        type: "element",
+        tag: "list-item",
+        attrs: { value: "1" },
+        children: [
+          {
+            type: "element",
+            tag: "paragraph",
+            attrs: {},
+            children: [{ type: "text", value: "Top-level item" }],
+          },
+        ],
+      },
+    ],
+  };
+
+  let renderer;
+  act(() => {
+    renderer = create(renderXmlNode(listNode));
+  });
+
+  const tree = renderer.toJSON();
+  const wrapperItem = tree.children[0];
+  assert.equal(wrapperItem.type, "View");
+  // Only the nested list View should be rendered inside the wrapper list-item (no bare "•" Text)
+  assert.equal(wrapperItem.children.length, 1);
+  assert.equal(wrapperItem.children[0].type, "View");
+  assert.equal(collectText(tree), "•Nested item•Top-level item");
 });

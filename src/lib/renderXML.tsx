@@ -492,6 +492,16 @@ function unwrapWrapperList(node: XmlElementNode): XmlElementNode | null {
   return innerLists[0];
 }
 
+function isNestedListOnlyItem(item: XmlElementNode): boolean {
+  const nonEmptyChildren = item.children.filter(
+    (c) => c.type !== "text" || c.value.trim().length > 0,
+  );
+  return (
+    nonEmptyChildren.length > 0 &&
+    nonEmptyChildren.every((c) => c.type === "element" && c.tag === "list")
+  );
+}
+
 function renderListItem(
   item: XmlElementNode,
   keyPrefix: string,
@@ -555,9 +565,9 @@ function renderListItem(
     i++;
   }
 
-  // Fallback: No inline content to attach the marker to (e.g. only a nested list).
-  // Emit a bare marker so numbering stays consistent.
-  if (!markerPlaced) {
+  // Fallback: No inline content to attach the marker to.
+  // Skip the bare marker when the item only wraps a nested <list> (matches web).
+  if (!markerPlaced && !isNestedListOnlyItem(item)) {
     fragments.unshift(
       <Text
         key={`${keyPrefix}-marker`}
@@ -736,7 +746,9 @@ export function renderXmlNode(
                 child.type === "element" &&
                 (child.tag === "li" || child.tag === "list-item")
               ) {
-                itemIndex += 1;
+                if (!isNestedListOnlyItem(child)) {
+                  itemIndex += 1;
+                }
                 const marker = ordered ? `${itemIndex}.` : "•";
                 return renderListItem(
                   child,
@@ -798,7 +810,7 @@ export function renderXmlNode(
         return (
           <View
             key={keyPrefix}
-            className="my-2 rounded-r-lg border-l-4 border-slate-300 bg-slate-50/70 py-2 pr-3 pl-3 dark:border-slate-600 dark:bg-slate-800/50"
+            className="my-2 ml-4 rounded-r-lg border-l-4 border-slate-300 bg-slate-50/70 py-2 pr-3 pl-3 dark:border-slate-600 dark:bg-slate-800/50"
           >
             {hasBlockChildren ? (
               renderBlockChildren(node, keyPrefix, context)
