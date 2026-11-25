@@ -144,7 +144,7 @@ export function KeyProvider({ children }: { children: React.ReactNode }) {
         apiKey,
         setApiKey: handleSetApiKey,
         clearApiKey: handleClearApiKey,
-        isLoading: !fontsLoaded || !keyLoaded || !storageLoaded,
+        isLoading: (!fontsLoaded && !fontError) || !keyLoaded || !storageLoaded,
       }}
     >
       {children}
