@@ -41,9 +41,37 @@ export interface RenderXmlContext {
 
 export type TextSegment =
   | { kind: "text"; text: string }
-  | { kind: "thread-ref"; text: string; threadNumber: number };
+  | { kind: "thread-ref"; text: string; threadNumber: number }
+  | { kind: "email"; text: string; email: string };
 
 const THREAD_REF_RE = /(^|[^A-Za-z0-9_/#])#([1-9]\d*)(?![A-Za-z0-9_])/g;
+const EMAIL_RE =
+  /(^|[^A-Za-z0-9._%+-])([A-Za-z0-9](?:[A-Za-z0-9._%+-]*[A-Za-z0-9])?@(?:[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?\.)+[A-Za-z]{2,})(?![A-Za-z0-9_-])/g;
+
+export function splitEmails(text: string): TextSegment[] {
+  const segments: TextSegment[] = [];
+  let lastIndex = 0;
+
+  for (const match of text.matchAll(EMAIL_RE)) {
+    const fullIndex = match.index ?? 0;
+    const prefix = match[1];
+    const email = match[2];
+
+    const emailIndex = fullIndex + prefix.length;
+    if (emailIndex > lastIndex) {
+      segments.push({ kind: "text", text: text.slice(lastIndex, emailIndex) });
+    }
+
+    segments.push({ kind: "email", text: email, email });
+    lastIndex = emailIndex + email.length;
+  }
+
+  if (lastIndex < text.length) {
+    segments.push({ kind: "text", text: text.slice(lastIndex) });
+  }
+
+  return segments.length > 0 ? segments : [{ kind: "text", text }];
+}
 
 export function splitThreadRefs(
   text: string,
@@ -239,6 +267,9 @@ function extractRunsFromNode(node: XmlNode, marks: InlineMarks): InlineRun[] {
   }
 }
 
+const NO_SPACE_BEFORE_RE = /^[.,;:!?)\]}"'\u2019\u201D]/;
+const NO_SPACE_AFTER_RE = /(?:^|[\s([{])["']$|[([{\u2018\u201C]$/;
+
 function collectInlineRuns(
   nodes: XmlNode[],
   activeMarks: InlineMarks = {},
@@ -254,7 +285,9 @@ function collectInlineRuns(
         last.kind === "text" &&
         first.kind === "text" &&
         !/\s$/.test(last.text) &&
-        !/^\s/.test(first.text)
+        !/^\s/.test(first.text) &&
+        !NO_SPACE_BEFORE_RE.test(first.text) &&
+        !NO_SPACE_AFTER_RE.test(last.text)
       ) {
         runs.push({ kind: "text", text: " ", marks: {} });
       }
@@ -383,49 +416,91 @@ function renderInlineRuns(
     if (run.marks.heading) classNames.push(headingSizeClass(run.marks.heading));
 
     const className = classNames.join(" ");
+    const textStyle = run.marks.underline
+      ? { textDecorationLine: "underline" as const }
+      : undefined;
 
     if (run.marks.href) {
       return (
-        <LinkText key={k} href={run.marks.href}>
+        <LinkText
+          key={k}
+          href={run.marks.href}
+          className={className || undefined}
+        >
           {run.text}
         </LinkText>
       );
     }
 
-    if (
-      !run.marks.code &&
-      context?.courseId !== undefined &&
-      context?.maxThreadNumber !== undefined &&
-      run.text.includes("#")
-    ) {
-      const segments = splitThreadRefs(run.text, context.maxThreadNumber);
-      if (segments.some((s) => s.kind === "thread-ref")) {
-        const courseId = context.courseId;
+    if (!run.marks.code) {
+      let segments: TextSegment[] = [{ kind: "text", text: run.text }];
+
+      if (run.text.includes("@")) {
+        segments = segments.flatMap((seg) =>
+          seg.kind === "text" ? splitEmails(seg.text) : [seg],
+        );
+      }
+
+      if (
+        context?.courseId !== undefined &&
+        context?.maxThreadNumber !== undefined &&
+        run.text.includes("#")
+      ) {
+        const maxThreadNumber = context.maxThreadNumber;
+        segments = segments.flatMap((seg) =>
+          seg.kind === "text"
+            ? splitThreadRefs(seg.text, maxThreadNumber)
+            : [seg],
+        );
+      }
+
+      if (segments.some((s) => s.kind !== "text")) {
         return (
           <React.Fragment key={k}>
-            {segments.map((seg, segIdx) =>
-              seg.kind === "thread-ref" ? (
-                <ThreadRefLink
-                  key={`${k}-ref-${segIdx}`}
-                  courseId={courseId}
-                  threadNumber={seg.threadNumber}
+            {segments.map((seg, segIdx) => {
+              if (seg.kind === "email") {
+                return (
+                  <LinkText
+                    key={`${k}-email-${segIdx}`}
+                    href={`mailto:${seg.email}`}
+                    className={className || undefined}
+                  >
+                    {seg.text}
+                  </LinkText>
+                );
+              }
+              if (
+                seg.kind === "thread-ref" &&
+                context?.courseId !== undefined
+              ) {
+                return (
+                  <ThreadRefLink
+                    key={`${k}-ref-${segIdx}`}
+                    courseId={context.courseId}
+                    threadNumber={seg.threadNumber}
+                    className={className}
+                  >
+                    {seg.text}
+                  </ThreadRefLink>
+                );
+              }
+              return (
+                <Text
+                  key={`${k}-txt-${segIdx}`}
                   className={className}
+                  style={textStyle}
                 >
                   {seg.text}
-                </ThreadRefLink>
-              ) : (
-                <Text key={`${k}-txt-${segIdx}`} className={className}>
-                  {seg.text}
                 </Text>
-              ),
-            )}
+              );
+            })}
           </React.Fragment>
         );
       }
     }
 
     return (
-      <Text key={k} className={className}>
+      <Text key={k} className={className} style={textStyle}>
         {run.text}
       </Text>
     );
@@ -676,6 +751,17 @@ export function renderXmlNode(
       case "i":
         return (
           <Text key={keyPrefix} className="font-display italic">
+            {children()}
+          </Text>
+        );
+      case "underline":
+      case "u":
+        return (
+          <Text
+            key={keyPrefix}
+            className="underline"
+            style={{ textDecorationLine: "underline" }}
+          >
             {children()}
           </Text>
         );

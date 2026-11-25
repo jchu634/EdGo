@@ -240,3 +240,302 @@ test("omits bare marker on list-item that only wraps a nested list", () => {
   assert.equal(wrapperItem.children[0].type, "View");
   assert.equal(collectText(tree), "•Nested item•Top-level item");
 });
+
+function findNodes(node, predicate, out = []) {
+  if (!node || typeof node !== "object") return out;
+  if (Array.isArray(node)) {
+    for (const item of node) findNodes(item, predicate, out);
+    return out;
+  }
+  if (predicate(node)) out.push(node);
+  if ("children" in node) findNodes(node.children, predicate, out);
+  return out;
+}
+
+test("auto-links plaintext emails in paragraphs without breaking explicit mailto links", () => {
+  const { renderXmlNode, splitEmails } = loadRenderXml();
+
+  assert.deepEqual(
+    structuredClone(
+      splitEmails(
+        "email Alice (alice.smith@example.edu) and Bob (bob.jones@example.edu) immediately.",
+      ),
+    ),
+    [
+      { kind: "text", text: "email Alice (" },
+      {
+        kind: "email",
+        text: "alice.smith@example.edu",
+        email: "alice.smith@example.edu",
+      },
+      { kind: "text", text: ") and Bob (" },
+      {
+        kind: "email",
+        text: "bob.jones@example.edu",
+        email: "bob.jones@example.edu",
+      },
+      { kind: "text", text: ") immediately." },
+    ],
+  );
+
+  assert.deepEqual(
+    structuredClone(splitEmails("Contact user@example.com.au.")),
+    [
+      { kind: "text", text: "Contact " },
+      {
+        kind: "email",
+        text: "user@example.com.au",
+        email: "user@example.com.au",
+      },
+      { kind: "text", text: "." },
+    ],
+  );
+
+  assert.deepEqual(
+    structuredClone(
+      splitEmails(
+        "Reach support@example.org, hello@example.com, or team@example.co.uk and ops@sub.example.co.nz.",
+      ),
+    ),
+    [
+      { kind: "text", text: "Reach " },
+      {
+        kind: "email",
+        text: "support@example.org",
+        email: "support@example.org",
+      },
+      { kind: "text", text: ", " },
+      {
+        kind: "email",
+        text: "hello@example.com",
+        email: "hello@example.com",
+      },
+      { kind: "text", text: ", or " },
+      {
+        kind: "email",
+        text: "team@example.co.uk",
+        email: "team@example.co.uk",
+      },
+      { kind: "text", text: " and " },
+      {
+        kind: "email",
+        text: "ops@sub.example.co.nz",
+        email: "ops@sub.example.co.nz",
+      },
+      { kind: "text", text: "." },
+    ],
+  );
+
+  const doc = {
+    type: "document",
+    tag: "document",
+    attrs: {},
+    children: [
+      {
+        type: "element",
+        tag: "paragraph",
+        attrs: {},
+        children: [
+          { type: "text", value: "email Alice (alice.smith@example.edu) and" },
+          {
+            type: "element",
+            tag: "link",
+            attrs: { href: "mailto:bob.jones@example.edu" },
+            children: [{ type: "text", value: "bob.jones@example.edu" }],
+          },
+          { type: "text", value: "." },
+        ],
+      },
+    ],
+  };
+
+  let renderer;
+  act(() => {
+    renderer = create(renderXmlNode(doc));
+  });
+
+  const tree = renderer.toJSON();
+  const links = findNodes(tree, (n) => n.type === "LinkText");
+  assert.equal(links.length, 2);
+  assert.equal(links[0].props.href, "mailto:alice.smith@example.edu");
+  assert.equal(collectText(links[0]), "alice.smith@example.edu");
+  assert.equal(links[1].props.href, "mailto:bob.jones@example.edu");
+  assert.equal(collectText(links[1]), "bob.jones@example.edu");
+  assert.equal(
+    collectText(tree),
+    "email Alice (alice.smith@example.edu) and bob.jones@example.edu.",
+  );
+});
+
+test("renders underline and bold together in paragraphs and list-items", () => {
+  const { renderXmlNode } = loadRenderXml();
+  const doc = {
+    type: "document",
+    tag: "document",
+    attrs: {},
+    children: [
+      {
+        type: "element",
+        tag: "paragraph",
+        attrs: {},
+        children: [
+          { type: "text", value: "The workshop starts" },
+          {
+            type: "element",
+            tag: "underline",
+            attrs: {},
+            children: [
+              {
+                type: "element",
+                tag: "bold",
+                attrs: {},
+                children: [{ type: "text", value: "next Monday" }],
+              },
+            ],
+          },
+          { type: "text", value: "- bring a laptop" },
+        ],
+      },
+      {
+        type: "element",
+        tag: "list",
+        attrs: { style: "bullet" },
+        children: [
+          {
+            type: "element",
+            tag: "list-item",
+            attrs: { value: "1" },
+            children: [
+              {
+                type: "element",
+                tag: "paragraph",
+                attrs: {},
+                children: [
+                  { type: "text", value: "Participants" },
+                  {
+                    type: "element",
+                    tag: "underline",
+                    attrs: {},
+                    children: [
+                      {
+                        type: "element",
+                        tag: "bold",
+                        attrs: {},
+                        children: [{ type: "text", value: "should" }],
+                      },
+                    ],
+                  },
+                  { type: "text", value: "register in advance." },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  };
+
+  let renderer;
+  act(() => {
+    renderer = create(renderXmlNode(doc));
+  });
+
+  const tree = renderer.toJSON();
+  const underlinedTexts = findNodes(
+    tree,
+    (n) =>
+      n.type === "Text" &&
+      typeof n.props?.className === "string" &&
+      n.props.className.includes("underline"),
+  );
+  assert.equal(underlinedTexts.length, 2);
+
+  for (const node of underlinedTexts) {
+    assert.match(node.props.className, /\bfont-display-bold\b/);
+    assert.match(node.props.className, /\bunderline\b/);
+    assert.equal(node.props.style?.textDecorationLine, "underline");
+  }
+  assert.equal(collectText(underlinedTexts[0]), "next Monday");
+  assert.equal(collectText(underlinedTexts[1]), "should");
+});
+
+test("avoids spurious spaces before closing punctuation and after opening punctuation", () => {
+  const { renderXmlNode } = loadRenderXml();
+  // Text nodes are trimmed to match react-native-turboxml output.
+  const doc = {
+    type: "document",
+    tag: "document",
+    attrs: {},
+    children: [
+      {
+        type: "element",
+        tag: "paragraph",
+        attrs: {},
+        children: [
+          { type: "text", value: "When you spot a" },
+          {
+            type: "element",
+            tag: "bold",
+            attrs: {},
+            children: [{ type: "text", value: "minor typo" }],
+          },
+          { type: "text", value: ", open the" },
+          {
+            type: "element",
+            tag: "link",
+            attrs: { href: "https://example.com/form" },
+            children: [{ type: "text", value: "feedback page" }],
+          },
+          { type: "text", value: "before" },
+          {
+            type: "element",
+            tag: "bold",
+            attrs: {},
+            children: [{ type: "text", value: "noon on Tuesday" }],
+          },
+          { type: "text", value: ". Updates post daily." },
+        ],
+      },
+      {
+        type: "element",
+        tag: "paragraph",
+        attrs: {},
+        children: [
+          { type: "text", value: 'Label it "' },
+          {
+            type: "element",
+            tag: "italic",
+            attrs: {},
+            children: [{ type: "text", value: "draft" }],
+          },
+          { type: "text", value: '" (see:' },
+          {
+            type: "element",
+            tag: "bold",
+            attrs: {},
+            children: [{ type: "text", value: "help desk" }],
+          },
+          { type: "text", value: "at" },
+          {
+            type: "element",
+            tag: "link",
+            attrs: { href: "mailto:help@example.edu" },
+            children: [{ type: "text", value: "help@example.edu" }],
+          },
+          { type: "text", value: ")." },
+        ],
+      },
+    ],
+  };
+
+  let renderer;
+  act(() => {
+    renderer = create(renderXmlNode(doc));
+  });
+
+  const tree = renderer.toJSON();
+  assert.equal(
+    collectText(tree),
+    'When you spot a minor typo, open the feedback page before noon on Tuesday. Updates post daily.\n\nLabel it "draft" (see: help desk at help@example.edu).',
+  );
+});

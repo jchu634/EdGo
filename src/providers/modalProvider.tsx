@@ -357,7 +357,11 @@ export function ModalProvider({ children }: { children: React.ReactNode }) {
 
   async function openExternalUrl(url: string) {
     const trimmed = url.trim().toLowerCase();
-    if (!trimmed.startsWith("http://") && !trimmed.startsWith("https://"))
+    if (
+      !trimmed.startsWith("http://") &&
+      !trimmed.startsWith("https://") &&
+      !trimmed.startsWith("mailto:")
+    )
       return;
     try {
       const supported = await Linking.canOpenURL(url);
