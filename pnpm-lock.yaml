@@ -239,6 +239,9 @@ importers:
       expo-background-task:
         specifier: ~58.0.13
         version: 58.0.13(expo@58.0.26)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.86.3(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.2)(react@19.3.0)(supports-color@8.1.1))
+      expo-build-properties:
+        specifier: ~58.0.12
+        version: 58.0.12(expo@58.0.26)
       expo-clipboard:
         specifier: ~58.0.4
         version: 58.0.4(expo@58.0.26)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.86.3(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.2)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0)
@@ -2277,6 +2280,11 @@ packages:
 
   expo-background-task@58.0.13:
     resolution: {integrity: sha512-1AbMsRPgD9eHgvWWhNCdPwR7u4J2c1pCZDWjZ0NiNVkbaVof5Jqaqk8I6vWN+Z9taFD+C9ACE61PsK3NIJqSzg==}
+    peerDependencies:
+      expo: '*'
+
+  expo-build-properties@58.0.12:
+    resolution: {integrity: sha512-Wrs1X1iz0kigrBBDs3qILxvXmANccvbsjpR937KqX0Qq7ON6ISk2uJyfz7Tb7/GFhDuJ6MAfW0jR+oryYdOhcg==}
     peerDependencies:
       expo: '*'
 
@@ -6175,6 +6183,13 @@ snapshots:
       expo-task-manager: 58.0.14(expo@58.0.26)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.86.3(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.2)(react@19.3.0)(supports-color@8.1.1))
     transitivePeerDependencies:
       - react-native
+
+  expo-build-properties@58.0.12(expo@58.0.26):
+    dependencies:
+      '@expo/schema-utils': 58.0.3
+      expo: 58.0.26(5af09bec524112e5b47bf2c64195a7af)
+      resolve-from: 5.0.0
+      semver: 7.8.1
 
   expo-clipboard@58.0.4(expo@58.0.26)(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.86.3(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.2)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0):
     dependencies:
