@@ -42,11 +42,103 @@ export interface RenderXmlContext {
 export type TextSegment =
   | { kind: "text"; text: string }
   | { kind: "thread-ref"; text: string; threadNumber: number }
-  | { kind: "email"; text: string; email: string };
+  | { kind: "email"; text: string; email: string }
+  | { kind: "link"; text: string; url: string };
 
 const THREAD_REF_RE = /(^|[^A-Za-z0-9_/#])#([1-9]\d*)(?![A-Za-z0-9_])/g;
 const EMAIL_RE =
   /(^|[\s([{<"\u201C,;:])([A-Za-z0-9](?:[A-Za-z0-9._%+-]*[A-Za-z0-9])?@(?:[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?\.)+[A-Za-z]{2,})(?![A-Za-z0-9_-])/g;
+const LINK_RE =
+  /(^|[\s([{<"'`\u201C\u2018,;:]|[^\x00-\x7F])(https?:\/\/(?:(?!,https?:\/\/)[^\s<>"\u201C\u201D\u200B-\u200D\uFEFF\u00AD\u3000-\u303F\uFF01-\uFF0F\uFF1A-\uFF20\uFF3B-\uFF40\uFF5B-\uFF65])+)/gi;
+
+function isValidHttpUrl(candidate: string): boolean {
+  const match = /^https?:\/\/([^/?#]+)/i.exec(candidate);
+  if (!match) {
+    return false;
+  }
+  const authority = match[1];
+  const atIndex = authority.lastIndexOf("@");
+  const hostPort = atIndex >= 0 ? authority.slice(atIndex + 1) : authority;
+  if (!hostPort) {
+    return false;
+  }
+  if (hostPort.startsWith("[")) {
+    return /^\[[0-9a-fA-F:.]+\](?::\d+)?$/.test(hostPort);
+  }
+  const colonIndex = hostPort.lastIndexOf(":");
+  const host = colonIndex >= 0 ? hostPort.slice(0, colonIndex) : hostPort;
+  const port = colonIndex >= 0 ? hostPort.slice(colonIndex + 1) : "";
+  if (colonIndex >= 0 && !/^\d+$/.test(port)) {
+    return false;
+  }
+  if (
+    !host ||
+    host.startsWith(".") ||
+    host.endsWith(".") ||
+    host.includes("..")
+  ) {
+    return false;
+  }
+  return !/[\s/?#\\:@[\]{}<>"'`]/.test(host);
+}
+
+function trimTrailingUrlPunctuation(raw: string): string {
+  let url = raw;
+  while (url.length > 0) {
+    const last = url[url.length - 1];
+    if (
+      ".,;:!?'\"\u2019\u3002\uFF0C\u3001\u300D\u300F\u3011\u300B\u00BB\u2026\uFF09".includes(
+        last,
+      )
+    ) {
+      url = url.slice(0, -1);
+      continue;
+    }
+    if (last === ")" || last === "]" || last === "}") {
+      const open = last === ")" ? "(" : last === "]" ? "[" : "{";
+      let opens = 0;
+      let closes = 0;
+      for (let i = 0; i < url.length; i++) {
+        if (url[i] === open) opens++;
+        else if (url[i] === last) closes++;
+      }
+      if (closes > opens) {
+        url = url.slice(0, -1);
+        continue;
+      }
+    }
+    break;
+  }
+  return url;
+}
+
+export function splitLinks(text: string): TextSegment[] {
+  const segments: TextSegment[] = [];
+  let lastIndex = 0;
+
+  for (const match of text.matchAll(LINK_RE)) {
+    const fullIndex = match.index ?? 0;
+    const prefix = match[1];
+    const url = trimTrailingUrlPunctuation(match[2]);
+    if (!isValidHttpUrl(url)) {
+      continue;
+    }
+
+    const urlIndex = fullIndex + prefix.length;
+    if (urlIndex > lastIndex) {
+      segments.push({ kind: "text", text: text.slice(lastIndex, urlIndex) });
+    }
+
+    segments.push({ kind: "link", text: url, url });
+    lastIndex = urlIndex + url.length;
+  }
+
+  if (lastIndex < text.length) {
+    segments.push({ kind: "text", text: text.slice(lastIndex) });
+  }
+
+  return segments.length > 0 ? segments : [{ kind: "text", text }];
+}
 
 export function splitEmails(text: string): TextSegment[] {
   const segments: TextSegment[] = [];
@@ -435,6 +527,12 @@ function renderInlineRuns(
     if (!run.marks.code) {
       let segments: TextSegment[] = [{ kind: "text", text: run.text }];
 
+      if (run.text.includes("://")) {
+        segments = segments.flatMap((seg) =>
+          seg.kind === "text" ? splitLinks(seg.text) : [seg],
+        );
+      }
+
       if (run.text.includes("@")) {
         segments = segments.flatMap((seg) =>
           seg.kind === "text" ? splitEmails(seg.text) : [seg],
@@ -458,6 +556,17 @@ function renderInlineRuns(
         return (
           <React.Fragment key={k}>
             {segments.map((seg, segIdx) => {
+              if (seg.kind === "link") {
+                return (
+                  <LinkText
+                    key={`${k}-link-${segIdx}`}
+                    href={seg.url}
+                    className={className || undefined}
+                  >
+                    {seg.text}
+                  </LinkText>
+                );
+              }
               if (seg.kind === "email") {
                 return (
                   <LinkText

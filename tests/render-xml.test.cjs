@@ -569,3 +569,186 @@ test("does not partially auto-link emails preceded by non-delimiter characters",
     ],
   );
 });
+
+test("auto-links plaintext http and https URLs without breaking explicit links or punctuation", () => {
+  const { renderXmlNode, splitLinks } = loadRenderXml();
+
+  assert.deepEqual(
+    JSON.parse(
+      JSON.stringify(
+        splitLinks(
+          "Visit https://example.com/docs and (http://localhost:3000/test), or see https://en.wikipedia.org/wiki/Foo_(bar)!",
+        ),
+      ),
+    ),
+    [
+      { kind: "text", text: "Visit " },
+      {
+        kind: "link",
+        text: "https://example.com/docs",
+        url: "https://example.com/docs",
+      },
+      { kind: "text", text: " and (" },
+      {
+        kind: "link",
+        text: "http://localhost:3000/test",
+        url: "http://localhost:3000/test",
+      },
+      { kind: "text", text: "), or see " },
+      {
+        kind: "link",
+        text: "https://en.wikipedia.org/wiki/Foo_(bar)",
+        url: "https://en.wikipedia.org/wiki/Foo_(bar)",
+      },
+      { kind: "text", text: "!" },
+    ],
+  );
+
+  assert.deepEqual(
+    JSON.parse(
+      JSON.stringify(
+        splitLinks(
+          "Ignore ftp://example.com, ssh://git@github.com, foohttps://example.com, and https://.",
+        ),
+      ),
+    ),
+    [
+      {
+        kind: "text",
+        text: "Ignore ftp://example.com, ssh://git@github.com, foohttps://example.com, and https://.",
+      },
+    ],
+  );
+
+  const doc = {
+    type: "document",
+    tag: "document",
+    attrs: {},
+    children: [
+      {
+        type: "element",
+        tag: "paragraph",
+        attrs: {},
+        children: [
+          {
+            type: "text",
+            value: "See https://example.com/path/@user#12 and",
+          },
+          {
+            type: "element",
+            tag: "link",
+            attrs: { href: "https://explicit.example.com" },
+            children: [{ type: "text", value: "explicit link" }],
+          },
+          { type: "text", value: "." },
+        ],
+      },
+    ],
+  };
+
+  let renderer;
+  act(() => {
+    renderer = create(
+      renderXmlNode(doc, "doc-0", { courseId: 1, maxThreadNumber: 100 }),
+    );
+  });
+
+  const tree = renderer.toJSON();
+  const links = findNodes(tree, (n) => n.type === "LinkText");
+  assert.equal(links.length, 2);
+  assert.equal(links[0].props.href, "https://example.com/path/@user#12");
+  assert.equal(collectText(links[0]), "https://example.com/path/@user#12");
+  assert.equal(links[1].props.href, "https://explicit.example.com");
+  assert.equal(collectText(links[1]), "explicit link");
+  assert.equal(
+    collectText(tree),
+    "See https://example.com/path/@user#12 and explicit link.",
+  );
+});
+
+test("handles link autodetection edge cases: host validation, quotes, CJK, zero-width chars, and comma-separated URLs", () => {
+  const { splitLinks } = loadRenderXml();
+
+  // Rejects malformed / hostless URLs
+  assert.deepEqual(
+    JSON.parse(
+      JSON.stringify(
+        splitLinks(
+          "Bad: https://?q https:///path/x https://:8080/x https://.a/x https://user@/x",
+        ),
+      ),
+    ),
+    [
+      {
+        kind: "text",
+        text: "Bad: https://?q https:///path/x https://:8080/x https://.a/x https://user@/x",
+      },
+    ],
+  );
+
+  // Single quotes and curly single quotes
+  assert.deepEqual(
+    JSON.parse(
+      JSON.stringify(
+        splitLinks("Try 'https://example.com/a' or \u2018HTTPS://EXAMPLE.COM/b\u2019."),
+      ),
+    ),
+    [
+      { kind: "text", text: "Try '" },
+      { kind: "link", text: "https://example.com/a", url: "https://example.com/a" },
+      { kind: "text", text: "' or \u2018" },
+      { kind: "link", text: "HTTPS://EXAMPLE.COM/b", url: "HTTPS://EXAMPLE.COM/b" },
+      { kind: "text", text: "\u2019." },
+    ],
+  );
+
+  // CJK adjacency and non-ASCII trailing punctuation
+  assert.deepEqual(
+    JSON.parse(
+      JSON.stringify(
+        splitLinks("见https://example.com。和「https://example.org/x」…"),
+      ),
+    ),
+    [
+      { kind: "text", text: "见" },
+      { kind: "link", text: "https://example.com", url: "https://example.com" },
+      { kind: "text", text: "。和「" },
+      { kind: "link", text: "https://example.org/x", url: "https://example.org/x" },
+      { kind: "text", text: "」…" },
+    ],
+  );
+
+  // Zero-width characters are not swallowed into the URL
+  assert.deepEqual(
+    JSON.parse(
+      JSON.stringify(splitLinks("Link: https://example.com\u200Bnext")),
+    ),
+    [
+      { kind: "text", text: "Link: " },
+      { kind: "link", text: "https://example.com", url: "https://example.com" },
+      { kind: "text", text: "\u200Bnext" },
+    ],
+  );
+
+  // Adjacent comma-separated URLs split cleanly while preserving commas inside a single URL
+  assert.deepEqual(
+    JSON.parse(
+      JSON.stringify(
+        splitLinks(
+          "https://a.com,https://b.com and https://maps.example.com/@37.7,-122.4",
+        ),
+      ),
+    ),
+    [
+      { kind: "link", text: "https://a.com", url: "https://a.com" },
+      { kind: "text", text: "," },
+      { kind: "link", text: "https://b.com", url: "https://b.com" },
+      { kind: "text", text: " and " },
+      {
+        kind: "link",
+        text: "https://maps.example.com/@37.7,-122.4",
+        url: "https://maps.example.com/@37.7,-122.4",
+      },
+    ],
+  );
+});
