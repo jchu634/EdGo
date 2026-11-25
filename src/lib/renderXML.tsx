@@ -1,4 +1,10 @@
 import { useRouter } from "expo-router";
+import {
+  CheckCircleIcon,
+  InfoIcon,
+  WarningIcon,
+  XCircleIcon,
+} from "phosphor-react-native";
 import { RaTeXView } from "ratex-react-native";
 import React from "react";
 import { Text, View } from "react-native";
@@ -783,29 +789,35 @@ export function renderXmlNode(
       }
       case "callout": {
         let containerClass: string;
+        let edgeClass: string;
         let textClass: string;
+        let IconComponent: typeof InfoIcon;
 
         switch (node.attrs.type) {
           case "success":
-            containerClass =
-              "border-emerald-600 bg-emerald-50 dark:border-emerald-400 dark:bg-emerald-950";
+            containerClass = "bg-emerald-50 dark:bg-emerald-950";
+            edgeClass = "bg-emerald-600 dark:bg-emerald-500";
             textClass = "text-emerald-950 dark:text-emerald-50";
+            IconComponent = CheckCircleIcon;
             break;
           case "warning":
-            containerClass =
-              "border-amber-600 bg-amber-50 dark:border-amber-400 dark:bg-amber-950";
+            containerClass = "bg-amber-50 dark:bg-amber-950";
+            edgeClass = "bg-amber-600 dark:bg-amber-500";
             textClass = "text-amber-950 dark:text-amber-50";
+            IconComponent = WarningIcon;
             break;
           case "error":
-            containerClass =
-              "border-red-600 bg-red-50 dark:border-red-400 dark:bg-red-950";
+            containerClass = "bg-red-50 dark:bg-red-950";
+            edgeClass = "bg-red-600 dark:bg-red-500";
             textClass = "text-red-950 dark:text-red-50";
+            IconComponent = XCircleIcon;
             break;
           case "info":
           default:
-            containerClass =
-              "border-blue-600 bg-blue-50 dark:border-blue-400 dark:bg-blue-950";
+            containerClass = "bg-blue-50 dark:bg-blue-950";
+            edgeClass = "bg-blue-600 dark:bg-blue-500";
             textClass = "text-blue-950 dark:text-blue-50";
+            IconComponent = InfoIcon;
         }
 
         const runs = collectInlineRuns(node.children);
@@ -815,14 +827,16 @@ export function renderXmlNode(
             key={keyPrefix}
             className={`my-2 rounded-lg border-l-4 p-3 ${containerClass}`}
           >
-            <View>
-              <Text className={`font-display-bold-italic ${textClass}`}>
-                {node.attrs.type.toUpperCase()}
+            <View
+              className={`items-center justify-center px-2 py-3 ${edgeClass}`}
+            >
+              <IconComponent size={18} color="#ffffff" weight="bold" />
+            </View>
+            <View className="flex-1 p-3">
+              <Text className={`font-display ${textClass}`} selectable>
+                {renderInlineRuns(runs, keyPrefix, context)}
               </Text>
             </View>
-            <Text className={`font-display ${textClass}`} selectable>
-              {renderInlineRuns(runs, keyPrefix, context)}
-            </Text>
           </View>
         );
       }
