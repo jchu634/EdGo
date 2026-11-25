@@ -204,25 +204,39 @@ export default function Index() {
       (course): CourseListItem => ({ kind: "course", course }),
     );
     if (archived.length > 0) {
-      items.push({ kind: "archivedHeader" });
-      items.push(
-        ...archived.map(
-          (course): CourseListItem => ({ kind: "course", course }),
-        ),
-      );
+      items.push({ kind: "archivedHeader", count: archived.length });
+      if (!archivedCollapsed) {
+        items.push(
+          ...archived.map(
+            (course): CourseListItem => ({ kind: "course", course }),
+          ),
+        );
+      }
     }
     return items;
-  }, [courses]);
+  }, [courses, archivedCollapsed]);
 
   const renderListItem = useCallback(
     ({ item }: { item: CourseListItem }) => {
       if (item.kind === "archivedHeader") {
+        const iconColor = theme === "dark" ? "#f1f5f9" : "#4b5563";
         return (
-          <View className="flex-1 flex-row items-center pt-3">
-            <Text className="font-display-bold px-4 pb-1 text-sm text-gray-600 dark:text-slate-100">
-              Archived
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`Archived courses (${item.count})`}
+            accessibilityState={{ expanded: !archivedCollapsed }}
+            onPress={() => setArchivedCollapsed(!archivedCollapsed)}
+            className="flex-row items-center gap-x-1.5 px-3 pt-3 pb-1"
+          >
+            {archivedCollapsed ? (
+              <CaretRightIcon size={14} weight="bold" color={iconColor} />
+            ) : (
+              <CaretDownIcon size={14} weight="bold" color={iconColor} />
+            )}
+            <Text className="font-display-bold text-sm text-gray-600 dark:text-slate-100">
+              Archived ({item.count})
             </Text>
-          </View>
+          </Pressable>
         );
       }
 
