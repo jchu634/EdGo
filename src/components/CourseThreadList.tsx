@@ -145,8 +145,8 @@ export default function CourseThreadList({
       const colour = categoryColourMap.get(item.category);
       const cardClass = (
         item.isSeen
-          ? "mx-2 w-56 rounded-2xl border-l bg-gray-200 p-3 pl-2.5 dark:bg-neutral-700"
-          : "mx-2 w-56 rounded-2xl border-l bg-gray-300 p-3 pl-2.5 dark:bg-neutral-800"
+          ? "mx-2 w-56 flex-row overflow-hidden rounded-l-sm rounded-r-2xl bg-gray-200 dark:bg-neutral-700"
+          : "mx-2 w-56 flex-row overflow-hidden rounded-l-sm rounded-r-2xl bg-gray-300 dark:bg-neutral-800"
       ).concat(item.isHidden ? " opacity-60" : "");
       return (
         <Pressable
