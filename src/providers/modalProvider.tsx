@@ -1,33 +1,27 @@
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  useRef,
-} from "react";
-import {
-  View,
-  Text,
-  Pressable,
-  Modal,
-  TextInput,
-  FlatList,
-  useWindowDimensions,
-  ActivityIndicator,
-} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { and, asc, desc, eq, sql } from "drizzle-orm";
+import { useLiveQuery } from "drizzle-orm/expo-sqlite/async";
+import { Effect, Fiber } from "effect";
 import * as Clipboard from "expo-clipboard";
 import * as Linking from "expo-linking";
-import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { eq, and, desc, asc, sql } from "drizzle-orm";
-import { useLiveQuery } from "drizzle-orm/expo-sqlite";
-import { Effect, Fiber } from "effect";
-
-import { useDb } from "@/src/providers/dbProvider";
-import { threadsTable, type ThreadUser } from "@/src/db/schema";
+import type React from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
+import {
+  ActivityIndicator,
+  FlatList,
+  Modal,
+  Pressable,
+  Text,
+  TextInput,
+  useWindowDimensions,
+  View,
+} from "react-native";
+import ImageViewer, { type ViewedImage } from "@/src/components/ImageViewer";
+import { type ThreadUser, threadsTable } from "@/src/db/schema";
 import { searchAndSyncThreads } from "@/src/lib/threads";
 import { escapeLike } from "@/src/lib/utils";
-import ImageViewer, { type ViewedImage } from "@/src/components/ImageViewer";
+import { useDb } from "@/src/providers/dbProvider";
 
 interface LinkTextContextValue {
   openLink: (url: string) => void;
@@ -363,9 +357,17 @@ export function ModalProvider({ children }: { children: React.ReactNode }) {
 
   async function openExternalUrl(url: string) {
     const trimmed = url.trim().toLowerCase();
-    if (!trimmed.startsWith("http://") && !trimmed.startsWith("https://"))
+    if (
+      !trimmed.startsWith("http://") &&
+      !trimmed.startsWith("https://") &&
+      !trimmed.startsWith("mailto:")
+    )
       return;
     try {
+      if (trimmed.startsWith("mailto:")) {
+        await Linking.openURL(url);
+        return;
+      }
       const supported = await Linking.canOpenURL(url);
       if (supported) {
         await Linking.openURL(url);

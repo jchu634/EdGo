@@ -1,7 +1,7 @@
 import * as Notifications from "expo-notifications";
 import {
-  getNotificationSettings,
   getLastNotifiedTimestamp,
+  getNotificationSettings,
   setLastNotifiedTimestamp,
 } from "@/src/lib/storage";
 

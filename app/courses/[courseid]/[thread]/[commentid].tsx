@@ -1,14 +1,15 @@
-import { View, Text, ScrollView, ActivityIndicator } from "react-native";
 import { useLocalSearchParams } from "expo-router";
-import { useDb } from "@/src/providers/dbProvider";
+import { ActivityIndicator, ScrollView, Text, View } from "react-native";
+import {
+  findCommentById,
+  renderComment,
+} from "@/src/components/ThreadComments";
+import ThreadFullscreenButton from "@/src/components/ThreadFullscreenButton";
+import { useMaxThreadNumber } from "@/src/hooks/useMaxThreadNumber";
 import { useThreadDetail } from "@/src/hooks/useThreadDetail";
 import { useThreadVotes } from "@/src/hooks/useThreadVotes";
 import { useCourseLayout } from "@/src/providers/courseLayoutProvider";
-import ThreadFullscreenButton from "@/src/components/ThreadFullscreenButton";
-import {
-  renderComment,
-  findCommentById,
-} from "@/src/components/ThreadComments";
+import { useDb } from "@/src/providers/dbProvider";
 
 import "@/global.css";
 
@@ -21,6 +22,7 @@ export default function CommentThreadPage() {
     Array.isArray(commentid) ? commentid[0] : commentid,
   );
   const db = useDb();
+  const maxThreadNumber = useMaxThreadNumber(courseIdNum, threadNumber);
 
   const {
     thread: t,
@@ -83,6 +85,7 @@ export default function CommentThreadPage() {
           commentVotes,
           commentVoteCounts,
           toggleCommentVote,
+          maxThreadNumber,
         )}
       </View>
     </ScrollView>

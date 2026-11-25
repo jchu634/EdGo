@@ -1,13 +1,19 @@
-import { useEffect, useState } from "react";
 import { desc, eq, sql } from "drizzle-orm";
-import { useLiveQuery } from "drizzle-orm/expo-sqlite";
+import { useLiveQuery } from "drizzle-orm/expo-sqlite/async";
 import { Effect } from "effect";
+import { useEffect, useState } from "react";
 import { threadsTable } from "@/src/db/schema";
-import { useDb } from "@/src/providers/dbProvider";
 import { fetchThreadsFromApi, syncThreadsToDb } from "@/src/lib/threads";
+import { useDb } from "@/src/providers/dbProvider";
 
-export function useRecentThreads(courses: { id: number }[] | undefined) {
-  console.debug("[useRecentThreads] called", { courseCount: courses?.length });
+export function useRecentThreads(
+  courses: { id: number }[] | undefined,
+  limit = 5,
+) {
+  console.debug("[useRecentThreads] called", {
+    courseCount: courses?.length,
+    limit,
+  });
   const db = useDb();
   const [loading, setLoading] = useState(false);
 
@@ -21,11 +27,12 @@ export function useRecentThreads(courses: { id: number }[] | undefined) {
           sql`COALESCE(${threadsTable.updatedAt}, ${threadsTable.createdAt})`,
         ),
       )
-      .limit(5),
-    [],
+      .limit(limit),
+    [limit],
   );
 
   const courseKey = (courses ?? []).map((c) => c.id).join(",");
+  const perCourseLimit = Math.min(limit, 15);
 
   useEffect(() => {
     if (!courses || courses.length === 0) {
@@ -37,12 +44,16 @@ export function useRecentThreads(courses: { id: number }[] | undefined) {
     setLoading(true);
     console.debug("[useRecentThreads] fetching for courses", {
       courseIds: courses.map((c) => c.id),
+      perCourseLimit,
     });
 
     Promise.all(
       courses.map((course) =>
         Effect.runPromise(
-          fetchThreadsFromApi(course.id, { sort: "new", limit: 5 }),
+          fetchThreadsFromApi(course.id, {
+            sort: "new",
+            limit: perCourseLimit,
+          }),
         )
           .then((response) => {
             if (response?.threads?.length) {
@@ -73,7 +84,7 @@ export function useRecentThreads(courses: { id: number }[] | undefined) {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- dedupe by course IDs so equivalent sets don't refetch
-  }, [db, courseKey]);
+  }, [db, courseKey, perCourseLimit]);
 
   console.debug("[useRecentThreads] render", {
     courseCount: courses?.length,

@@ -1,9 +1,9 @@
-import { and, eq, desc, asc, sql } from "drizzle-orm";
-import { useLiveQuery } from "drizzle-orm/expo-sqlite";
+import { and, asc, desc, eq, sql } from "drizzle-orm";
+import { useLiveQuery } from "drizzle-orm/expo-sqlite/async";
 import { threadsTable } from "@/src/db/schema";
-import { useDb } from "@/src/providers/dbProvider";
-import { escapeLike } from "@/src/lib/utils";
 import { getCachedThreadDetail } from "@/src/lib/storage";
+import { escapeLike } from "@/src/lib/utils";
+import { useDb } from "@/src/providers/dbProvider";
 
 export function useSearchDbQuery(
   courseId: number,

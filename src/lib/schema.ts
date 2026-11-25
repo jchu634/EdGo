@@ -153,6 +153,7 @@ const Thread = Schema.Struct({
   is_answered: Schema.Boolean,
   is_student_answered: Schema.Boolean,
   is_staff_answered: Schema.Boolean,
+  is_endorsed: Schema.optional(Schema.Boolean),
   is_anonymous: Schema.Boolean,
   created_at: Schema.String,
   updated_at: Schema.NullOr(Schema.String),

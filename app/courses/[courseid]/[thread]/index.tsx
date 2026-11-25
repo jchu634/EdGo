@@ -1,34 +1,34 @@
+import * as Linking from "expo-linking";
+import { useLocalSearchParams } from "expo-router";
 import {
-  View,
-  Text,
-  ScrollView,
+  ArrowSquareOutIcon,
+  CheckCircleIcon,
+  EyeIcon,
+  HeartIcon,
+  MedalIcon,
+  PushPinIcon,
+  StarIcon,
+} from "phosphor-react-native";
+import {
   ActivityIndicator,
   Image,
   Pressable,
+  ScrollView,
+  Text,
+  View,
 } from "react-native";
-import { useLocalSearchParams } from "expo-router";
-import * as Linking from "expo-linking";
-
-import {
-  EyeIcon,
-  HeartIcon,
-  StarIcon,
-  PushPinIcon,
-  CheckCircleIcon,
-  ArrowSquareOutIcon,
-} from "phosphor-react-native";
-
-import { renderXmlNode } from "@/src/lib/renderXML";
-import { settings } from "@/src/lib/storage";
-import { useDb } from "@/src/providers/dbProvider";
-import { useThreadDetail } from "@/src/hooks/useThreadDetail";
-import { useThreadVotes } from "@/src/hooks/useThreadVotes";
-import { useCourseLayout } from "@/src/providers/courseLayoutProvider";
-import ThreadFullscreenButton from "@/src/components/ThreadFullscreenButton";
 import {
   AnimatedToggleIcon,
   renderComment,
 } from "@/src/components/ThreadComments";
+import ThreadFullscreenButton from "@/src/components/ThreadFullscreenButton";
+import { useMaxThreadNumber } from "@/src/hooks/useMaxThreadNumber";
+import { useThreadDetail } from "@/src/hooks/useThreadDetail";
+import { useThreadVotes } from "@/src/hooks/useThreadVotes";
+import { renderXmlNode } from "@/src/lib/renderXML";
+import { settings } from "@/src/lib/storage";
+import { useCourseLayout } from "@/src/providers/courseLayoutProvider";
+import { useDb } from "@/src/providers/dbProvider";
 
 import "@/global.css";
 
@@ -39,6 +39,7 @@ export default function ThreadPage() {
   const threadNumber = Number(Array.isArray(thread) ? thread[0] : thread);
 
   const db = useDb();
+  const maxThreadNumber = useMaxThreadNumber(courseIdNum, threadNumber);
   const {
     thread: t,
     usersMap,
@@ -182,11 +183,22 @@ export default function ThreadPage() {
               <Text className="text-sm text-green-600">Answered</Text>
             </View>
           )}
+          {t.is_endorsed && (
+            <View className="flex-row items-center gap-x-1 rounded-full border border-blue-500 bg-blue-500/10 px-2 py-0.5">
+              <MedalIcon size={14} color="#3b82f6" weight="fill" />
+              <Text className="text-xs font-semibold text-blue-600 dark:text-blue-400">
+                Endorsed
+              </Text>
+            </View>
+          )}
         </View>
 
         <View className="mb-2 rounded-xl bg-gray-50 p-1 dark:bg-black">
           {mainXml ? (
-            renderXmlNode(mainXml, "thread-body")
+            renderXmlNode(mainXml, "thread-body", 1, {
+              courseId: courseIdNum,
+              maxThreadNumber,
+            })
           ) : (
             <Text className="font-display text-gray-700">{t.content}</Text>
           )}
@@ -208,6 +220,7 @@ export default function ThreadPage() {
                 commentVotes,
                 commentVoteCounts,
                 toggleCommentVote,
+                maxThreadNumber,
               ),
             )}
           </View>
@@ -229,6 +242,7 @@ export default function ThreadPage() {
                 commentVotes,
                 commentVoteCounts,
                 toggleCommentVote,
+                maxThreadNumber,
               ),
             )}
           </View>

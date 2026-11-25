@@ -1,20 +1,20 @@
-import { Effect, Schema, Schedule } from "effect";
+import { and, eq, inArray, not, sql } from "drizzle-orm";
+import { Effect, Schedule, type Schema } from "effect";
 import {
   FetchHttpClient,
   HttpClient,
   HttpClientRequest,
   HttpClientResponse,
-} from "effect/unstable/http";
-import { and, eq, inArray, not, sql } from "drizzle-orm";
+} from "effect/http";
 
-import { threadsTable, type NewThread } from "@/src/db/schema";
-import type { Db } from "@/src/providers/dbProvider";
+import { type NewThread, threadsTable } from "@/src/db/schema";
 import {
-  ThreadResponse,
   ThreadDetailResponse,
-  ThreadUser,
+  ThreadResponse,
+  type ThreadUser,
 } from "@/src/lib/schema";
 import { getApiKey } from "@/src/lib/storage";
+import type { Db } from "@/src/providers/dbProvider";
 
 // ---------------------------------------------------------------------------
 // Constants

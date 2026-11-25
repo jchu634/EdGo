@@ -1,17 +1,17 @@
-import { useState } from "react";
-import { Effect } from "effect";
 import { eq } from "drizzle-orm";
+import { Effect } from "effect";
+import { useState } from "react";
 import { threadsTable } from "@/src/db/schema";
-import type { Db } from "@/src/providers/dbProvider";
 import type { ThreadDetail } from "@/src/lib/thread-detail";
 import {
   starThread,
   unstarThread,
-  upvoteThread,
+  unvoteComment,
   unvoteThread,
   upvoteComment,
-  unvoteComment,
+  upvoteThread,
 } from "@/src/lib/threads";
+import type { Db } from "@/src/providers/dbProvider";
 
 export interface VoteState {
   isStarred: boolean;
@@ -107,7 +107,10 @@ export function useThreadVotes(
         catch: (e) => new Error(`DB star update failed: ${String(e)}`),
       }).pipe(
         Effect.tapError((err) =>
-          Effect.logError(`[Star] local DB persist failed for ${thread.id}:`, err),
+          Effect.logError(
+            `[Star] local DB persist failed for ${thread.id}:`,
+            err,
+          ),
         ),
       );
     }).pipe(Effect.ignore);
@@ -152,7 +155,10 @@ export function useThreadVotes(
         catch: (e) => new Error(`DB vote update failed: ${String(e)}`),
       }).pipe(
         Effect.tapError((err) =>
-          Effect.logError(`[Vote] local DB persist failed for ${thread.id}:`, err),
+          Effect.logError(
+            `[Vote] local DB persist failed for ${thread.id}:`,
+            err,
+          ),
         ),
       );
     }).pipe(Effect.ignore);

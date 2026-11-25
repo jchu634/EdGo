@@ -1,6 +1,6 @@
+import { useGlobalSearchParams, usePathname } from "expo-router";
 import { createContext, useContext, useRef, useState } from "react";
 import { useWindowDimensions } from "react-native";
-import { useGlobalSearchParams, usePathname } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 function useCourseLayoutState() {
@@ -32,7 +32,9 @@ function useCourseLayoutState() {
   >({});
   const scrollOffsets = useRef(new Map<string, number>());
   const isFullscreen =
-    isWide && activeThreadKey !== null && fullscreenThreadKey === activeThreadKey;
+    isWide &&
+    activeThreadKey !== null &&
+    fullscreenThreadKey === activeThreadKey;
 
   return {
     courseId,

@@ -1,5 +1,5 @@
-import { Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { Pressable } from "react-native";
 import { useUniwind } from "uniwind";
 import { useCourseLayout } from "@/src/providers/courseLayoutProvider";
 

@@ -1,9 +1,9 @@
 import {
+  index,
   int,
+  integer,
   sqliteTable,
   text,
-  integer,
-  index,
 } from "drizzle-orm/sqlite-core";
 
 export const threadsTable = sqliteTable(
