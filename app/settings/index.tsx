@@ -1,5 +1,12 @@
 import React, { useCallback, useState } from "react";
-import { Platform, Pressable, Switch, Text, View } from "react-native";
+import {
+  Platform,
+  Pressable,
+  ScrollView,
+  Switch,
+  Text,
+  View,
+} from "react-native";
 import { sendTestNotification } from "@/src/lib/notifications";
 import {
   clearCourseCache,
@@ -40,6 +47,10 @@ export default function Index() {
     "user.developer_settings",
     settings!,
   );
+  const [largerCards, setLargerCards] = useMMKVBoolean(
+    "ui.larger_cards",
+    settings!,
+  );
   const [userName] = useMMKVString("user.name", settings!);
   const [userEmail] = useMMKVString("user.email", settings!);
   const [userRegion] = useMMKVString("user.default_region", settings!);
@@ -63,7 +74,10 @@ export default function Index() {
   );
 
   return (
-    <View className="flex h-full gap-y-8 p-4 dark:bg-black">
+    <ScrollView
+      className="flex-1 dark:bg-black"
+      contentContainerClassName="gap-y-8 p-4 pb-8"
+    >
       <View>
         <Text className="font-display-bold text-2xl dark:text-slate-100">
           User Details
@@ -250,6 +264,23 @@ export default function Index() {
         )}
       </View>
 
+      <View className="gap-y-3">
+        <Text className="font-display-bold text-2xl dark:text-slate-100">
+          Display
+        </Text>
+
+        <View className="flex flex-row items-center justify-between">
+          <Text className="font-display dark:text-slate-100">Larger Card</Text>
+          <Switch
+            trackColor={{ false: "#767577", true: "#81b0ff" }}
+            thumbColor={largerCards ? "#f5dd4b" : "#f4f3f4"}
+            ios_backgroundColor="#3e3e3e"
+            onValueChange={(v) => setLargerCards(v)}
+            value={largerCards ?? false}
+          />
+        </View>
+      </View>
+
       <View>
         <View className="flex flex-row">
           <Text className="font-display-bold text-2xl dark:text-slate-100">
@@ -295,6 +326,6 @@ export default function Index() {
           </View>
         )}
       </View>
-    </View>
+    </ScrollView>
   );
 }

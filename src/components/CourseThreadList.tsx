@@ -19,6 +19,7 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { useMMKVBoolean } from "react-native-mmkv";
 import { useUniwind } from "uniwind";
 import type { ThreadUser } from "@/src/db/schema";
 import { useSearchDbQuery } from "@/src/hooks/useSearchDbQuery";
@@ -26,7 +27,7 @@ import { useSearchSync } from "@/src/hooks/useSearchSync";
 import { useThreadsDbQuery } from "@/src/hooks/useThreadsDbQuery";
 import { useThreadsSync } from "@/src/hooks/useThreadsSync";
 import type { CourseCategory } from "@/src/lib/schema";
-import { getCachedCourseCategory } from "@/src/lib/storage";
+import { getCachedCourseCategory, settings } from "@/src/lib/storage";
 import { useCourseLayout } from "@/src/providers/courseLayoutProvider";
 import { useSearchQuery } from "@/src/providers/modalProvider";
 
@@ -62,6 +63,10 @@ export default function CourseThreadList({
   sidebar?: boolean;
 }) {
   const { theme } = useUniwind();
+  const [largerCards = false] = useMMKVBoolean(
+    "ui.larger_cards",
+    settings ?? undefined,
+  );
   const router = useRouter();
   const {
     categories,
@@ -146,161 +151,211 @@ export default function CourseThreadList({
       return (
         <Pressable
           className={cardClass}
-          style={{
-            borderLeftColor: colour || "#d1d5db",
-            ...(sidebar && item.number === selectedThread
+          style={
+            sidebar && item.number === selectedThread
               ? { borderWidth: 2, borderColor: "#a855f7" }
-              : {}),
-          }}
+              : undefined
+          }
           accessibilityState={
             sidebar ? { selected: item.number === selectedThread } : undefined
           }
           onPress={() => navigateToThread(item.number)}
         >
-          <View className="flex w-full flex-row items-start justify-between">
-            <Text
-              className="font-display-bold max-h-20 w-44 text-sm dark:text-slate-100"
-              numberOfLines={2}
-            >
-              {item.title}
-            </Text>
-            <View className="flex flex-row items-center gap-x-1">
-              {item.isHidden && (
-                <Text className="font-display text-xs text-red-500 dark:text-red-400">
-                  Deleted
-                </Text>
-              )}
-              <PushPinIcon
-                size={14}
-                color={theme === "dark" ? "white" : "black"}
-              />
+          <View
+            className="w-2"
+            style={{ backgroundColor: colour || "#d1d5db" }}
+          />
+          <View
+            className={largerCards ? "flex-1 p-3 pl-2.5" : "flex-1 px-2.5 py-2"}
+          >
+            <View className="flex w-full flex-row items-start justify-between">
+              <Text
+                className="font-display-bold max-h-20 flex-1 pr-1 text-sm dark:text-slate-100"
+                numberOfLines={2}
+              >
+                {item.title}
+              </Text>
+              <View className="flex flex-row items-center gap-x-1">
+                {item.isHidden && (
+                  <Text className="font-display text-xs text-red-500 dark:text-red-400">
+                    Deleted
+                  </Text>
+                )}
+                <PushPinIcon
+                  size={14}
+                  color={theme === "dark" ? "white" : "black"}
+                />
+              </View>
             </View>
-          </View>
-          <View className="mt-1 flex flex-row items-center">
             <View
-              className="size-4 rounded-full"
-              style={{ backgroundColor: colour || "#6b7280" }}
-            />
-            <Text className="font-display pl-1.5 text-xs dark:text-slate-100">
-              {item.category}
-            </Text>
+              className={
+                largerCards
+                  ? "mt-1 flex flex-row items-center"
+                  : "mt-0.5 flex flex-row items-center"
+              }
+            >
+              <Text className="font-display text-xs dark:text-slate-100">
+                {item.category}
+              </Text>
+            </View>
           </View>
         </Pressable>
       );
     },
-    [categoryColourMap, navigateToThread, theme, sidebar, selectedThread],
+    [
+      categoryColourMap,
+      navigateToThread,
+      theme,
+      sidebar,
+      selectedThread,
+      largerCards,
+    ],
   );
 
   const renderThreadItem = useCallback(
     ({ item }: { item: ThreadUser }) => {
       const colour = categoryColourMap.get(item.category);
+      const spacingClass = largerCards ? "mb-3" : "mb-2";
       const cardClass = (
         item.isSeen
-          ? "w-80% mx-1.5 mb-3 rounded-2xl border-l bg-gray-200 p-4 px-4 pl-2.5 dark:bg-neutral-700"
-          : "w-80% mx-1.5 mb-3 rounded-2xl border-l bg-gray-300 p-4 px-4 pl-2.5 dark:bg-neutral-800"
+          ? `w-80% mx-1.5 ${spacingClass} flex-row overflow-hidden rounded-l-sm rounded-r-2xl bg-gray-200 dark:bg-neutral-700`
+          : `w-80% mx-1.5 ${spacingClass} flex-row overflow-hidden rounded-l-sm rounded-r-2xl bg-gray-300 dark:bg-neutral-800`
       ).concat(item.isHidden ? " opacity-60" : "");
+      const iconSize = largerCards ? 20 : 15;
+      const metaTextClass = largerCards
+        ? "font-display pl-2 dark:text-slate-100"
+        : "font-display pl-1.5 text-xs dark:text-slate-100";
       return (
         <Pressable
           className={cardClass}
-          style={{
-            borderLeftColor: colour || "#d1d5db",
-            ...(sidebar && item.number === selectedThread
+          style={
+            sidebar && item.number === selectedThread
               ? { borderWidth: 2, borderColor: "#a855f7" }
-              : {}),
-          }}
+              : undefined
+          }
           accessibilityState={
             sidebar ? { selected: item.number === selectedThread } : undefined
           }
           onPress={() => navigateToThread(item.number)}
         >
           <View
+            className="w-2.5"
+            style={{ backgroundColor: colour || "#d1d5db" }}
+          />
+          <View
             className={
-              sidebar
-                ? "flex-row justify-between gap-2"
-                : "flex w-max flex-row justify-between"
+              largerCards ? "flex-1 p-4 px-4 pl-3" : "flex-1 px-3 py-2.5 pl-2.5"
             }
           >
-            <Text
+            <View
               className={
                 sidebar
-                  ? "font-display-bold flex-1 dark:text-slate-100"
-                  : "font-display-bold max-h-30 w-100 truncate dark:text-slate-100"
+                  ? "flex-row justify-between gap-2"
+                  : "flex w-max flex-row justify-between"
               }
-              numberOfLines={sidebar ? 3 : undefined}
             >
-              {item.title}
-            </Text>
-            <View className="flex flex-row items-center gap-x-1">
-              {item.isHidden && (
-                <Text className="font-display text-xs text-red-500 dark:text-red-400">
-                  Deleted
-                </Text>
-              )}
-              {item.isStarred && (
-                <View className="flex flex-row items-center">
-                  <StarIcon color="#f59e0b" weight="fill" />
-                </View>
-              )}
-              {item.isAnswered && <CheckIcon color="#3f6212" />}
-              {item.isPinned && (
-                <PushPinIcon color={theme === "dark" ? "white" : "black"} />
-              )}
-            </View>
-          </View>
-          <View
-            className={sidebar ? "mt-2 gap-2" : "flex flex-row justify-between"}
-          >
-            <View className="flex flex-row items-center">
-              <View
-                className="size-6 rounded-full"
-                style={{ backgroundColor: colour || "#6b7280" }}
-              />
               <Text
                 className={
                   sidebar
-                    ? "font-display flex-1 pl-2 dark:text-slate-100"
-                    : "font-display pl-2 dark:text-slate-100"
+                    ? "font-display-bold flex-1 dark:text-slate-100"
+                    : "font-display-bold max-h-30 w-100 truncate dark:text-slate-100"
                 }
+                numberOfLines={sidebar ? (largerCards ? 3 : 2) : undefined}
               >
-                {item.category}
+                {item.title}
               </Text>
+              <View className="flex flex-row items-center gap-x-1">
+                {item.isHidden && (
+                  <Text className="font-display text-xs text-red-500 dark:text-red-400">
+                    Deleted
+                  </Text>
+                )}
+                {item.isStarred && (
+                  <View className="flex flex-row items-center">
+                    <StarIcon size={iconSize} color="#f59e0b" weight="fill" />
+                  </View>
+                )}
+                {item.isAnswered && (
+                  <CheckIcon
+                    size={iconSize}
+                    color={theme === "dark" ? "#4ade80" : "#16a34a"}
+                  />
+                )}
+                {item.isPinned && (
+                  <PushPinIcon
+                    size={iconSize}
+                    color={theme === "dark" ? "white" : "black"}
+                  />
+                )}
+              </View>
             </View>
             <View
               className={
-                sidebar ? "flex-row flex-wrap gap-y-1" : "flex flex-row"
+                sidebar
+                  ? largerCards
+                    ? "mt-2 flex-row flex-wrap items-center justify-between gap-x-2 gap-y-1.5"
+                    : "mt-1 flex-row flex-wrap items-center justify-between gap-x-2 gap-y-1"
+                  : largerCards
+                    ? "mt-1 flex flex-row justify-between"
+                    : "mt-0.5 flex flex-row items-center justify-between"
               }
             >
-              {item.replyCount !== 0 && (
-                <View className="flex min-w-10 flex-row items-center">
-                  <Text className="font-display pl-2 dark:text-slate-100">
-                    {item.replyCount}
-                  </Text>
-                  <ChatsIcon color={theme === "dark" ? "white" : "black"} />
-                </View>
-              )}
-
-              <View className="flex min-w-10 flex-row items-center">
-                <Text className="font-display pl-2 dark:text-slate-100">
-                  {item.viewCount}
+              <View className="flex flex-row items-center">
+                <Text
+                  className={
+                    largerCards
+                      ? "font-display dark:text-slate-100"
+                      : "font-display text-xs dark:text-slate-100"
+                  }
+                >
+                  {item.category}
                 </Text>
-                <EyeIcon color={theme === "dark" ? "white" : "black"} />
               </View>
-              <View className="flex min-w-10 flex-row items-center">
-                <Text className="font-display pl-2 dark:text-slate-100">
-                  {item.voteCount}
-                </Text>
+              <View
+                className={
+                  sidebar ? "flex-row flex-wrap gap-y-1" : "flex flex-row"
+                }
+              >
+                {item.replyCount !== 0 && (
+                  <View className="flex min-w-10 flex-row items-center">
+                    <Text className={metaTextClass}>{item.replyCount}</Text>
+                    <ChatsIcon
+                      size={iconSize}
+                      color={theme === "dark" ? "white" : "black"}
+                    />
+                  </View>
+                )}
 
-                <HeartIcon
-                  color={item.isVoted ? "#ef4444" : "#9ca3af"}
-                  weight={item.isVoted ? "fill" : "regular"}
-                />
+                <View className="flex min-w-10 flex-row items-center">
+                  <Text className={metaTextClass}>{item.viewCount}</Text>
+                  <EyeIcon
+                    size={iconSize}
+                    color={theme === "dark" ? "white" : "black"}
+                  />
+                </View>
+                <View className="flex min-w-10 flex-row items-center">
+                  <Text className={metaTextClass}>{item.voteCount}</Text>
+
+                  <HeartIcon
+                    size={iconSize}
+                    color={item.isVoted ? "#ef4444" : "#9ca3af"}
+                    weight={item.isVoted ? "fill" : "regular"}
+                  />
+                </View>
               </View>
             </View>
           </View>
         </Pressable>
       );
     },
-    [categoryColourMap, navigateToThread, theme, sidebar, selectedThread],
+    [
+      categoryColourMap,
+      navigateToThread,
+      theme,
+      sidebar,
+      selectedThread,
+      largerCards,
+    ],
   );
 
   return (
@@ -428,7 +483,7 @@ export default function CourseThreadList({
                 }}
               >
                 <Text
-                  className="font-display text-center"
+                  className="font-display-bold text-center"
                   style={isActive ? { color: colour } : { color: "white" }}
                 >
                   {category.name}

@@ -15,6 +15,7 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
+import { useMMKVBoolean } from "react-native-mmkv";
 import { useUniwind } from "uniwind";
 import { useRecentThreads } from "@/src/hooks/useRecentThreads";
 import { type Course, RegionResponse, UserResponse } from "@/src/lib/schema";
@@ -40,6 +41,10 @@ type CourseListItem =
 
 export default function Index() {
   const { theme } = useUniwind();
+  const [largerCards = false] = useMMKVBoolean(
+    "ui.larger_cards",
+    settings ?? undefined,
+  );
 
   const { isOnline } = useNetwork();
 
@@ -276,65 +281,70 @@ export default function Index() {
       const colour = courseInfo ? colourForCourse(thread.courseId) : "#d1d5db";
       return (
         <Pressable
-          className="mx-1.5 mb-2 rounded-2xl border-l bg-slate-200 p-3 pl-2.5 dark:bg-neutral-800"
-          style={{
-            borderLeftColor: colour,
-          }}
+          className={
+            largerCards
+              ? "mx-1.5 mb-3 flex-row overflow-hidden rounded-l-sm rounded-r-2xl bg-slate-200 dark:bg-neutral-800"
+              : "mx-1.5 mb-2 flex-row overflow-hidden rounded-l-sm rounded-r-2xl bg-slate-200 dark:bg-neutral-800"
+          }
           onPress={() =>
             router.navigate(`/courses/${thread.courseId}/${thread.number}`)
           }
         >
-          <View className="flex w-max flex-row justify-between">
-            <Text
-              className="font-display-bold max-h-30 w-100 truncate dark:text-white"
-              numberOfLines={1}
-            >
-              {thread.title}
-            </Text>
-          </View>
-          <View className="flex flex-row items-center justify-between">
-            <Text
-              className="font-display line-clamp-1 w-70 truncate text-xs"
-              style={{ color: colour }}
-            >
-              {courseInfo?.code}
-            </Text>
-            <View className="flex flex-row">
-              {thread.replyCount !== 0 && (
+          <View className="w-2.5" style={{ backgroundColor: colour }} />
+          <View
+            className={
+              largerCards ? "flex-1 p-4 pl-3" : "flex-1 px-3 py-2 pl-2.5"
+            }
+          >
+            <View className="flex w-max flex-row justify-between">
+              <Text
+                className="font-display-bold max-h-30 w-100 truncate dark:text-white"
+                numberOfLines={1}
+              >
+                {thread.title}
+              </Text>
+            </View>
+            <View className="flex flex-row items-center justify-between">
+              <Text className="font-display line-clamp-1 w-70 truncate text-xs text-gray-600 dark:text-slate-300">
+                {courseInfo?.code}
+              </Text>
+              <View className="flex flex-row">
+                {thread.replyCount !== 0 && (
+                  <View className="flex min-w-10 flex-row items-center">
+                    <Text className="font-display pl-2 dark:text-white">
+                      {thread.replyCount}
+                    </Text>
+                    <ChatsIcon
+                      size={14}
+                      color={theme === "dark" ? "white" : "black"}
+                    />
+                  </View>
+                )}
                 <View className="flex min-w-10 flex-row items-center">
                   <Text className="font-display pl-2 dark:text-white">
-                    {thread.replyCount}
+                    {thread.viewCount}
                   </Text>
-                  <ChatsIcon
+                  <EyeIcon
                     size={14}
                     color={theme === "dark" ? "white" : "black"}
                   />
                 </View>
-              )}
-              <View className="flex min-w-10 flex-row items-center">
-                <Text className="font-display pl-2 dark:text-white">
-                  {thread.viewCount}
-                </Text>
-                <EyeIcon
-                  size={14}
-                  color={theme === "dark" ? "white" : "black"}
-                />
-              </View>
-              <View className="flex min-w-10 flex-row items-center">
-                <Text className="font-display pl-2 dark:text-white">
-                  {thread.voteCount}
-                </Text>
-                <HeartIcon
-                  size={14}
-                  color={theme === "dark" ? "white" : "black"}
-                />
+                <View className="flex min-w-10 flex-row items-center">
+                  <Text className="font-display pl-2 dark:text-white">
+                    {thread.voteCount}
+                  </Text>
+                  <HeartIcon
+                    size={14}
+                    color={theme === "dark" ? "white" : "black"}
+                  />
+                </View>
               </View>
             </View>
           </View>
         </Pressable>
       );
     },
-    [courseMap, router, theme],
+    [courseMap, router, theme, largerCards],
   );
 
   if (!courses) {
