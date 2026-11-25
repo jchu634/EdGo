@@ -1,0 +1,13 @@
+diff --git a/node_modules/react-native-shiki-engine/android/build.gradle b/node_modules/react-native-shiki-engine/android/build.gradle
+--- a/node_modules/react-native-shiki-engine/android/build.gradle
++++ b/node_modules/react-native-shiki-engine/android/build.gradle
+@@ -119,7 +119,8 @@ dependencies {
+   //noinspection GradleDynamicVersion
+   implementation "com.facebook.react:react-native:+"
+   implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+-  implementation "com.facebook.fbjni:fbjni:+"
++  // Match React Native 0.86's C++ runtime; fbjni 0.8 requires newer libc++ symbols.
++  implementation "com.facebook.fbjni:fbjni:0.7.0"
+ }
+ 
+ if (isNewArchitectureEnabled()) {

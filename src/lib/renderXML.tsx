@@ -1,12 +1,30 @@
-import { View, Text, Image } from "react-native";
+import { useRouter } from "expo-router";
+import {
+  CheckCircleIcon,
+  InfoIcon,
+  WarningIcon,
+  XCircleIcon,
+} from "phosphor-react-native";
+import { RaTeXView } from "ratex-react-native";
 import React from "react";
+import { Text, View } from "react-native";
+import { withUniwind } from "uniwind";
+import CodeBlock from "@/src/components/CodeBlock";
+import ContentImage from "@/src/components/ContentImage";
+import FileComponent from "@/src/components/FileComponent";
 import LinkText from "@/src/components/LinkText";
+import SpoilerText from "@/src/components/SpoilerText";
+import VideoComponent from "@/src/components/VideoComponent";
+import WebSnippetComponent from "@/src/components/WebSnippetComponent";
+
+const StyledRaTeXView = withUniwind(RaTeXView);
+
 interface XmlTextNode {
   type: "text";
   value: string;
 }
 
-interface XmlElementNode {
+export interface XmlElementNode {
   type: "element" | "document";
   tag: string;
   attrs: Record<string, string>;
@@ -16,18 +34,195 @@ interface XmlElementNode {
 
 export type XmlNode = XmlTextNode | XmlElementNode;
 
-export function isXmlNode(val: unknown): val is XmlNode {
-  if (!val || typeof val !== "object") return false;
-  const obj = val as Record<string, unknown>;
-  if (obj.type === "text" && typeof obj.value === "string") return true;
-  if (
-    (obj.type === "element" || obj.type === "document") &&
-    typeof obj.tag === "string" &&
-    Array.isArray(obj.children)
-  )
-    return true;
-  return false;
+export interface RenderXmlContext {
+  courseId?: number;
+  maxThreadNumber?: number;
 }
+
+export type TextSegment =
+  | { kind: "text"; text: string }
+  | { kind: "thread-ref"; text: string; threadNumber: number }
+  | { kind: "email"; text: string; email: string }
+  | { kind: "link"; text: string; url: string };
+
+const THREAD_REF_RE = /(^|[^A-Za-z0-9_/#])#([1-9]\d*)(?![A-Za-z0-9_])/g;
+const EMAIL_RE =
+  /(^|[\s([{<"\u201C,;:])([A-Za-z0-9](?:[A-Za-z0-9._%+-]*[A-Za-z0-9])?@(?:[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?\.)+[A-Za-z]{2,})(?![A-Za-z0-9_-])/g;
+const LINK_RE =
+  /(^|[\s([{<"'`\u201C\u2018,;:]|[\u0080-\uFFFF])(https?:\/\/(?:(?!,https?:\/\/)[^\s<>"\u201C\u201D\u200B-\u200D\uFEFF\u00AD\u3000-\u303F\uFF01-\uFF0F\uFF1A-\uFF20\uFF3B-\uFF40\uFF5B-\uFF65])+)/gi;
+
+function isValidHttpUrl(candidate: string): boolean {
+  const match = /^https?:\/\/([^/?#]+)/i.exec(candidate);
+  if (!match) {
+    return false;
+  }
+  const authority = match[1];
+  const atIndex = authority.lastIndexOf("@");
+  const hostPort = atIndex >= 0 ? authority.slice(atIndex + 1) : authority;
+  if (!hostPort) {
+    return false;
+  }
+  if (hostPort.startsWith("[")) {
+    return /^\[[0-9a-fA-F:.]+\](?::\d+)?$/.test(hostPort);
+  }
+  const colonIndex = hostPort.lastIndexOf(":");
+  const host = colonIndex >= 0 ? hostPort.slice(0, colonIndex) : hostPort;
+  const port = colonIndex >= 0 ? hostPort.slice(colonIndex + 1) : "";
+  if (colonIndex >= 0 && !/^\d+$/.test(port)) {
+    return false;
+  }
+  if (
+    !host ||
+    host.startsWith(".") ||
+    host.endsWith(".") ||
+    host.includes("..")
+  ) {
+    return false;
+  }
+  return !/[\s/?#\\:@[\]{}<>"'`]/.test(host);
+}
+
+function trimTrailingUrlPunctuation(raw: string): string {
+  let url = raw;
+  while (url.length > 0) {
+    const last = url[url.length - 1];
+    if (
+      ".,;:!?'\"\u2019\u3002\uFF0C\u3001\u300D\u300F\u3011\u300B\u00BB\u2026\uFF09".includes(
+        last,
+      )
+    ) {
+      url = url.slice(0, -1);
+      continue;
+    }
+    if (last === ")" || last === "]" || last === "}") {
+      const open = last === ")" ? "(" : last === "]" ? "[" : "{";
+      let opens = 0;
+      let closes = 0;
+      for (let i = 0; i < url.length; i++) {
+        if (url[i] === open) opens++;
+        else if (url[i] === last) closes++;
+      }
+      if (closes > opens) {
+        url = url.slice(0, -1);
+        continue;
+      }
+    }
+    break;
+  }
+  return url;
+}
+
+export function splitLinks(text: string): TextSegment[] {
+  const segments: TextSegment[] = [];
+  let lastIndex = 0;
+
+  for (const match of text.matchAll(LINK_RE)) {
+    const fullIndex = match.index ?? 0;
+    const prefix = match[1];
+    const url = trimTrailingUrlPunctuation(match[2]);
+    if (!isValidHttpUrl(url)) {
+      continue;
+    }
+
+    const urlIndex = fullIndex + prefix.length;
+    if (urlIndex > lastIndex) {
+      segments.push({ kind: "text", text: text.slice(lastIndex, urlIndex) });
+    }
+
+    segments.push({ kind: "link", text: url, url });
+    lastIndex = urlIndex + url.length;
+  }
+
+  if (lastIndex < text.length) {
+    segments.push({ kind: "text", text: text.slice(lastIndex) });
+  }
+
+  return segments.length > 0 ? segments : [{ kind: "text", text }];
+}
+
+export function splitEmails(text: string): TextSegment[] {
+  const segments: TextSegment[] = [];
+  let lastIndex = 0;
+
+  for (const match of text.matchAll(EMAIL_RE)) {
+    const fullIndex = match.index ?? 0;
+    const prefix = match[1];
+    const email = match[2];
+
+    const emailIndex = fullIndex + prefix.length;
+    if (emailIndex > lastIndex) {
+      segments.push({ kind: "text", text: text.slice(lastIndex, emailIndex) });
+    }
+
+    segments.push({ kind: "email", text: email, email });
+    lastIndex = emailIndex + email.length;
+  }
+
+  if (lastIndex < text.length) {
+    segments.push({ kind: "text", text: text.slice(lastIndex) });
+  }
+
+  return segments.length > 0 ? segments : [{ kind: "text", text }];
+}
+
+export function splitThreadRefs(
+  text: string,
+  maxThreadNumber: number,
+): TextSegment[] {
+  const segments: TextSegment[] = [];
+  let lastIndex = 0;
+
+  for (const match of text.matchAll(THREAD_REF_RE)) {
+    const fullIndex = match.index ?? 0;
+    const prefix = match[1];
+    const numStr = match[2];
+    const threadNumber = Number(numStr);
+
+    if (threadNumber < 1 || threadNumber > maxThreadNumber) {
+      continue;
+    }
+
+    const hashIndex = fullIndex + prefix.length;
+    if (hashIndex > lastIndex) {
+      segments.push({ kind: "text", text: text.slice(lastIndex, hashIndex) });
+    }
+
+    const token = `#${numStr}`;
+    segments.push({ kind: "thread-ref", text: token, threadNumber });
+    lastIndex = hashIndex + token.length;
+  }
+
+  if (lastIndex < text.length) {
+    segments.push({ kind: "text", text: text.slice(lastIndex) });
+  }
+
+  return segments.length > 0 ? segments : [{ kind: "text", text }];
+}
+
+function ThreadRefLink({
+  courseId,
+  threadNumber,
+  className,
+  children,
+}: {
+  courseId: number;
+  threadNumber: number;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  const router = useRouter();
+  return (
+    <Text
+      className={`${className ? `${className} ` : ""}text-blue-700 underline dark:text-blue-500`}
+      onPress={() => router.push(`/courses/${courseId}/${threadNumber}`)}
+      selectable={false}
+    >
+      {children}
+    </Text>
+  );
+}
+
+type TextBlockNode = XmlElementNode & { _blockTag?: string };
 
 type InlineMarks = {
   bold?: boolean;
@@ -47,6 +242,19 @@ type InlineRun =
   | {
       kind: "newline";
     };
+
+export function isXmlNode(val: unknown): val is XmlNode {
+  if (!val || typeof val !== "object") return false;
+  const obj = val as Record<string, unknown>;
+  if (obj.type === "text" && typeof obj.value === "string") return true;
+  if (
+    (obj.type === "element" || obj.type === "document") &&
+    typeof obj.tag === "string" &&
+    Array.isArray(obj.children)
+  )
+    return true;
+  return false;
+}
 
 function sameMarks(a: InlineMarks, b: InlineMarks): boolean {
   return (
@@ -81,6 +289,30 @@ function mergeAdjacentRuns(runs: InlineRun[]): InlineRun[] {
   return merged;
 }
 
+const BLOCKED =
+  /\\(?:def|gdef|edef|xdef|let|global|newcommand|renewcommand|newenvironment|renewenvironment)\*?(?![A-Za-z@])/;
+
+function validateAndCleanLaTeX(input: any): string {
+  if (typeof input !== "string") return "";
+
+  const latex = input.slice(0, 5_000);
+
+  return BLOCKED.test(latex) ? "\\text{Invalid formatting detected.}" : latex;
+}
+
+function extractRawText(nodes: XmlNode[]): string {
+  let out = "";
+  const walk = (n: XmlNode) => {
+    if (n.type === "text") {
+      out += n.value;
+    } else {
+      for (const child of n.children) walk(child);
+    }
+  };
+  for (const n of nodes) walk(n);
+  return out;
+}
+
 function extractRunsFromNode(node: XmlNode, marks: InlineMarks): InlineRun[] {
   if (node.type === "text") {
     return node.value.length > 0
@@ -103,7 +335,7 @@ function extractRunsFromNode(node: XmlNode, marks: InlineMarks): InlineRun[] {
       if (node.children.length > 0 && node.children[0].type === "text") {
         return collectInlineRuns(node.children, {
           ...marks,
-          href: node.children[0].value,
+          href: node.attrs.href,
         });
       } else {
         return collectInlineRuns(node.children, {
@@ -127,6 +359,9 @@ function extractRunsFromNode(node: XmlNode, marks: InlineMarks): InlineRun[] {
   }
 }
 
+const NO_SPACE_BEFORE_RE = /^[.,;:!?)\]}"'\u2019\u201D]/;
+const NO_SPACE_AFTER_RE = /(?:^|[\s([{])["']$|[([{\u2018\u201C]$/;
+
 function collectInlineRuns(
   nodes: XmlNode[],
   activeMarks: InlineMarks = {},
@@ -142,7 +377,9 @@ function collectInlineRuns(
         last.kind === "text" &&
         first.kind === "text" &&
         !/\s$/.test(last.text) &&
-        !/^\s/.test(first.text)
+        !/^\s/.test(first.text) &&
+        !NO_SPACE_BEFORE_RE.test(first.text) &&
+        !NO_SPACE_AFTER_RE.test(last.text)
       ) {
         runs.push({ kind: "text", text: " ", marks: {} });
       }
@@ -153,18 +390,13 @@ function collectInlineRuns(
   return mergeAdjacentRuns(runs);
 }
 
-type TextBlockNode = XmlElementNode & { _blockTag?: string };
-
 function collectMergedBlockRuns(blocks: TextBlockNode[]): InlineRun[] {
   const allRuns: InlineRun[] = [];
   for (let i = 0; i < blocks.length; i++) {
     if (i > 0) {
       const prevIsHeading = blocks[i - 1]._blockTag === "heading";
       const curIsHeading = blocks[i]._blockTag === "heading";
-      if (curIsHeading) {
-        allRuns.push({ kind: "newline" });
-        allRuns.push({ kind: "newline" });
-      } else if (!prevIsHeading) {
+      if (curIsHeading || !prevIsHeading) {
         allRuns.push({ kind: "newline" });
         allRuns.push({ kind: "newline" });
       } else {
@@ -187,6 +419,52 @@ function collectMergedBlockRuns(blocks: TextBlockNode[]): InlineRun[] {
   return mergeAdjacentRuns(allRuns);
 }
 
+function renderBlockChildren(
+  node: XmlElementNode,
+  keyPrefix: string,
+  context?: RenderXmlContext,
+): React.ReactNode[] {
+  const fragments: React.ReactNode[] = [];
+  let blockBuffer: TextBlockNode[] = [];
+  let groupIdx = 0;
+
+  const flushBuffer = () => {
+    if (blockBuffer.length === 0) return;
+    const runs = collectMergedBlockRuns(blockBuffer);
+    fragments.push(
+      <Text
+        key={`${keyPrefix}-pg-${groupIdx}`}
+        className="font-display mb-2 dark:text-slate-100"
+        selectable
+      >
+        {renderInlineRuns(runs, `${keyPrefix}-pg-${groupIdx}`, context)}
+      </Text>,
+    );
+    blockBuffer = [];
+    groupIdx++;
+  };
+
+  node.children.forEach((child, i) => {
+    if (
+      child.type === "element" &&
+      (child.tag === "paragraph" ||
+        child.tag === "p" ||
+        child.tag === "heading")
+    ) {
+      blockBuffer.push({
+        ...child,
+        _blockTag: child.tag,
+      });
+    } else {
+      flushBuffer();
+      fragments.push(renderXmlNode(child, `${keyPrefix}-blk-${i}`, 1, context));
+    }
+  });
+  flushBuffer();
+
+  return fragments;
+}
+
 function headingSizeClass(level: number): string {
   switch (level) {
     case 1:
@@ -205,47 +483,297 @@ function headingSizeClass(level: number): string {
 function renderInlineRuns(
   runs: InlineRun[],
   keyPrefix: string,
+  context?: RenderXmlContext,
 ): React.ReactNode[] {
   return runs.map((run, i) => {
     const k = `${keyPrefix}-run-${i}`;
 
     if (run.kind === "newline") {
+      // biome-ignore lint/correctness/noReactNativeRawText: rendered inside a parent <Text>
       return <React.Fragment key={k}>{"\n"}</React.Fragment>;
     }
-
     const classNames: string[] = [];
-    if (run.marks.bold) classNames.push("font-display-bold");
-    if (run.marks.italic) classNames.push("italic");
-    if (run.marks.underline) classNames.push("underline");
-    if (run.marks.code)
+
+    if (run.marks.code) {
       classNames.push("rounded", "bg-gray-200", "px-1", "font-mono");
+    } else if (run.marks.bold && run.marks.italic) {
+      classNames.push("font-display-bold-italic");
+    } else if (run.marks.bold) {
+      classNames.push("font-display-bold");
+    } else if (run.marks.italic) {
+      classNames.push("font-display-italic");
+    }
+
+    if (run.marks.underline) classNames.push("underline");
     if (run.marks.heading) classNames.push(headingSizeClass(run.marks.heading));
 
     const className = classNames.join(" ");
+    const textStyle = run.marks.underline
+      ? { textDecorationLine: "underline" as const }
+      : undefined;
 
     if (run.marks.href) {
       return (
-        <LinkText key={k} href={run.marks.href}>
+        <LinkText
+          key={k}
+          href={run.marks.href}
+          className={className || undefined}
+        >
           {run.text}
         </LinkText>
       );
     }
 
-    if (className) {
-      return (
-        <Text key={k} className={className}>
-          {run.text}
-        </Text>
-      );
+    if (!run.marks.code) {
+      let segments: TextSegment[] = [{ kind: "text", text: run.text }];
+
+      if (run.text.includes("://")) {
+        segments = segments.flatMap((seg) =>
+          seg.kind === "text" ? splitLinks(seg.text) : [seg],
+        );
+      }
+
+      if (run.text.includes("@")) {
+        segments = segments.flatMap((seg) =>
+          seg.kind === "text" ? splitEmails(seg.text) : [seg],
+        );
+      }
+
+      if (
+        context?.courseId !== undefined &&
+        context?.maxThreadNumber !== undefined &&
+        run.text.includes("#")
+      ) {
+        const maxThreadNumber = context.maxThreadNumber;
+        segments = segments.flatMap((seg) =>
+          seg.kind === "text"
+            ? splitThreadRefs(seg.text, maxThreadNumber)
+            : [seg],
+        );
+      }
+
+      if (segments.some((s) => s.kind !== "text")) {
+        return (
+          <React.Fragment key={k}>
+            {segments.map((seg, segIdx) => {
+              if (seg.kind === "link") {
+                return (
+                  <LinkText
+                    key={`${k}-link-${segIdx}`}
+                    href={seg.url}
+                    className={className || undefined}
+                  >
+                    {seg.text}
+                  </LinkText>
+                );
+              }
+              if (seg.kind === "email") {
+                return (
+                  <LinkText
+                    key={`${k}-email-${segIdx}`}
+                    href={`mailto:${seg.email}`}
+                    className={className || undefined}
+                  >
+                    {seg.text}
+                  </LinkText>
+                );
+              }
+              if (
+                seg.kind === "thread-ref" &&
+                context?.courseId !== undefined
+              ) {
+                return (
+                  <ThreadRefLink
+                    key={`${k}-ref-${segIdx}`}
+                    courseId={context.courseId}
+                    threadNumber={seg.threadNumber}
+                    className={className}
+                  >
+                    {seg.text}
+                  </ThreadRefLink>
+                );
+              }
+              return (
+                <Text
+                  key={`${k}-txt-${segIdx}`}
+                  className={className}
+                  style={textStyle}
+                >
+                  {seg.text}
+                </Text>
+              );
+            })}
+          </React.Fragment>
+        );
+      }
     }
 
-    return <React.Fragment key={k}>{run.text}</React.Fragment>;
+    return (
+      <Text key={k} className={className} style={textStyle}>
+        {run.text}
+      </Text>
+    );
   });
+}
+
+// Block-level tags that may appear inside a <list-item>. These are NOT merged
+// into the item's inline text — they are rendered as separate blocks below the
+// marker line (e.g. a nested <list> or an extra <paragraph>).
+const LIST_BLOCK_TAGS = new Set([
+  "list",
+  "paragraph",
+  "p",
+  "heading",
+  "pre",
+  "codeblock",
+  "snippet",
+  "image",
+  "file",
+  "video",
+  "web-snippet",
+  "spoiler",
+  "callout",
+  "blockquote",
+]);
+
+/**
+ * Workaround for an upstream API bug: A list can be wrapped in a degenerate
+ * "wrapper" list with a single <list-item>, whose only content is another <list>.
+ * For example:
+ *
+ *   <list style="number">
+ *     <list-item>
+ *       <list style="number">...</list>   <!-- the real list -->
+ *     </list-item>
+ *   </list>
+ *
+ * This renders as a spurious marker ("1.") followed by a sub-list.
+ * When this is detected, we skip the wrapper and just render the inner list as if the wrapper never existed
+ *
+ * Returns the inner <list> node, or null if `node` is not such a wrapper.
+ */
+function unwrapWrapperList(node: XmlElementNode): XmlElementNode | null {
+  const items = node.children.filter(
+    (c): c is XmlElementNode =>
+      c.type === "element" && (c.tag === "li" || c.tag === "list-item"),
+  );
+  if (items.length !== 1) return null;
+  const item = items[0];
+
+  const innerLists = item.children.filter(
+    (c): c is XmlElementNode => c.type === "element" && c.tag === "list",
+  );
+  if (innerLists.length !== 1) return null;
+
+  // Only unwrap if there is no real content
+  const hasOtherContent = item.children.some((c) => {
+    if (c.type === "text") return c.value.trim().length > 0;
+    if (c.type === "element") return c.tag !== "list";
+    return false;
+  });
+  if (hasOtherContent) return null;
+
+  return innerLists[0];
+}
+
+function isNestedListOnlyItem(item: XmlElementNode): boolean {
+  const nonEmptyChildren = item.children.filter(
+    (c) => c.type !== "text" || c.value.trim().length > 0,
+  );
+  return (
+    nonEmptyChildren.length > 0 &&
+    nonEmptyChildren.every((c) => c.type === "element" && c.tag === "list")
+  );
+}
+
+function renderListItem(
+  item: XmlElementNode,
+  keyPrefix: string,
+  marker: string,
+  childListDepth: number,
+  context?: RenderXmlContext,
+): React.ReactNode {
+  const fragments: React.ReactNode[] = [];
+  let markerPlaced = false;
+  let i = 0;
+  const kids = item.children;
+
+  // Helper func to render the marker+content inside a single <Text>
+  const placeMarkerOnInline = (inlineNodes: XmlNode[], k: string) => {
+    const runs = collectInlineRuns(inlineNodes);
+    fragments.push(
+      <View key={k} className="flex-row">
+        <Text className="font-display mr-1 dark:text-white">{marker}</Text>
+        <Text className="font-display flex-1 dark:text-slate-100" selectable>
+          {renderInlineRuns(runs, k, context)}
+        </Text>
+      </View>,
+    );
+    markerPlaced = true;
+  };
+
+  while (i < kids.length) {
+    const child = kids[i];
+    const isParagraph =
+      child.type === "element" &&
+      (child.tag === "paragraph" || child.tag === "p");
+    const isBlock = child.type === "element" && LIST_BLOCK_TAGS.has(child.tag);
+
+    // Leading <paragraph>: just attach the marker to its text
+    // Most common
+    if (!markerPlaced && isParagraph) {
+      placeMarkerOnInline(child.children, `${keyPrefix}-m`);
+      i++;
+      continue;
+    }
+
+    // Leading inline content with no paragraph wrapper:
+    // gather the inline siblings, then attach the marker to them.
+    if (!markerPlaced && !isBlock) {
+      const inlineNodes: XmlNode[] = [];
+      while (i < kids.length) {
+        const c = kids[i];
+        if (c.type === "element" && LIST_BLOCK_TAGS.has(c.tag)) break;
+        inlineNodes.push(c);
+        i++;
+      }
+      placeMarkerOnInline(inlineNodes, `${keyPrefix}-m`);
+      continue;
+    }
+
+    // Render any other (block) child below the marker line
+    // e.g. a nested <list> or a subsequent
+    fragments.push(
+      renderXmlNode(child, `${keyPrefix}-blk-${i}`, childListDepth, context),
+    );
+    i++;
+  }
+
+  // Fallback: No inline content to attach the marker to.
+  // Skip the bare marker when the item only wraps a nested <list> (matches web).
+  if (!markerPlaced && !isNestedListOnlyItem(item)) {
+    fragments.unshift(
+      <Text
+        key={`${keyPrefix}-marker`}
+        className="font-display dark:text-white"
+      >
+        {marker}
+      </Text>,
+    );
+  }
+
+  return (
+    <View key={keyPrefix} className="mb-1 ml-4">
+      {fragments}
+    </View>
+  );
 }
 
 export function renderXmlNode(
   node: XmlNode,
   keyPrefix = "node",
+  listDepth = 1,
+  context?: RenderXmlContext,
 ): React.ReactNode {
   if (node.type === "text") {
     return <Text key={keyPrefix}>{node.value} </Text>;
@@ -254,58 +782,60 @@ export function renderXmlNode(
   if (node.type === "element" || node.type === "document") {
     const children = () =>
       node.children.map((child, i) =>
-        renderXmlNode(child, `${keyPrefix}-${node.tag}-${i}`),
+        renderXmlNode(
+          child,
+          `${keyPrefix}-${node.tag}-${i}`,
+          listDepth,
+          context,
+        ),
       );
 
     if (node.selfClosing && node.children.length === 0) {
-      if (node.tag === "break" || node.tag === "br") {
-        return <Text key={keyPrefix}>{"\n"}</Text>;
+      switch (node.tag) {
+        case "break":
+        case "br":
+          return <Text key={keyPrefix}>{"\n"}</Text>;
+        case "image": {
+          const src = node.attrs.src;
+          const imageWidth = node.attrs.width;
+          const imageHeight = node.attrs.height;
+          const calculatedAspectRatio =
+            Number(imageWidth) / Number(imageHeight);
+
+          if (src) {
+            return (
+              <ContentImage
+                key={keyPrefix}
+                uri={src}
+                aspectRatio={
+                  Number.isFinite(calculatedAspectRatio) &&
+                  calculatedAspectRatio > 0
+                    ? calculatedAspectRatio
+                    : 1
+                }
+              />
+            );
+          }
+          return null;
+        }
+        case "file":
+          return <FileComponent key={keyPrefix} node={node} />;
+        case "video":
+          return <VideoComponent key={keyPrefix} node={node} />;
+        case "web-snippet":
+          return <WebSnippetComponent key={keyPrefix} />;
       }
+
       return null;
     }
 
     switch (node.tag) {
-      case "document": {
-        const fragments: React.ReactNode[] = [];
-        let blockBuffer: TextBlockNode[] = [];
-        let groupIdx = 0;
-
-        const flushBuffer = () => {
-          if (blockBuffer.length === 0) return;
-          const runs = collectMergedBlockRuns(blockBuffer);
-          fragments.push(
-            <Text
-              key={`${keyPrefix}-pg-${groupIdx}`}
-              className="font-display mb-2 dark:text-slate-100"
-              selectable
-            >
-              {renderInlineRuns(runs, `${keyPrefix}-pg-${groupIdx}`)}
-            </Text>,
-          );
-          blockBuffer = [];
-          groupIdx++;
-        };
-
-        node.children.forEach((child, i) => {
-          if (
-            child.type === "element" &&
-            (child.tag === "paragraph" ||
-              child.tag === "p" ||
-              child.tag === "heading")
-          ) {
-            blockBuffer.push({
-              ...child,
-              _blockTag: child.tag,
-            });
-          } else {
-            flushBuffer();
-            fragments.push(renderXmlNode(child, `${keyPrefix}-doc-${i}`));
-          }
-        });
-        flushBuffer();
-
-        return <React.Fragment key={keyPrefix}>{fragments}</React.Fragment>;
-      }
+      case "document":
+        return (
+          <View key={keyPrefix}>
+            {renderBlockChildren(node, keyPrefix, context)}
+          </View>
+        );
       case "paragraph":
       case "p": {
         const runs = collectInlineRuns(node.children);
@@ -315,7 +845,7 @@ export function renderXmlNode(
             className="font-display mb-2 dark:text-slate-100"
             selectable
           >
-            {renderInlineRuns(runs, keyPrefix)}
+            {renderInlineRuns(runs, keyPrefix, context)}
           </Text>
         );
       }
@@ -333,6 +863,17 @@ export function renderXmlNode(
             {children()}
           </Text>
         );
+      case "underline":
+      case "u":
+        return (
+          <Text
+            key={keyPrefix}
+            className="underline"
+            style={{ textDecorationLine: "underline" }}
+          >
+            {children()}
+          </Text>
+        );
       case "code":
         return (
           <Text key={keyPrefix} className="rounded bg-gray-200 px-1 font-mono">
@@ -346,17 +887,90 @@ export function renderXmlNode(
             <Text className="font-mono text-sm">{children()}</Text>
           </View>
         );
-      case "list":
+      case "snippet": {
+        // <snippet> wraps a <snippet-file> that contains the source text.
+        const fileNode = node.children.find(
+          (c): c is XmlElementNode =>
+            c.type === "element" && c.tag === "snippet-file",
+        );
+        const code = extractRawText((fileNode ?? node).children);
         return (
-          <View key={keyPrefix} className="mb-2 ml-2">
-            {children()}
+          <CodeBlock
+            key={keyPrefix}
+            code={code}
+            lang={node.attrs.language}
+            lineNumbers={node.attrs["line-numbers"] === "true"}
+            runnable={node.attrs.runnable === "true"}
+          />
+        );
+      }
+      case "file":
+        return <FileComponent key={keyPrefix} node={node} />;
+      case "video":
+        return <VideoComponent key={keyPrefix} node={node} />;
+      case "web-snippet":
+        return <WebSnippetComponent key={keyPrefix} />;
+      case "list": {
+        // API workaround: if this is a degenerate single-item wrapper list,
+        // skip it and render the list it wraps at the same depth.
+        const wrapper = unwrapWrapperList(node);
+        if (wrapper) {
+          return renderXmlNode(wrapper, keyPrefix, listDepth, context);
+        }
+
+        // Depth guard: Have not implemented horizontal scroll, and there is
+        // not enough width, so past level 2 we punt to the site.
+        if (listDepth > 2) {
+          return (
+            <Text
+              key={keyPrefix}
+              className="my-1 text-slate-500 italic dark:text-slate-400"
+            >
+              Nested lists beyond 2 levels aren't supported — please view this
+              post on the website.
+            </Text>
+          );
+        }
+        // style="number" -> ordered ("1." marker), otherwise bullet ("•").
+        const ordered = node.attrs.style === "number";
+        let itemIndex = 0;
+        return (
+          <View key={keyPrefix} className="mb-2">
+            {node.children.map((child, i) => {
+              if (
+                child.type === "element" &&
+                (child.tag === "li" || child.tag === "list-item")
+              ) {
+                if (!isNestedListOnlyItem(child)) {
+                  itemIndex += 1;
+                }
+                const marker = ordered ? `${itemIndex}.` : "•";
+                return renderListItem(
+                  child,
+                  `${keyPrefix}-li-${i}`,
+                  marker,
+                  listDepth + 1,
+                  context,
+                );
+              }
+              // Non-item children (unexpected inside a list) render inline.
+              return renderXmlNode(
+                child,
+                `${keyPrefix}-blk-${i}`,
+                listDepth + 1,
+                context,
+              );
+            })}
           </View>
         );
+      }
+      // Fallback for an <li>/<list-item> encountered outside a <list> (the
+      // list case normally renders items itself via renderListItem).
       case "li":
       case "list-item":
         return (
           <View key={keyPrefix} className="mb-1 ml-2 flex-row">
-            <Text className="font-display">• </Text>
+            <Text className="font-display dark:text-white">• </Text>
             {children()}
           </View>
         );
@@ -374,23 +988,94 @@ export function renderXmlNode(
             className={`font-display-bold mb-1 ${sizeClass}`}
             selectable
           >
-            {renderInlineRuns(runs, keyPrefix)}
+            {renderInlineRuns(runs, keyPrefix, context)}
           </Text>
         );
       }
-      case "image": {
-        const src = node.attrs.src || node.attrs.url;
-        if (src) {
-          return (
-            <Image
-              key={keyPrefix}
-              source={{ uri: src }}
-              className="my-2 h-40 w-full rounded-lg"
-              resizeMode="contain"
-            />
-          );
+      case "figure": {
+        return <View key={keyPrefix}>{children()}</View>;
+      }
+      case "blockquote": {
+        const hasBlockChildren = node.children.some(
+          (child) =>
+            child.type === "element" &&
+            (LIST_BLOCK_TAGS.has(child.tag) || child.tag === "figure"),
+        );
+
+        return (
+          <View
+            key={keyPrefix}
+            className="my-2 ml-4 rounded-r-lg border-l-4 border-slate-300 bg-slate-50/70 py-2 pr-3 pl-3 dark:border-slate-600 dark:bg-slate-800/50"
+          >
+            {hasBlockChildren ? (
+              renderBlockChildren(node, keyPrefix, context)
+            ) : (
+              <Text
+                className="font-display text-slate-700 dark:text-slate-300"
+                selectable
+              >
+                {renderInlineRuns(
+                  collectInlineRuns(node.children),
+                  keyPrefix,
+                  context,
+                )}
+              </Text>
+            )}
+          </View>
+        );
+      }
+      case "callout": {
+        let containerClass: string;
+        let edgeClass: string;
+        let textClass: string;
+        let IconComponent: typeof InfoIcon;
+
+        switch (node.attrs.type) {
+          case "success":
+            containerClass = "bg-emerald-50 dark:bg-emerald-950";
+            edgeClass = "bg-emerald-600 dark:bg-emerald-500";
+            textClass = "text-emerald-950 dark:text-emerald-50";
+            IconComponent = CheckCircleIcon;
+            break;
+          case "warning":
+            containerClass = "bg-amber-50 dark:bg-amber-950";
+            edgeClass = "bg-amber-600 dark:bg-amber-500";
+            textClass = "text-amber-950 dark:text-amber-50";
+            IconComponent = WarningIcon;
+            break;
+          case "error":
+            containerClass = "bg-red-50 dark:bg-red-950";
+            edgeClass = "bg-red-600 dark:bg-red-500";
+            textClass = "text-red-950 dark:text-red-50";
+            IconComponent = XCircleIcon;
+            break;
+          case "info":
+          default:
+            containerClass = "bg-blue-50 dark:bg-blue-950";
+            edgeClass = "bg-blue-600 dark:bg-blue-500";
+            textClass = "text-blue-950 dark:text-blue-50";
+            IconComponent = InfoIcon;
         }
-        return null;
+
+        const runs = collectInlineRuns(node.children);
+
+        return (
+          <View
+            key={keyPrefix}
+            className={`my-2 flex-row overflow-hidden rounded-lg ${containerClass}`}
+          >
+            <View
+              className={`items-center justify-center px-2 py-3 ${edgeClass}`}
+            >
+              <IconComponent size={18} color="#ffffff" weight="bold" />
+            </View>
+            <View className="flex-1 p-3">
+              <Text className={`font-display ${textClass}`} selectable>
+                {renderInlineRuns(runs, keyPrefix, context)}
+              </Text>
+            </View>
+          </View>
+        );
       }
       case "link": {
         return (
@@ -399,8 +1084,34 @@ export function renderXmlNode(
           </LinkText>
         );
       }
-      default:
+      // <spoiler> is a block-level container (never nested inside a <paragraph>)
+      // Currently, it only holds text + lists, this may change to support images, codeblocks etc.
+      case "spoiler":
+        return (
+          <SpoilerText key={keyPrefix}>
+            {renderBlockChildren(node, keyPrefix, context)}
+          </SpoilerText>
+        );
+      case "math": {
+        const textChild = node.children.find(
+          (child): child is XmlTextNode => child.type === "text",
+        );
+        if (!textChild) return null;
+
+        return (
+          <StyledRaTeXView
+            key={keyPrefix}
+            latex={validateAndCleanLaTeX(textChild.value)}
+            fontSize={24}
+            colorClassName="accent-gray-900 dark:accent-gray-100"
+            onError={(e) => console.warn("LaTeX error:", e.nativeEvent.error)}
+          />
+        );
+      }
+      default: {
+        console.log("Unhandled Node Tag:", node.tag);
         return <React.Fragment key={keyPrefix}>{children()}</React.Fragment>;
+      }
     }
   }
 

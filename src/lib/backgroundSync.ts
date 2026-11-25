@@ -1,30 +1,30 @@
-import * as TaskManager from "expo-task-manager";
-import * as BackgroundTask from "expo-background-task";
+import { inArray, sql } from "drizzle-orm";
+import { drizzle } from "drizzle-orm/expo-sqlite/async";
 import { Effect } from "effect";
 import {
   FetchHttpClient,
   HttpClient,
   HttpClientRequest,
   HttpClientResponse,
-} from "effect/unstable/http";
+} from "effect/http";
+import * as BackgroundTask from "expo-background-task";
 import { openDatabaseSync } from "expo-sqlite";
-import { drizzle } from "drizzle-orm/expo-sqlite";
-import { inArray, sql } from "drizzle-orm";
+import * as TaskManager from "expo-task-manager";
 import * as schema from "@/src/db/schema";
 import {
+  isInSleepHours,
+  requestNotificationPermissions,
+  sendNewThreadNotification,
+  shouldSendNotification,
+} from "@/src/lib/notifications";
+import { UserResponse } from "@/src/lib/schema";
+import {
+  cacheCourses,
   getApiKey,
   getCachedCourses,
-  cacheCourses,
   initStorage,
 } from "@/src/lib/storage";
 import { fetchThreadsFromApi, syncThreadsToDb } from "@/src/lib/threads";
-import { UserResponse } from "@/src/lib/schema";
-import {
-  requestNotificationPermissions,
-  shouldSendNotification,
-  isInSleepHours,
-  sendNewThreadNotification,
-} from "@/src/lib/notifications";
 
 export const TASK_NAME = "background-thread-sync";
 
@@ -32,7 +32,7 @@ let isTaskDefined = false;
 
 function getBackgroundDb() {
   const expoDb = openDatabaseSync("edgo.db", { enableChangeListener: true });
-  return drizzle(expoDb, { schema });
+  return drizzle(expoDb);
 }
 
 function fetchCoursesFromApi() {

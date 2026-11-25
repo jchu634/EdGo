@@ -1,17 +1,17 @@
-import { useState } from "react";
-import { Effect } from "effect";
 import { eq } from "drizzle-orm";
+import { Effect } from "effect";
+import { useState } from "react";
 import { threadsTable } from "@/src/db/schema";
-import type { Db } from "@/src/providers/dbProvider";
 import type { ThreadDetail } from "@/src/lib/thread-detail";
 import {
   starThread,
   unstarThread,
-  upvoteThread,
+  unvoteComment,
   unvoteThread,
   upvoteComment,
-  unvoteComment,
+  upvoteThread,
 } from "@/src/lib/threads";
+import type { Db } from "@/src/providers/dbProvider";
 
 export interface VoteState {
   isStarred: boolean;
@@ -55,7 +55,11 @@ const EMPTY_VOTE_STATE: VoteState = {
   commentVoteCounts: new Map(),
 };
 
-export function useThreadVotes(thread: ThreadDetail | null, db: Db) {
+export function useThreadVotes(
+  thread: ThreadDetail | null,
+  db: Db,
+  readOnly = false,
+) {
   const [state, setState] = useState<VoteState>(EMPTY_VOTE_STATE);
   const [trackedThreadId, setTrackedThreadId] = useState<number | null>(null);
 
@@ -66,7 +70,7 @@ export function useThreadVotes(thread: ThreadDetail | null, db: Db) {
   }
 
   function toggleStar() {
-    if (!thread) return;
+    if (!thread || readOnly) return;
     const next = !state.isStarred;
     const prevStarred = state.isStarred;
     const prevCount = state.starCount;
@@ -103,7 +107,10 @@ export function useThreadVotes(thread: ThreadDetail | null, db: Db) {
         catch: (e) => new Error(`DB star update failed: ${String(e)}`),
       }).pipe(
         Effect.tapError((err) =>
-          Effect.logError(`[Star] local DB persist failed for ${thread.id}:`, err),
+          Effect.logError(
+            `[Star] local DB persist failed for ${thread.id}:`,
+            err,
+          ),
         ),
       );
     }).pipe(Effect.ignore);
@@ -111,7 +118,7 @@ export function useThreadVotes(thread: ThreadDetail | null, db: Db) {
   }
 
   function toggleVote() {
-    if (!thread) return;
+    if (!thread || readOnly) return;
     const next = !state.isVoted;
     const prevVoted = state.isVoted;
     const prevCount = state.voteCount;
@@ -148,7 +155,10 @@ export function useThreadVotes(thread: ThreadDetail | null, db: Db) {
         catch: (e) => new Error(`DB vote update failed: ${String(e)}`),
       }).pipe(
         Effect.tapError((err) =>
-          Effect.logError(`[Vote] local DB persist failed for ${thread.id}:`, err),
+          Effect.logError(
+            `[Vote] local DB persist failed for ${thread.id}:`,
+            err,
+          ),
         ),
       );
     }).pipe(Effect.ignore);
@@ -156,6 +166,7 @@ export function useThreadVotes(thread: ThreadDetail | null, db: Db) {
   }
 
   function toggleCommentVote(commentId: number, currentVoted: boolean) {
+    if (readOnly) return;
     const next = !currentVoted;
     setState((s) => {
       const commentVotes = new Map(s.commentVotes);

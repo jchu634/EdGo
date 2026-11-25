@@ -3,7 +3,7 @@ const IS_DEV = process.env.APP_VARIANT === "development";
 export default {
   name: IS_DEV ? "EdGo (Dev)" : "EdGo",
   slug: "EdGo",
-  version: "0.1.4",
+  version: "0.5.0",
   orientation: "portrait",
   icon: "./assets/images/icon.png",
   scheme: "edgo",
@@ -20,10 +20,6 @@ export default {
     },
     predictiveBackGestureEnabled: false,
     package: IS_DEV ? "com.edgo.dev" : "com.edgo",
-  },
-  web: {
-    output: "static",
-    favicon: "./assets/images/favicon.png",
   },
   plugins: [
     "expo-router",

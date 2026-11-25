@@ -1,9 +1,13 @@
 import { Schema } from "effect";
-import { createMMKV, type MMKV } from "react-native-mmkv";
-import * as SecureStore from "expo-secure-store";
-import { Course, CourseCategory, ThreadDetailResponse } from "@/src/lib/schema";
 import * as Crypto from "expo-crypto";
+import * as SecureStore from "expo-secure-store";
+import { createMMKV, type MMKV } from "react-native-mmkv";
 import { DEMO, DEMO_API_KEY } from "@/src/lib/demo";
+import {
+  Course,
+  type CourseCategory,
+  ThreadDetailResponse,
+} from "@/src/lib/schema";
 
 let courseCache: MMKV | null = null;
 let threadCache: MMKV | null = null;
@@ -264,4 +268,19 @@ export function getLastNotifiedTimestamp(): number {
 
 export function setLastNotifiedTimestamp(ts: number): void {
   requireStore(settings, "settings").set("notifications.last_notified", ts);
+}
+
+export type ThemePreference = "system" | "light" | "dark";
+
+const THEME_PREFERENCES: ThemePreference[] = ["system", "light", "dark"];
+
+export function getThemePreference(): ThemePreference {
+  const raw = requireStore(settings, "settings").getString("ui.theme");
+  return THEME_PREFERENCES.includes(raw as ThemePreference)
+    ? (raw as ThemePreference)
+    : "system";
+}
+
+export function setThemePreference(theme: ThemePreference): void {
+  requireStore(settings, "settings").set("ui.theme", theme);
 }

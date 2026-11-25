@@ -1,35 +1,52 @@
-import { View, Text, ScrollView, ActivityIndicator, Image, Pressable } from "react-native";
-import { useLocalSearchParams } from "expo-router";
 import * as Linking from "expo-linking";
-
+import { useLocalSearchParams } from "expo-router";
 import {
+  ArrowSquareOutIcon,
+  CheckCircleIcon,
   EyeIcon,
   HeartIcon,
-  StarIcon,
+  MedalIcon,
   PushPinIcon,
-  CheckCircleIcon,
-  ArrowSquareOutIcon,
+  StarIcon,
 } from "phosphor-react-native";
-
-import { renderXmlNode } from "@/src/lib/renderXML";
-import { settings } from "@/src/lib/storage";
-import { useDb } from "@/src/providers/dbProvider";
+import {
+  ActivityIndicator,
+  Image,
+  Pressable,
+  ScrollView,
+  Text,
+  View,
+} from "react-native";
+import {
+  AnimatedToggleIcon,
+  renderComment,
+} from "@/src/components/ThreadComments";
+import ThreadFullscreenButton from "@/src/components/ThreadFullscreenButton";
+import { useMaxThreadNumber } from "@/src/hooks/useMaxThreadNumber";
 import { useThreadDetail } from "@/src/hooks/useThreadDetail";
 import { useThreadVotes } from "@/src/hooks/useThreadVotes";
-import { AnimatedToggleIcon, renderComment } from "@/src/components/thread-comments";
+import { renderXmlNode } from "@/src/lib/renderXML";
+import { settings } from "@/src/lib/storage";
+import { useCourseLayout } from "@/src/providers/courseLayoutProvider";
+import { useDb } from "@/src/providers/dbProvider";
 
-import "@/app/global.css";
+import "@/global.css";
 
 export default function ThreadPage() {
+  const { isWide } = useCourseLayout();
   const { courseid, thread } = useLocalSearchParams();
   const courseIdNum = Number(Array.isArray(courseid) ? courseid[0] : courseid);
   const threadNumber = Number(Array.isArray(thread) ? thread[0] : thread);
 
   const db = useDb();
-  const { thread: t, usersMap, parsedXmlMap, loading } = useThreadDetail(
-    courseIdNum,
-    threadNumber,
-  );
+  const maxThreadNumber = useMaxThreadNumber(courseIdNum, threadNumber);
+  const {
+    thread: t,
+    usersMap,
+    parsedXmlMap,
+    loading,
+    isHidden,
+  } = useThreadDetail(courseIdNum, threadNumber);
   const {
     isStarred,
     starCount,
@@ -40,11 +57,11 @@ export default function ThreadPage() {
     toggleStar,
     toggleVote,
     toggleCommentVote,
-  } = useThreadVotes(t, db);
+  } = useThreadVotes(t, db, isHidden);
 
   if (loading && !t) {
     return (
-      <View className="flex h-full items-center justify-center">
+      <View className="flex h-full items-center justify-center bg-white dark:bg-black">
         <ActivityIndicator size="large" color="#70069e" />
       </View>
     );
@@ -52,9 +69,11 @@ export default function ThreadPage() {
 
   if (!t) {
     return (
-      <View className="flex h-full items-center justify-center">
+      <View className="flex h-full items-center justify-center bg-white dark:bg-black">
         <Text className="font-display text-gray-500">
-          Thread not found, You may be offline
+          {isHidden
+            ? "This thread has been deleted or made private."
+            : "Thread not found, You may be offline"}
         </Text>
       </View>
     );
@@ -76,9 +95,13 @@ export default function ThreadPage() {
             {t.title}
           </Text>
           {t.is_pinned && <PushPinIcon size={18} color="#70069e" />}
+          <ThreadFullscreenButton />
         </View>
 
-        <View className="mb-3 flex-row items-center gap-x-2">
+        <View
+          className="mb-3 flex-row items-center gap-x-2"
+          style={isWide ? { flexWrap: "wrap", rowGap: 8 } : undefined}
+        >
           {!t.is_anonymous && author?.avatar ? (
             <Image
               source={{
@@ -97,7 +120,10 @@ export default function ThreadPage() {
           <Text className="font-display-semibold dark:text-slate-100">
             {t.is_anonymous ? "Anonymous" : (author?.name ?? "Unknown")}
           </Text>
-          <View className="flex flex-row items-center gap-x-4">
+          <View
+            className="flex flex-row items-center gap-x-4"
+            style={isWide ? { flexWrap: "wrap" } : undefined}
+          >
             <Text className="font-display dark:text-slate-100">
               {t.updated_at
                 ? `Updated: ${new Date(t.updated_at).toLocaleDateString()}`
@@ -157,11 +183,22 @@ export default function ThreadPage() {
               <Text className="text-sm text-green-600">Answered</Text>
             </View>
           )}
+          {t.is_endorsed && (
+            <View className="flex-row items-center gap-x-1 rounded-full border border-blue-500 bg-blue-500/10 px-2 py-0.5">
+              <MedalIcon size={14} color="#3b82f6" weight="fill" />
+              <Text className="text-xs font-semibold text-blue-600 dark:text-blue-400">
+                Endorsed
+              </Text>
+            </View>
+          )}
         </View>
 
-        <View className="mb-4 rounded-xl bg-gray-50 p-3 dark:bg-black">
+        <View className="mb-2 rounded-xl bg-gray-50 p-1 dark:bg-black">
           {mainXml ? (
-            renderXmlNode(mainXml, "thread-body")
+            renderXmlNode(mainXml, "thread-body", 1, {
+              courseId: courseIdNum,
+              maxThreadNumber,
+            })
           ) : (
             <Text className="font-display text-gray-700">{t.content}</Text>
           )}
@@ -183,6 +220,7 @@ export default function ThreadPage() {
                 commentVotes,
                 commentVoteCounts,
                 toggleCommentVote,
+                maxThreadNumber,
               ),
             )}
           </View>
@@ -204,6 +242,7 @@ export default function ThreadPage() {
                 commentVotes,
                 commentVoteCounts,
                 toggleCommentVote,
+                maxThreadNumber,
               ),
             )}
           </View>

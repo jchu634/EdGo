@@ -1,8 +1,9 @@
-import { and, eq, desc, asc, sql } from "drizzle-orm";
-import { useLiveQuery } from "drizzle-orm/expo-sqlite";
+import { and, asc, desc, eq, sql } from "drizzle-orm";
+import { useLiveQuery } from "drizzle-orm/expo-sqlite/async";
 import { threadsTable } from "@/src/db/schema";
-import { useDb } from "@/src/providers/dbProvider";
+import { getCachedThreadDetail } from "@/src/lib/storage";
 import { escapeLike } from "@/src/lib/utils";
+import { useDb } from "@/src/providers/dbProvider";
 
 export function useSearchDbQuery(
   courseId: number,
@@ -33,20 +34,28 @@ export function useSearchDbQuery(
           sql`${threadsTable.title} LIKE ${"%" + escapeLike(trimmed) + "%"} ESCAPE '\\'`,
         ),
       )
-      .orderBy(...orderByClause)
-      .limit(50),
+      .orderBy(...orderByClause),
     [courseId, trimmed, sort],
   );
+
+  // Drop ghost threads the user never opened; keep previously-opened hidden
+  // threads so they remain discoverable (rendered read-only), then apply the
+  // final cap so the limit counts usable results rather than dropped ghosts.
+  const results = (searchResults ?? [])
+    .filter(
+      (t) => !t.isHidden || getCachedThreadDetail(courseId, t.number) !== null,
+    )
+    .slice(0, 50);
 
   console.debug("[useSearchDbQuery] render", {
     courseId,
     query: trimmed,
-    resultCount: (searchResults ?? []).length,
+    resultCount: results.length,
     queryError: queryError?.message ?? null,
   });
 
   return {
-    searchResults: searchResults ?? [],
+    searchResults: results,
     queryError,
     updatedAt,
   };

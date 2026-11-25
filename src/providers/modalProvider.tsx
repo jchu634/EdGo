@@ -1,32 +1,27 @@
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  useRef,
-} from "react";
-import {
-  View,
-  Text,
-  Pressable,
-  Modal,
-  TextInput,
-  FlatList,
-  useWindowDimensions,
-  ActivityIndicator,
-} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { and, asc, desc, eq, sql } from "drizzle-orm";
+import { useLiveQuery } from "drizzle-orm/expo-sqlite/async";
+import { Effect, Fiber } from "effect";
 import * as Clipboard from "expo-clipboard";
 import * as Linking from "expo-linking";
-import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { eq, and, desc, asc, sql } from "drizzle-orm";
-import { useLiveQuery } from "drizzle-orm/expo-sqlite";
-import { Effect, Fiber } from "effect";
-
-import { useDb } from "@/src/providers/dbProvider";
-import { threadsTable, type ThreadUser } from "@/src/db/schema";
+import type React from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
+import {
+  ActivityIndicator,
+  FlatList,
+  Modal,
+  Pressable,
+  Text,
+  TextInput,
+  useWindowDimensions,
+  View,
+} from "react-native";
+import ImageViewer, { type ViewedImage } from "@/src/components/ImageViewer";
+import { type ThreadUser, threadsTable } from "@/src/db/schema";
 import { searchAndSyncThreads } from "@/src/lib/threads";
 import { escapeLike } from "@/src/lib/utils";
+import { useDb } from "@/src/providers/dbProvider";
 
 interface LinkTextContextValue {
   openLink: (url: string) => void;
@@ -52,6 +47,20 @@ const SearchModalContext = createContext<SearchModalContextValue>({
 
 export function useSearchModal() {
   return useContext(SearchModalContext);
+}
+
+interface ImageViewerContextValue {
+  openImage: (image: ViewedImage) => void;
+  closeImage: () => void;
+}
+
+const ImageViewerContext = createContext<ImageViewerContextValue>({
+  openImage: () => {},
+  closeImage: () => {},
+});
+
+export function useImageViewer() {
+  return useContext(ImageViewerContext);
 }
 
 interface SearchQueryContextValue {
@@ -327,6 +336,7 @@ export function ModalProvider({ children }: { children: React.ReactNode }) {
   const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [searchCourseId, setSearchCourseId] = useState<number | null>(null);
+  const [viewedImage, setViewedImage] = useState<ViewedImage | null>(null);
 
   const [searchQuery, setSearchQueryState] = useState<string | null>(null);
   const [searchQueryCourseId, setSearchQueryCourseId] = useState<number | null>(
@@ -347,9 +357,17 @@ export function ModalProvider({ children }: { children: React.ReactNode }) {
 
   async function openExternalUrl(url: string) {
     const trimmed = url.trim().toLowerCase();
-    if (!trimmed.startsWith("http://") && !trimmed.startsWith("https://"))
+    if (
+      !trimmed.startsWith("http://") &&
+      !trimmed.startsWith("https://") &&
+      !trimmed.startsWith("mailto:")
+    )
       return;
     try {
+      if (trimmed.startsWith("mailto:")) {
+        await Linking.openURL(url);
+        return;
+      }
       const supported = await Linking.canOpenURL(url);
       if (supported) {
         await Linking.openURL(url);
@@ -366,6 +384,8 @@ export function ModalProvider({ children }: { children: React.ReactNode }) {
     }
     setActiveHref(url);
     setCopied(false);
+    setSearchCourseId(null);
+    setViewedImage(null);
   }
 
   function dismissMenu() {
@@ -402,6 +422,8 @@ export function ModalProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   function openSearch(courseId: number) {
+    dismissMenu();
+    setViewedImage(null);
     setSearchCourseId(courseId);
   }
 
@@ -409,88 +431,102 @@ export function ModalProvider({ children }: { children: React.ReactNode }) {
     setSearchCourseId(null);
   }
 
+  function openImage(image: ViewedImage) {
+    dismissMenu();
+    setSearchCourseId(null);
+    setViewedImage(image);
+  }
+
+  function closeImage() {
+    setViewedImage(null);
+  }
+
   return (
     <LinkTextContext.Provider value={{ openLink: openExternalUrl, showMenu }}>
       <SearchModalContext.Provider value={{ openSearch }}>
-        <SearchQueryContext.Provider
-          value={{
-            searchQuery,
-            searchCourseId: searchQueryCourseId,
-            searchSort,
-            setSearchQuery,
-            clearSearch,
-          }}
-        >
-          {children}
-
-          {/* Link-text context menu modal */}
-          <Modal
-            visible={activeHref !== null}
-            transparent
-            animationType="fade"
-            statusBarTranslucent={true}
-            onRequestClose={dismissMenu}
+        <ImageViewerContext.Provider value={{ openImage, closeImage }}>
+          <SearchQueryContext.Provider
+            value={{
+              searchQuery,
+              searchCourseId: searchQueryCourseId,
+              searchSort,
+              setSearchQuery,
+              clearSearch,
+            }}
           >
-            <Pressable
-              onPress={dismissMenu}
-              style={{
-                width,
-                height,
-                backgroundColor: "rgba(0,0,0,0.4)",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
+            {children}
+
+            {/* Link-text context menu modal */}
+            <Modal
+              visible={activeHref !== null}
+              transparent
+              animationType="fade"
+              statusBarTranslucent={true}
+              onRequestClose={dismissMenu}
             >
-              <Pressable className="w-[90%] self-center rounded-xl bg-white p-4 dark:bg-slate-950">
-                <Text
-                  className="font-display mb-3 text-sm text-wrap text-gray-700 dark:text-neutral-300"
-                  numberOfLines={2}
-                  ellipsizeMode="middle"
-                >
-                  {activeHref}
-                </Text>
-
-                {copied ? (
-                  <Text className="font-display text-center text-sm text-green-600 dark:text-green-400">
-                    Copied!
+              <Pressable
+                onPress={dismissMenu}
+                style={{
+                  width,
+                  height,
+                  backgroundColor: "rgba(0,0,0,0.4)",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Pressable className="w-[90%] self-center rounded-xl bg-white p-4 dark:bg-slate-800">
+                  <Text
+                    className="font-display mb-3 text-sm text-wrap text-gray-500 dark:text-neutral-100"
+                    numberOfLines={2}
+                    ellipsizeMode="middle"
+                  >
+                    {activeHref}
                   </Text>
-                ) : (
-                  <View style={{ gap: 12 }}>
-                    <Pressable
-                      onPress={handleCopy}
-                      className="w-50 items-center self-center rounded-lg bg-gray-300 py-3 active:bg-gray-200 dark:bg-neutral-700 dark:active:bg-neutral-600"
-                      style={{
-                        width: 200,
-                        alignSelf: "center",
-                      }}
-                    >
-                      <Text className="font-display text-md text-center text-gray-800 dark:text-neutral-100">
-                        Copy Link
-                      </Text>
-                    </Pressable>
-                    <Pressable
-                      onPress={handleOpen}
-                      className="w-50 items-center self-center rounded-lg bg-gray-300 py-3 active:bg-gray-200 dark:bg-neutral-700 dark:active:bg-neutral-600"
-                      style={{
-                        width: 200,
-                        alignSelf: "center",
-                      }}
-                    >
-                      <Text className="font-display text-md text-center text-gray-800 dark:text-neutral-100">
-                        Open Link
-                      </Text>
-                    </Pressable>
-                  </View>
-                )}
-              </Pressable>
-            </Pressable>
-          </Modal>
 
-          {/* Search modal — only mounted when active */}
-          {searchCourseId !== null && (
-            <SearchModal courseId={searchCourseId} onClose={closeSearch} />
-          )}
-        </SearchQueryContext.Provider>
+                  {copied ? (
+                    <Text className="font-display text-center text-sm text-green-600 dark:text-green-400">
+                      Copied!
+                    </Text>
+                  ) : (
+                    <View className="flex w-full flex-row justify-between">
+                      <Pressable
+                        onPress={handleCopy}
+                        className="w-44 items-center self-center rounded-lg bg-gray-300 py-3 active:bg-gray-200 dark:bg-neutral-700 dark:active:bg-neutral-600"
+                        style={{
+                          alignSelf: "center",
+                        }}
+                      >
+                        <Text className="font-display text-md text-center text-gray-800 dark:text-neutral-100">
+                          Copy Link
+                        </Text>
+                      </Pressable>
+                      <Pressable
+                        onPress={handleOpen}
+                        className="w-44 items-center self-center rounded-lg bg-gray-300 py-3 active:bg-gray-200 dark:bg-neutral-700 dark:active:bg-neutral-600"
+                        style={{
+                          alignSelf: "center",
+                        }}
+                      >
+                        <Text className="font-display text-md text-center text-gray-800 dark:text-neutral-100">
+                          Open Link
+                        </Text>
+                      </Pressable>
+                    </View>
+                  )}
+                </Pressable>
+              </Pressable>
+            </Modal>
+
+            {/* Search modal — only mounted when active */}
+            {searchCourseId !== null && (
+              <SearchModal courseId={searchCourseId} onClose={closeSearch} />
+            )}
+
+            {viewedImage !== null && (
+              <ImageViewer image={viewedImage} onClose={closeImage} />
+            )}
+          </SearchQueryContext.Provider>
+        </ImageViewerContext.Provider>
       </SearchModalContext.Provider>
     </LinkTextContext.Provider>
   );

@@ -1,6 +1,5 @@
-import React from "react";
-import { View, Text } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { Text, View } from "react-native";
 
 import { useNetwork } from "@/src/providers/networkProvider";
 

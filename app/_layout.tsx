@@ -1,20 +1,57 @@
-import { ActivityIndicator, Platform, Pressable, View } from "react-native";
-import { Suspense } from "react";
-import { Stack, useGlobalSearchParams, useRouter } from "expo-router";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-
-import { KeyProvider } from "@/src/providers/keyProvider";
-import { DbProvider } from "@/src/providers/dbProvider";
-import { ModalProvider, useSearchModal } from "@/src/providers/modalProvider";
-import { NotificationProvider } from "@/src/providers/notificationProvider";
-import { NetworkProvider } from "@/src/providers/networkProvider";
+import { Stack, useGlobalSearchParams, useRouter } from "expo-router";
+import { Suspense } from "react";
+import {
+  ActivityIndicator,
+  Platform,
+  Pressable,
+  Text,
+  View,
+} from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useUniwind } from "uniwind";
+import CourseFrame from "@/src/components/CourseFrame";
 import OfflineBanner from "@/src/components/OfflineBanner";
+import { getCachedCourses } from "@/src/lib/storage";
+import {
+  CourseLayoutProvider,
+  useCourseLayout,
+} from "@/src/providers/courseLayoutProvider";
+import { DbProvider } from "@/src/providers/dbProvider";
+import { HighlighterProvider } from "@/src/providers/highlightProvider";
+import { KeyProvider, useApiKey } from "@/src/providers/keyProvider";
+import { ModalProvider, useSearchModal } from "@/src/providers/modalProvider";
+import { NetworkProvider } from "@/src/providers/networkProvider";
+import { NotificationProvider } from "@/src/providers/notificationProvider";
+import "@/global.css";
 
+function HeaderLeft() {
+  const cached = getCachedCourses();
+
+  const { courseid } = useGlobalSearchParams();
+
+  const normalizedCourseId =
+    courseid && (!Array.isArray(courseid) || courseid.length > 0)
+      ? Number(Array.isArray(courseid) ? courseid[0] : courseid)
+      : NaN;
+
+  const course = cached?.find((c) => c.id === normalizedCourseId);
+  return (
+    <>
+      {!isNaN(normalizedCourseId) && course && (
+        <Text className="font-display-medium line-clamp-1 h-6 w-3/4 truncate text-white">
+          {course.name}
+        </Text>
+      )}
+    </>
+  );
+}
 function HeaderRight() {
   const router = useRouter();
   const { courseid } = useGlobalSearchParams();
   const { openSearch } = useSearchModal();
+  const { isWide, openSidebarSearch } = useCourseLayout();
 
   const normalizedCourseId =
     courseid && (!Array.isArray(courseid) || courseid.length > 0)
@@ -26,51 +63,144 @@ function HeaderRight() {
     <>
       {isInCourse && (
         <Pressable
-          onPress={() => openSearch(normalizedCourseId)}
+          accessibilityRole="button"
+          accessibilityLabel="Search threads"
+          onPress={() =>
+            isWide ? openSidebarSearch() : openSearch(normalizedCourseId)
+          }
           style={{ marginRight: 16 }}
         >
           <Ionicons name="search" size={24} color="white" />
         </Pressable>
       )}
-      <Pressable onPress={() => router.navigate("/settings")}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Settings"
+        onPress={() => router.navigate("/settings")}
+      >
         <Ionicons name="person" size={24} color="white" />
       </Pressable>
     </>
   );
 }
 
-export default function RootLayout() {
+function WideCourseHeader() {
+  const { courseId, hasThread } = useCourseLayout();
   const insets = useSafeAreaInsets();
+  const router = useRouter();
+  const course = getCachedCourses()?.find((item) => item.id === courseId);
 
   return (
-    <Suspense fallback={<ActivityIndicator size="large" />}>
-      <KeyProvider>
-        <DbProvider>
-          <NotificationProvider>
-            <NetworkProvider>
-              <ModalProvider>
-                <View className="flex-1">
-                  <OfflineBanner />
-                  <Stack
-                    screenOptions={{
-                      headerStyle: {
-                        backgroundColor: "#70069e",
-                      },
-                      headerTintColor: "white",
-                      headerTitle: "",
-                      headerRight: () => <HeaderRight />,
-                      contentStyle: {
-                        paddingBottom:
-                          Platform.OS === "android" ? insets.bottom : 0,
-                      },
-                    }}
-                  />
-                </View>
-              </ModalProvider>
-            </NetworkProvider>
-          </NotificationProvider>
-        </DbProvider>
-      </KeyProvider>
-    </Suspense>
+    <View
+      style={{
+        backgroundColor: "#70069e",
+        paddingTop: insets.top,
+        paddingLeft: insets.left,
+        paddingRight: insets.right,
+      }}
+    >
+      <View
+        style={{
+          height: 56,
+          flexDirection: "row",
+          alignItems: "center",
+          paddingHorizontal: 16,
+        }}
+      >
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={hasThread ? "Back to course" : "Back"}
+          hitSlop={8}
+          style={{ padding: 8, marginRight: 16 }}
+          onPress={() => {
+            if (hasThread && courseId !== null)
+              router.dismissTo(`/courses/${courseId}`);
+            else if (router.canGoBack()) router.back();
+            else router.replace("/");
+          }}
+        >
+          <Ionicons name="arrow-back" size={24} color="white" />
+        </Pressable>
+        <Text
+          className="font-display-medium flex-1 text-white"
+          numberOfLines={1}
+          style={{ marginRight: 16 }}
+        >
+          {course?.name ?? "Course threads"}
+        </Text>
+        <HeaderRight />
+      </View>
+    </View>
+  );
+}
+
+function AppNavigator() {
+  const insets = useSafeAreaInsets();
+  const { isWide } = useCourseLayout();
+  const { theme } = useUniwind();
+  const { apiKey } = useApiKey();
+
+  return (
+    <CourseFrame header={<WideCourseHeader />}>
+      <Stack
+        screenOptions={({ route }) => {
+          const isWideCourse = isWide && route.name.startsWith("courses/");
+          return {
+            headerShown: !isWideCourse,
+            animation: isWideCourse ? "none" : "default",
+            headerStyle: { backgroundColor: "#70069e" },
+            headerTintColor: "white",
+            headerTitle: "",
+            headerBackVisible: true,
+            headerLeft: () => <HeaderLeft />,
+            headerRight: () => <HeaderRight />,
+            contentStyle: {
+              ...(route.name.startsWith("courses/") && {
+                backgroundColor: theme === "dark" ? "#000000" : "#ffffff",
+              }),
+              paddingBottom: Platform.OS === "android" ? insets.bottom : 0,
+            },
+          };
+        }}
+      >
+        <Stack.Protected guard={!!apiKey}>
+          <Stack.Screen name="index" />
+          <Stack.Screen name="courses/[courseid]/index" />
+          <Stack.Screen name="courses/[courseid]/[thread]/index" />
+          <Stack.Screen name="courses/[courseid]/[thread]/[commentid]" />
+          <Stack.Screen name="settings/index" />
+        </Stack.Protected>
+        <Stack.Protected guard={!apiKey}>
+          <Stack.Screen name="api-key" options={{ headerShown: false }} />
+        </Stack.Protected>
+      </Stack>
+    </CourseFrame>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <Suspense fallback={<ActivityIndicator size="large" />}>
+        <KeyProvider>
+          <DbProvider>
+            <NotificationProvider>
+              <NetworkProvider>
+                <HighlighterProvider>
+                  <CourseLayoutProvider>
+                    <ModalProvider>
+                      <View style={{ flex: 1 }}>
+                        <OfflineBanner />
+                        <AppNavigator />
+                      </View>
+                    </ModalProvider>
+                  </CourseLayoutProvider>
+                </HighlighterProvider>
+              </NetworkProvider>
+            </NotificationProvider>
+          </DbProvider>
+        </KeyProvider>
+      </Suspense>
+    </GestureHandlerRootView>
   );
 }

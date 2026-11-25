@@ -1,25 +1,42 @@
-import React, { useState, useCallback } from "react";
-import { View, Text, Pressable, Switch, Platform } from "react-native";
+import React, { useCallback, useState } from "react";
+import {
+  Platform,
+  Pressable,
+  ScrollView,
+  Switch,
+  Text,
+  View,
+} from "react-native";
+import { Uniwind } from "uniwind";
+import { sendTestNotification } from "@/src/lib/notifications";
 import {
   clearCourseCache,
   clearThreadCache,
-  settings,
   getNotificationSettings,
-  setNotificationSetting,
+  getThemePreference,
   type NotificationFrequency,
+  setNotificationSetting,
+  setThemePreference,
+  settings,
+  type ThemePreference,
 } from "@/src/lib/storage";
 import { useApiKey } from "@/src/providers/keyProvider";
 import { useNotificationSync } from "@/src/providers/notificationProvider";
-import { sendTestNotification } from "@/src/lib/notifications";
 
-import "@/app/global.css";
-import { useMMKVBoolean, useMMKVString } from "react-native-mmkv";
+import "@/global.css";
 import { DateTimePicker } from "@expo/ui/community/datetime-picker";
+import { useMMKVBoolean, useMMKVString } from "react-native-mmkv";
 
 const FREQUENCY_OPTIONS: { value: NotificationFrequency; label: string }[] = [
   { value: "hourly", label: "Every hour" },
   { value: "every_4_hours", label: "Every 4 hours" },
   { value: "daily_6pm", label: "Daily at 6pm" },
+];
+
+const THEME_OPTIONS: { value: ThemePreference; label: string }[] = [
+  { value: "system", label: "System" },
+  { value: "light", label: "Light" },
+  { value: "dark", label: "Dark" },
 ];
 
 function hourToDate(hour: number): Date {
@@ -40,6 +57,10 @@ export default function Index() {
     "user.developer_settings",
     settings!,
   );
+  const [largerCards, setLargerCards] = useMMKVBoolean(
+    "ui.larger_cards",
+    settings!,
+  );
   const [userName] = useMMKVString("user.name", settings!);
   const [userEmail] = useMMKVString("user.email", settings!);
   const [userRegion] = useMMKVString("user.default_region", settings!);
@@ -47,8 +68,16 @@ export default function Index() {
   const { updateSyncSettings } = useNotificationSync();
 
   const [notifSettings, setNotifSettings] = useState(getNotificationSettings);
+  const [themePref, setThemePref] =
+    useState<ThemePreference>(getThemePreference);
   const [showStartPicker, setShowStartPicker] = useState(false);
   const [showEndPicker, setShowEndPicker] = useState(false);
+
+  const handleThemeChange = useCallback((next: ThemePreference) => {
+    setThemePreference(next);
+    setThemePref(next);
+    Uniwind.setTheme(next);
+  }, []);
 
   const handleNotificationChange = useCallback(
     async <K extends keyof typeof notifSettings>(
@@ -63,7 +92,10 @@ export default function Index() {
   );
 
   return (
-    <View className="flex h-full gap-y-8 p-4 dark:bg-black">
+    <ScrollView
+      className="flex-1 dark:bg-black"
+      contentContainerClassName="gap-y-8 p-4 pb-8"
+    >
       <View>
         <Text className="font-display-bold text-2xl dark:text-slate-100">
           User Details
@@ -250,6 +282,54 @@ export default function Index() {
         )}
       </View>
 
+      <View className="gap-y-3">
+        <Text className="font-display-bold text-2xl dark:text-slate-100">
+          Display
+        </Text>
+
+        <View className="gap-y-1.5">
+          <Text className="font-display-semibold dark:text-slate-100">
+            Appearance
+          </Text>
+          <View className="flex flex-row gap-x-2">
+            {THEME_OPTIONS.map((opt) => (
+              <Pressable
+                key={opt.value}
+                className={`rounded-lg px-3 py-1.5 ${
+                  themePref === opt.value
+                    ? "bg-blue-800"
+                    : "bg-gray-300 dark:bg-slate-800"
+                }`}
+                onPress={() => handleThemeChange(opt.value)}
+              >
+                <Text
+                  className={`font-display text-xs ${
+                    themePref === opt.value
+                      ? "text-white"
+                      : "text-black dark:text-slate-200"
+                  }`}
+                >
+                  {opt.label}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+
+        <View className="flex flex-row items-center justify-between">
+          <Text className="font-display dark:text-slate-100">
+            Compact Cards
+          </Text>
+          <Switch
+            trackColor={{ false: "#767577", true: "#81b0ff" }}
+            thumbColor={!largerCards ? "#f5dd4b" : "#f4f3f4"}
+            ios_backgroundColor="#3e3e3e"
+            onValueChange={(v) => setLargerCards(!v)}
+            value={!largerCards}
+          />
+        </View>
+      </View>
+
       <View>
         <View className="flex flex-row">
           <Text className="font-display-bold text-2xl dark:text-slate-100">
@@ -295,6 +375,6 @@ export default function Index() {
           </View>
         )}
       </View>
-    </View>
+    </ScrollView>
   );
 }

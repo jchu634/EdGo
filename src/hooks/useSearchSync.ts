@@ -1,8 +1,8 @@
+import { Effect, type Fiber } from "effect";
 import { useEffect, useRef, useState } from "react";
-import { Effect, Fiber } from "effect";
-import { useDb } from "@/src/providers/dbProvider";
 import { searchAndSyncThreads } from "@/src/lib/threads";
 import { interruptFiber } from "@/src/lib/utils";
+import { useDb } from "@/src/providers/dbProvider";
 
 export function useSearchSync(
   courseId: number,

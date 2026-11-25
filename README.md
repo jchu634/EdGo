@@ -1,7 +1,19 @@
 # EdGo
-A UNOFFICIAL react-native app for Ed Discussion.
 
-<img src="/assets/images/icon.png" alt="EdGo Log" width="200" height="200">
+A UNOFFICIAL app for Ed Discussion written in React-Native
+
+<img src="/assets/images/icon.png" alt="EdGo Log" width="100" height="100">
+
+<table>
+  <tr>
+    <td><img src="/assets/images/darkMode_homepage.jpg" alt="Edgo Homepage Screenshot" width="162" height="378"></td>
+    <td><img src="/assets/images/darkMode_course.jpg" alt="EdGo Course Screenshot" width="162" height="378"></td>
+    <td><img src="/assets/images/darkMode_question.jpg" alt="EdGo Question Screenshot" width="162" height="378"></td>
+    <td><img src="/assets/images/lightMode_homepage.jpg" alt="EdGo Homepage Screenshot" width="162" height="378"></td>
+    <td><img src="/assets/images/lightMode_course.jpg" alt="EdGo Course Screenshot" width="162" height="378"></td>
+    <td><img src="/assets/images/lightMode_question.jpg" alt="EdGo Question Screenshot" width="162" height="378"></td>
+  </tr>
+</table>
 
 ## Running dev build
 
@@ -24,7 +36,9 @@ In the output, you'll find options to open the app in a
 - [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
 
 ## Technical Details:
+
 ### Stack
+
 - Framework: React Native + Expo
 - DB + ORM: Drizzle + Expo-Sqlite
 - Schemas + Data fetching: Effect-ts
