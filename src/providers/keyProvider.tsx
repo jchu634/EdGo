@@ -1,18 +1,3 @@
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  useCallback,
-} from "react";
-import { useRouter, useSegments } from "expo-router";
-import {
-  getApiKey as getStoredApiKey,
-  setApiKey as setStoredApiKey,
-  clearApiKey as clearStoredApiKey,
-  initStorage,
-} from "@/src/lib/storage";
-import { useFonts } from "expo-font";
 import { IntelOneMono_300Light } from "@expo-google-fonts/intel-one-mono/300Light";
 import { IntelOneMono_300Light_Italic } from "@expo-google-fonts/intel-one-mono/300Light_Italic";
 import { IntelOneMono_400Regular } from "@expo-google-fonts/intel-one-mono/400Regular";
@@ -23,12 +8,10 @@ import { IntelOneMono_600SemiBold } from "@expo-google-fonts/intel-one-mono/600S
 import { IntelOneMono_600SemiBold_Italic } from "@expo-google-fonts/intel-one-mono/600SemiBold_Italic";
 import { IntelOneMono_700Bold } from "@expo-google-fonts/intel-one-mono/700Bold";
 import { IntelOneMono_700Bold_Italic } from "@expo-google-fonts/intel-one-mono/700Bold_Italic";
-
 import { PTSerif_400Regular } from "@expo-google-fonts/pt-serif/400Regular";
 import { PTSerif_400Regular_Italic } from "@expo-google-fonts/pt-serif/400Regular_Italic";
 import { PTSerif_700Bold } from "@expo-google-fonts/pt-serif/700Bold";
 import { PTSerif_700Bold_Italic } from "@expo-google-fonts/pt-serif/700Bold_Italic";
-
 import { Rokkitt_100Thin } from "@expo-google-fonts/rokkitt/100Thin";
 import { Rokkitt_100Thin_Italic } from "@expo-google-fonts/rokkitt/100Thin_Italic";
 import { Rokkitt_200ExtraLight } from "@expo-google-fonts/rokkitt/200ExtraLight";
@@ -47,6 +30,21 @@ import { Rokkitt_800ExtraBold } from "@expo-google-fonts/rokkitt/800ExtraBold";
 import { Rokkitt_800ExtraBold_Italic } from "@expo-google-fonts/rokkitt/800ExtraBold_Italic";
 import { Rokkitt_900Black } from "@expo-google-fonts/rokkitt/900Black";
 import { Rokkitt_900Black_Italic } from "@expo-google-fonts/rokkitt/900Black_Italic";
+import { useFonts } from "expo-font";
+import type React from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
+import {
+  clearApiKey as clearStoredApiKey,
+  getApiKey as getStoredApiKey,
+  initStorage,
+  setApiKey as setStoredApiKey,
+} from "@/src/lib/storage";
 
 interface KeyContextType {
   apiKey: string | null;
@@ -70,13 +68,11 @@ export function KeyProvider({ children }: { children: React.ReactNode }) {
   const [apiKey, setApiKeyState] = useState<string | null>(null);
   const [keyLoaded, setKeyLoaded] = useState(false);
   const [storageLoaded, setStorageLoaded] = useState(false);
-  const router = useRouter();
-  const segments = useSegments();
 
   /*
    * Temporary workaround to keep fonts loaded globally as expo config does not load them
    */
-  const [fontsLoaded] = useFonts({
+  const [fontsLoaded, fontError] = useFonts({
     // IntelOneMono
     IntelOneMono_300Light,
     IntelOneMono_300Light_Italic,
@@ -115,35 +111,18 @@ export function KeyProvider({ children }: { children: React.ReactNode }) {
   });
 
   useEffect(() => {
+    if (fontError) {
+      console.error("Failed to load fonts:", fontError);
+    }
+  }, [fontError]);
+
+  useEffect(() => {
     Promise.all([initStorage(), getStoredApiKey()]).then(([_, key]) => {
       setStorageLoaded(true);
       setApiKeyState(key);
       setKeyLoaded(true);
     });
   }, []);
-
-  const inApiKeyRoute = segments[0] === "api-key";
-  const shouldRedirectToApiKey = !apiKey && !inApiKeyRoute;
-  const shouldRedirectHome = !!apiKey && inApiKeyRoute;
-
-  useEffect(() => {
-    if (!fontsLoaded || !keyLoaded || !storageLoaded) return;
-
-    if (shouldRedirectToApiKey) {
-      router.replace("/api-key");
-    } else if (shouldRedirectHome) {
-      router.replace("/");
-    }
-  }, [
-    apiKey,
-    segments,
-    router,
-    fontsLoaded,
-    keyLoaded,
-    storageLoaded,
-    shouldRedirectToApiKey,
-    shouldRedirectHome,
-  ]);
 
   const handleSetApiKey = useCallback(async (key: string) => {
     await setStoredApiKey(key);
@@ -155,13 +134,7 @@ export function KeyProvider({ children }: { children: React.ReactNode }) {
     setApiKeyState(null);
   }, []);
 
-  if (
-    !fontsLoaded ||
-    !keyLoaded ||
-    shouldRedirectToApiKey ||
-    shouldRedirectHome ||
-    !storageLoaded
-  ) {
+  if ((!fontsLoaded && !fontError) || !keyLoaded || !storageLoaded) {
     return null;
   }
 

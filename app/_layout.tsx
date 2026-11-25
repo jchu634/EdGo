@@ -1,30 +1,29 @@
+import { Ionicons } from "@expo/vector-icons";
+import { Stack, useGlobalSearchParams, useRouter } from "expo-router";
+import { Suspense } from "react";
 import {
   ActivityIndicator,
   Platform,
   Pressable,
-  View,
   Text,
+  View,
 } from "react-native";
-import { Suspense } from "react";
-import { Stack, useGlobalSearchParams, useRouter } from "expo-router";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useUniwind } from "uniwind";
-
-import { KeyProvider } from "@/src/providers/keyProvider";
-import { DbProvider } from "@/src/providers/dbProvider";
-import { getCachedCourses } from "@/src/lib/storage";
-import { HighlighterProvider } from "@/src/providers/highlightProvider";
-import { ModalProvider, useSearchModal } from "@/src/providers/modalProvider";
-import { NotificationProvider } from "@/src/providers/notificationProvider";
-import { NetworkProvider } from "@/src/providers/networkProvider";
-import OfflineBanner from "@/src/components/OfflineBanner";
 import CourseFrame from "@/src/components/CourseFrame";
+import OfflineBanner from "@/src/components/OfflineBanner";
+import { getCachedCourses } from "@/src/lib/storage";
 import {
   CourseLayoutProvider,
   useCourseLayout,
 } from "@/src/providers/courseLayoutProvider";
+import { DbProvider } from "@/src/providers/dbProvider";
+import { HighlighterProvider } from "@/src/providers/highlightProvider";
+import { KeyProvider, useApiKey } from "@/src/providers/keyProvider";
+import { ModalProvider, useSearchModal } from "@/src/providers/modalProvider";
+import { NetworkProvider } from "@/src/providers/networkProvider";
+import { NotificationProvider } from "@/src/providers/notificationProvider";
 import "@/global.css";
 
 function HeaderLeft() {
@@ -139,6 +138,7 @@ function AppNavigator() {
   const insets = useSafeAreaInsets();
   const { isWide } = useCourseLayout();
   const { theme } = useUniwind();
+  const { apiKey } = useApiKey();
 
   return (
     <CourseFrame header={<WideCourseHeader />}>
@@ -162,7 +162,18 @@ function AppNavigator() {
             },
           };
         }}
-      />
+      >
+        <Stack.Protected guard={!!apiKey}>
+          <Stack.Screen name="index" />
+          <Stack.Screen name="courses/[courseid]/index" />
+          <Stack.Screen name="courses/[courseid]/[thread]/index" />
+          <Stack.Screen name="courses/[courseid]/[thread]/[commentid]" />
+          <Stack.Screen name="settings/index" />
+        </Stack.Protected>
+        <Stack.Protected guard={!apiKey}>
+          <Stack.Screen name="api-key" />
+        </Stack.Protected>
+      </Stack>
     </CourseFrame>
   );
 }
