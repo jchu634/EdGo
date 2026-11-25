@@ -49,7 +49,7 @@ const THREAD_REF_RE = /(^|[^A-Za-z0-9_/#])#([1-9]\d*)(?![A-Za-z0-9_])/g;
 const EMAIL_RE =
   /(^|[\s([{<"\u201C,;:])([A-Za-z0-9](?:[A-Za-z0-9._%+-]*[A-Za-z0-9])?@(?:[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?\.)+[A-Za-z]{2,})(?![A-Za-z0-9_-])/g;
 const LINK_RE =
-  /(^|[\s([{<"'`\u201C\u2018,;:]|[^\x00-\x7F])(https?:\/\/(?:(?!,https?:\/\/)[^\s<>"\u201C\u201D\u200B-\u200D\uFEFF\u00AD\u3000-\u303F\uFF01-\uFF0F\uFF1A-\uFF20\uFF3B-\uFF40\uFF5B-\uFF65])+)/gi;
+  /(^|[\s([{<"'`\u201C\u2018,;:]|[\u0080-\uFFFF])(https?:\/\/(?:(?!,https?:\/\/)[^\s<>"\u201C\u201D\u200B-\u200D\uFEFF\u00AD\u3000-\u303F\uFF01-\uFF0F\uFF1A-\uFF20\uFF3B-\uFF40\uFF5B-\uFF65])+)/gi;
 
 function isValidHttpUrl(candidate: string): boolean {
   const match = /^https?:\/\/([^/?#]+)/i.exec(candidate);

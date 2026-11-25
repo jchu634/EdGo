@@ -690,14 +690,24 @@ test("handles link autodetection edge cases: host validation, quotes, CJK, zero-
   assert.deepEqual(
     JSON.parse(
       JSON.stringify(
-        splitLinks("Try 'https://example.com/a' or \u2018HTTPS://EXAMPLE.COM/b\u2019."),
+        splitLinks(
+          "Try 'https://example.com/a' or \u2018HTTPS://EXAMPLE.COM/b\u2019.",
+        ),
       ),
     ),
     [
       { kind: "text", text: "Try '" },
-      { kind: "link", text: "https://example.com/a", url: "https://example.com/a" },
+      {
+        kind: "link",
+        text: "https://example.com/a",
+        url: "https://example.com/a",
+      },
       { kind: "text", text: "' or \u2018" },
-      { kind: "link", text: "HTTPS://EXAMPLE.COM/b", url: "HTTPS://EXAMPLE.COM/b" },
+      {
+        kind: "link",
+        text: "HTTPS://EXAMPLE.COM/b",
+        url: "HTTPS://EXAMPLE.COM/b",
+      },
       { kind: "text", text: "\u2019." },
     ],
   );
@@ -713,7 +723,11 @@ test("handles link autodetection edge cases: host validation, quotes, CJK, zero-
       { kind: "text", text: "见" },
       { kind: "link", text: "https://example.com", url: "https://example.com" },
       { kind: "text", text: "。和「" },
-      { kind: "link", text: "https://example.org/x", url: "https://example.org/x" },
+      {
+        kind: "link",
+        text: "https://example.org/x",
+        url: "https://example.org/x",
+      },
       { kind: "text", text: "」…" },
     ],
   );
