@@ -95,6 +95,15 @@ export default {
     ],
     "expo-image",
     "expo-status-bar",
+    [
+      "expo-build-properties",
+      {
+        android: {
+          extraProguardRules:
+            "-keep class * extends androidx.room.RoomDatabase { <init>(); }",
+        },
+      },
+    ],
   ],
   experiments: {
     typedRoutes: true,

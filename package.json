@@ -30,6 +30,7 @@
     "effect": "^4.1.5",
     "expo": "~58.0.26",
     "expo-background-task": "~58.0.13",
+    "expo-build-properties": "~58.0.12",
     "expo-clipboard": "~58.0.4",
     "expo-constants": "~58.0.16",
     "expo-crypto": "~58.0.8",
