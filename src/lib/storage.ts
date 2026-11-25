@@ -252,3 +252,18 @@ export function getLastNotifiedTimestamp(): number {
 export function setLastNotifiedTimestamp(ts: number): void {
   requireStore(settings, "settings").set("notifications.last_notified", ts);
 }
+
+export type ThemePreference = "system" | "light" | "dark";
+
+const THEME_PREFERENCES: ThemePreference[] = ["system", "light", "dark"];
+
+export function getThemePreference(): ThemePreference {
+  const raw = requireStore(settings, "settings").getString("ui.theme");
+  return THEME_PREFERENCES.includes(raw as ThemePreference)
+    ? (raw as ThemePreference)
+    : "system";
+}
+
+export function setThemePreference(theme: ThemePreference): void {
+  requireStore(settings, "settings").set("ui.theme", theme);
+}

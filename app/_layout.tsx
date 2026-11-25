@@ -171,7 +171,7 @@ function AppNavigator() {
           <Stack.Screen name="settings/index" />
         </Stack.Protected>
         <Stack.Protected guard={!apiKey}>
-          <Stack.Screen name="api-key" />
+          <Stack.Screen name="api-key" options={{ headerShown: false }} />
         </Stack.Protected>
       </Stack>
     </CourseFrame>

@@ -6,17 +6,12 @@ import {
   HttpClientResponse,
 } from "effect/http";
 import { useRouter } from "expo-router";
-import {
-  CaretDownIcon,
-  CaretRightIcon,
-  ChatsIcon,
-  EyeIcon,
-  HeartIcon,
-} from "phosphor-react-native";
+import { CaretDownIcon, CaretRightIcon } from "phosphor-react-native";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { FlatList, Pressable, Text, View } from "react-native";
 import { useMMKVBoolean } from "react-native-mmkv";
 import { useUniwind } from "uniwind";
+import RecentThreadCard from "@/src/components/RecentThreadCard";
 import { useRecentThreads } from "@/src/hooks/useRecentThreads";
 import { type Course, RegionResponse, UserResponse } from "@/src/lib/schema";
 import {
@@ -302,77 +297,21 @@ export default function Index() {
       const courseInfo = courseMap.get(thread.courseId);
       const colour = courseInfo ? colourForCourse(thread.courseId) : "#d1d5db";
       return (
-        <Pressable
-          className={
-            largerCards
-              ? "mx-1.5 mb-3 flex-row overflow-hidden rounded-l-sm rounded-r-2xl bg-slate-200 dark:bg-neutral-800"
-              : "mx-1.5 mb-2 flex-row overflow-hidden rounded-l-sm rounded-r-2xl bg-slate-200 dark:bg-neutral-800"
-          }
+        <RecentThreadCard
+          title={thread.title}
+          courseCode={courseInfo?.code}
+          colour={colour}
+          replyCount={thread.replyCount}
+          viewCount={thread.viewCount}
+          voteCount={thread.voteCount}
+          largerCards={largerCards}
           onPress={() =>
             router.navigate(`/courses/${thread.courseId}/${thread.number}`)
           }
-        >
-          <View
-            className="w-2.5 shrink-0"
-            style={{ backgroundColor: colour }}
-          />
-          <View
-            className={
-              largerCards
-                ? "min-w-0 flex-1 p-4 pl-3"
-                : "min-w-0 flex-1 px-3 py-2 pl-2.5"
-            }
-          >
-            <Text
-              className="font-display-bold dark:text-white"
-              numberOfLines={1}
-            >
-              {thread.title}
-            </Text>
-            <View className="flex-row items-center justify-between gap-x-2">
-              <Text
-                className="font-display min-w-0 flex-1 text-xs text-gray-600 dark:text-slate-300"
-                numberOfLines={1}
-              >
-                {courseInfo?.code}
-              </Text>
-              <View className="shrink-0 flex-row">
-                {thread.replyCount !== 0 && (
-                  <View className="flex min-w-10 flex-row items-center">
-                    <Text className="font-display pl-2 dark:text-white">
-                      {thread.replyCount}
-                    </Text>
-                    <ChatsIcon
-                      size={14}
-                      color={theme === "dark" ? "white" : "black"}
-                    />
-                  </View>
-                )}
-                <View className="flex min-w-10 flex-row items-center">
-                  <Text className="font-display pl-2 dark:text-white">
-                    {thread.viewCount}
-                  </Text>
-                  <EyeIcon
-                    size={14}
-                    color={theme === "dark" ? "white" : "black"}
-                  />
-                </View>
-                <View className="flex min-w-10 flex-row items-center">
-                  <Text className="font-display pl-2 dark:text-white">
-                    {thread.voteCount}
-                  </Text>
-                  <HeartIcon
-                    size={14}
-                    color={theme === "dark" ? "white" : "black"}
-                  />
-                </View>
-              </View>
-            </View>
-          </View>
-        </Pressable>
+        />
       );
     },
-    [courseMap, router, theme, largerCards],
+    [courseMap, router, largerCards],
   );
 
   if (!courses) {

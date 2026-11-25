@@ -39,9 +39,11 @@ import {
   useEffect,
   useState,
 } from "react";
+import { Uniwind } from "uniwind";
 import {
   clearApiKey as clearStoredApiKey,
   getApiKey as getStoredApiKey,
+  getThemePreference,
   initStorage,
   setApiKey as setStoredApiKey,
 } from "@/src/lib/storage";
@@ -118,6 +120,7 @@ export function KeyProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     Promise.all([initStorage(), getStoredApiKey()]).then(([_, key]) => {
+      Uniwind.setTheme(getThemePreference());
       setStorageLoaded(true);
       setApiKeyState(key);
       setKeyLoaded(true);

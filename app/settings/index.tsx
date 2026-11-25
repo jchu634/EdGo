@@ -7,14 +7,18 @@ import {
   Text,
   View,
 } from "react-native";
+import { Uniwind } from "uniwind";
 import { sendTestNotification } from "@/src/lib/notifications";
 import {
   clearCourseCache,
   clearThreadCache,
   getNotificationSettings,
+  getThemePreference,
   type NotificationFrequency,
   setNotificationSetting,
+  setThemePreference,
   settings,
+  type ThemePreference,
 } from "@/src/lib/storage";
 import { useApiKey } from "@/src/providers/keyProvider";
 import { useNotificationSync } from "@/src/providers/notificationProvider";
@@ -27,6 +31,12 @@ const FREQUENCY_OPTIONS: { value: NotificationFrequency; label: string }[] = [
   { value: "hourly", label: "Every hour" },
   { value: "every_4_hours", label: "Every 4 hours" },
   { value: "daily_6pm", label: "Daily at 6pm" },
+];
+
+const THEME_OPTIONS: { value: ThemePreference; label: string }[] = [
+  { value: "system", label: "System" },
+  { value: "light", label: "Light" },
+  { value: "dark", label: "Dark" },
 ];
 
 function hourToDate(hour: number): Date {
@@ -58,8 +68,16 @@ export default function Index() {
   const { updateSyncSettings } = useNotificationSync();
 
   const [notifSettings, setNotifSettings] = useState(getNotificationSettings);
+  const [themePref, setThemePref] =
+    useState<ThemePreference>(getThemePreference);
   const [showStartPicker, setShowStartPicker] = useState(false);
   const [showEndPicker, setShowEndPicker] = useState(false);
+
+  const handleThemeChange = useCallback((next: ThemePreference) => {
+    setThemePreference(next);
+    setThemePref(next);
+    Uniwind.setTheme(next);
+  }, []);
 
   const handleNotificationChange = useCallback(
     async <K extends keyof typeof notifSettings>(
@@ -268,6 +286,35 @@ export default function Index() {
         <Text className="font-display-bold text-2xl dark:text-slate-100">
           Display
         </Text>
+
+        <View className="gap-y-1.5">
+          <Text className="font-display-semibold dark:text-slate-100">
+            Appearance
+          </Text>
+          <View className="flex flex-row gap-x-2">
+            {THEME_OPTIONS.map((opt) => (
+              <Pressable
+                key={opt.value}
+                className={`rounded-lg px-3 py-1.5 ${
+                  themePref === opt.value
+                    ? "bg-blue-800"
+                    : "bg-gray-300 dark:bg-slate-800"
+                }`}
+                onPress={() => handleThemeChange(opt.value)}
+              >
+                <Text
+                  className={`font-display text-xs ${
+                    themePref === opt.value
+                      ? "text-white"
+                      : "text-black dark:text-slate-200"
+                  }`}
+                >
+                  {opt.label}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        </View>
 
         <View className="flex flex-row items-center justify-between">
           <Text className="font-display dark:text-slate-100">
