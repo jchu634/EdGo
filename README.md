@@ -15,6 +15,13 @@ A UNOFFICIAL app for Ed Discussion written in React-Native
   </tr>
 </table>
 
+<table>
+  <tr>
+    <td><img src="/assets/images/darkMode_foldable_homepage.jpg" alt="Edgo Homepage Screenshot" width="200" height="378"></td>
+    <td><img src="/assets/images/darkMode_foldable_course.jpg" alt="EdGo Course Screenshot" width="200" height="378"></td>
+  </tr>
+</table>
+
 ## Running dev build
 
 1. Install dependencies
