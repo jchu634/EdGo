@@ -1,13 +1,16 @@
-import React, { createContext, useContext, useMemo } from "react";
-import { View, ActivityIndicator } from "react-native";
-import { openDatabaseSync } from "expo-sqlite";
-import { drizzle, ExpoSQLiteDatabase } from "drizzle-orm/expo-sqlite";
-import * as schema from "@/src/db/schema";
-import migrations from "@/drizzle/migrations";
-import { useMigrations } from "drizzle-orm/expo-sqlite/migrator";
+import {
+  drizzle,
+  type ExpoSQLiteAsyncDatabase,
+} from "drizzle-orm/expo-sqlite/async";
+import { useMigrations } from "drizzle-orm/expo-sqlite/async/migrator";
 import { useDrizzleStudio } from "expo-drizzle-studio-plugin";
+import { openDatabaseSync } from "expo-sqlite";
+import type React from "react";
+import { createContext, useContext, useMemo } from "react";
+import { ActivityIndicator, View } from "react-native";
+import migrations from "@/drizzle/migrations";
 
-type Db = ExpoSQLiteDatabase<typeof schema>;
+type Db = ExpoSQLiteAsyncDatabase;
 
 export type { Db };
 
@@ -24,7 +27,7 @@ export function DbProvider({ children }: { children: React.ReactNode }) {
     () => openDatabaseSync("edgo.db", { enableChangeListener: true }),
     [],
   );
-  const db = useMemo(() => drizzle(expoDb, { schema }), [expoDb]);
+  const db = useMemo(() => drizzle(expoDb), [expoDb]);
 
   useDrizzleStudio(expoDb);
   const { success, error } = useMigrations(db, migrations);

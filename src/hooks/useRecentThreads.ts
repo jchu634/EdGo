@@ -1,10 +1,10 @@
-import { useEffect, useState } from "react";
 import { desc, eq, sql } from "drizzle-orm";
-import { useLiveQuery } from "drizzle-orm/expo-sqlite";
+import { useLiveQuery } from "drizzle-orm/expo-sqlite/async";
 import { Effect } from "effect";
+import { useEffect, useState } from "react";
 import { threadsTable } from "@/src/db/schema";
-import { useDb } from "@/src/providers/dbProvider";
 import { fetchThreadsFromApi, syncThreadsToDb } from "@/src/lib/threads";
+import { useDb } from "@/src/providers/dbProvider";
 
 export function useRecentThreads(courses: { id: number }[] | undefined) {
   console.debug("[useRecentThreads] called", { courseCount: courses?.length });

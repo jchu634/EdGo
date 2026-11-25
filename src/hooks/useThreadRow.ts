@@ -1,6 +1,6 @@
 import { and, eq } from "drizzle-orm";
-import { useLiveQuery } from "drizzle-orm/expo-sqlite";
-import { threadsTable, type ThreadUser } from "@/src/db/schema";
+import { useLiveQuery } from "drizzle-orm/expo-sqlite/async";
+import { type ThreadUser, threadsTable } from "@/src/db/schema";
 import { useDb } from "@/src/providers/dbProvider";
 
 export function useThreadRow(courseId: number, threadNumber: number) {

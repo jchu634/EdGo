@@ -1,8 +1,8 @@
-import { eq, and, desc } from "drizzle-orm";
-import { useLiveQuery } from "drizzle-orm/expo-sqlite";
+import { and, desc, eq } from "drizzle-orm";
+import { useLiveQuery } from "drizzle-orm/expo-sqlite/async";
 import { threadsTable } from "@/src/db/schema";
-import { useDb } from "@/src/providers/dbProvider";
 import { getCachedThreadDetail } from "@/src/lib/storage";
+import { useDb } from "@/src/providers/dbProvider";
 
 export function useThreadsDbQuery(courseId: number, category?: string) {
   console.debug("[useThreadsDbQuery] called", { courseId, category });
