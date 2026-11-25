@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState } from "react";
 import { Effect, Fiber } from "effect";
-import { useDb } from "@/src/providers/dbProvider";
+import { useEffect, useRef, useState } from "react";
 import { syncPageProgram } from "@/src/lib/threads";
 import { interruptFiber } from "@/src/lib/utils";
+import { useDb } from "@/src/providers/dbProvider";
 
 type SyncMode = "initial" | "refresh" | "page";
 

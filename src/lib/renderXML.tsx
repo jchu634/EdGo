@@ -1,14 +1,14 @@
-import { View, Text } from "react-native";
-import { withUniwind } from "uniwind";
+import { RaTeXView } from "ratex-react-native";
 import React from "react";
+import { Text, View } from "react-native";
+import { withUniwind } from "uniwind";
 import CodeBlock from "@/src/components/CodeBlock";
+import ContentImage from "@/src/components/ContentImage";
 import FileComponent from "@/src/components/FileComponent";
 import LinkText from "@/src/components/LinkText";
 import SpoilerText from "@/src/components/SpoilerText";
 import VideoComponent from "@/src/components/VideoComponent";
 import WebSnippetComponent from "@/src/components/WebSnippetComponent";
-import ContentImage from "@/src/components/ContentImage";
-import { RaTeXView } from "ratex-react-native";
 
 const StyledRaTeXView = withUniwind(RaTeXView);
 
@@ -287,6 +287,7 @@ function renderInlineRuns(
     const k = `${keyPrefix}-run-${i}`;
 
     if (run.kind === "newline") {
+      // biome-ignore lint/correctness/noReactNativeRawText: rendered inside a parent <Text>
       return <React.Fragment key={k}>{"\n"}</React.Fragment>;
     }
     const classNames: string[] = [];

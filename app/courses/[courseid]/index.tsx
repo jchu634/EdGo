@@ -1,5 +1,5 @@
-import { Text, View } from "react-native";
 import { useLocalSearchParams } from "expo-router";
+import { Text, View } from "react-native";
 import CourseThreadList from "@/src/components/CourseThreadList";
 import { useCourseLayout } from "@/src/providers/courseLayoutProvider";
 

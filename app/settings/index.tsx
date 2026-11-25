@@ -1,20 +1,20 @@
-import React, { useState, useCallback } from "react";
-import { View, Text, Pressable, Switch, Platform } from "react-native";
+import React, { useCallback, useState } from "react";
+import { Platform, Pressable, Switch, Text, View } from "react-native";
+import { sendTestNotification } from "@/src/lib/notifications";
 import {
   clearCourseCache,
   clearThreadCache,
-  settings,
   getNotificationSettings,
-  setNotificationSetting,
   type NotificationFrequency,
+  setNotificationSetting,
+  settings,
 } from "@/src/lib/storage";
 import { useApiKey } from "@/src/providers/keyProvider";
 import { useNotificationSync } from "@/src/providers/notificationProvider";
-import { sendTestNotification } from "@/src/lib/notifications";
 
 import "@/global.css";
-import { useMMKVBoolean, useMMKVString } from "react-native-mmkv";
 import { DateTimePicker } from "@expo/ui/community/datetime-picker";
+import { useMMKVBoolean, useMMKVString } from "react-native-mmkv";
 
 const FREQUENCY_OPTIONS: { value: NotificationFrequency; label: string }[] = [
   { value: "hourly", label: "Every hour" },

@@ -1,10 +1,11 @@
 import type { HighlighterCore, ThemedToken } from "@shikijs/core";
 import { createHighlighterCore } from "@shikijs/core";
-import type { LanguageRegistration } from "@shikijs/types";
 import githubDark from "@shikijs/themes/github-dark";
 import githubLight from "@shikijs/themes/github-light";
-import React, { createContext, useContext, useEffect, useState } from "react";
+import type { LanguageRegistration } from "@shikijs/types";
 import { Effect } from "effect";
+import type React from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import {
   createNativeEngine,
   isNativeEngineAvailable,

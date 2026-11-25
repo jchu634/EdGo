@@ -1,14 +1,14 @@
-import { Effect, Schema } from "effect";
+import { Effect, type Schema } from "effect";
 import { parseXml } from "react-native-turboxml";
-import { XmlNode, isXmlNode } from "@/src/lib/renderXML";
-import { ThreadDetailResponse } from "@/src/lib/schema";
-import { fetchThreadDetail } from "@/src/lib/threads";
+import { isXmlNode, type XmlNode } from "@/src/lib/renderXML";
+import type { ThreadDetailResponse } from "@/src/lib/schema";
 import {
-  getCachedThreadDetail,
+  cacheParsedXml,
   cacheThreadDetail,
   getCachedParsedXml,
-  cacheParsedXml,
+  getCachedThreadDetail,
 } from "@/src/lib/storage";
+import { fetchThreadDetail } from "@/src/lib/threads";
 
 type ThreadDetailResponseT = Schema.Schema.Type<typeof ThreadDetailResponse>;
 
@@ -52,7 +52,11 @@ function loadCachedXmlInto(
   out: Map<string, XmlNode>,
 ) {
   for (const c of comments) {
-    const cached = getCachedParsedXml(courseId, threadNumber, `comment-${c.id}`);
+    const cached = getCachedParsedXml(
+      courseId,
+      threadNumber,
+      `comment-${c.id}`,
+    );
     if (cached && isXmlNode(cached)) {
       out.set(`comment-${c.id}`, cached as XmlNode);
     }
@@ -74,8 +78,18 @@ export function readCachedThreadDetailData(
   if (mainCached && isXmlNode(mainCached)) {
     parsedXmlMap.set("main", mainCached as XmlNode);
   }
-  loadCachedXmlInto(cached.thread.comments, courseId, threadNumber, parsedXmlMap);
-  loadCachedXmlInto(cached.thread.answers, courseId, threadNumber, parsedXmlMap);
+  loadCachedXmlInto(
+    cached.thread.comments,
+    courseId,
+    threadNumber,
+    parsedXmlMap,
+  );
+  loadCachedXmlInto(
+    cached.thread.answers,
+    courseId,
+    threadNumber,
+    parsedXmlMap,
+  );
 
   return {
     thread: cached.thread,
@@ -128,15 +142,17 @@ export function loadFreshThreadDetailData(
       targets.push({ key: "main", content: response.thread.content });
     }
     for (const c of flattenComments(response.thread.comments)) {
-      if (c.content) targets.push({ key: `comment-${c.id}`, content: c.content });
+      if (c.content)
+        targets.push({ key: `comment-${c.id}`, content: c.content });
     }
     for (const c of flattenComments(response.thread.answers)) {
-      if (c.content) targets.push({ key: `comment-${c.id}`, content: c.content });
+      if (c.content)
+        targets.push({ key: `comment-${c.id}`, content: c.content });
     }
 
     const parsed = yield* Effect.forEach(targets, (t) =>
       parseAndCacheXmlEffect(t.content, t.key, courseId, threadNumber).pipe(
-        Effect.map((node) => (node ? ({ key: t.key, node }) : null)),
+        Effect.map((node) => (node ? { key: t.key, node } : null)),
       ),
     );
 

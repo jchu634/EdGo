@@ -1,10 +1,6 @@
-import React, {
-  createContext,
-  useContext,
-  useEffect,
-  useCallback,
-} from "react";
 import { useRouter } from "expo-router";
+import type React from "react";
+import { createContext, useCallback, useContext, useEffect } from "react";
 import {
   registerBackgroundSyncTask,
   unregisterBackgroundSyncTask,

@@ -1,4 +1,4 @@
-import React from "react";
+import type React from "react";
 import { Text } from "react-native";
 
 import { useLinkTextContext } from "@/src/providers/modalProvider";

@@ -1,8 +1,12 @@
 import { Schema } from "effect";
-import { createMMKV, type MMKV } from "react-native-mmkv";
-import * as SecureStore from "expo-secure-store";
-import { Course, CourseCategory, ThreadDetailResponse } from "@/src/lib/schema";
 import * as Crypto from "expo-crypto";
+import * as SecureStore from "expo-secure-store";
+import { createMMKV, type MMKV } from "react-native-mmkv";
+import {
+  Course,
+  type CourseCategory,
+  ThreadDetailResponse,
+} from "@/src/lib/schema";
 
 let courseCache: MMKV | null = null;
 let threadCache: MMKV | null = null;

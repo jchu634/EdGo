@@ -1,26 +1,27 @@
-import React, { useEffect, useRef, useState } from "react";
-import {
-  Pressable,
-  ScrollView,
-  Text,
-  View,
-  useColorScheme,
-  type TextStyle,
-} from "react-native";
-import { PlayIcon } from "phosphor-react-native";
-import { useGlobalSearchParams } from "expo-router";
+import type { ThemedToken } from "@shikijs/core";
+import { cn } from "cn";
 import { Effect, Fiber, Schema } from "effect";
 import {
   FetchHttpClient,
   HttpClient,
   HttpClientRequest,
   HttpClientResponse,
-} from "effect/unstable/http";
-import type { ThemedToken } from "@shikijs/core";
-import { cn } from "cnfast";
-import { useHighlighter } from "@/src/providers/highlightProvider";
-import { interruptFiber } from "@/src/lib/utils";
+} from "effect/http";
+import { useGlobalSearchParams } from "expo-router";
+import { PlayIcon } from "phosphor-react-native";
+import type React from "react";
+import { useEffect, useRef, useState } from "react";
+import {
+  Pressable,
+  ScrollView,
+  Text,
+  type TextStyle,
+  useColorScheme,
+  View,
+} from "react-native";
 import { getApiKey, settings } from "@/src/lib/storage";
+import { interruptFiber } from "@/src/lib/utils";
+import { useHighlighter } from "@/src/providers/highlightProvider";
 
 interface CodeBlockProps {
   code: string;
@@ -90,19 +91,21 @@ const FONT_UNDERLINE = 4;
 const FONT_STRIKETHROUGH = 8;
 
 function decodeFontStyle(fontStyle?: number): TextStyle {
-  const style: TextStyle = {};
-  if (!fontStyle || fontStyle <= 0) return style;
-  if (fontStyle & FONT_BOLD) style.fontWeight = "bold";
-  if (fontStyle & FONT_ITALIC) style.fontStyle = "italic";
+  if (!fontStyle || fontStyle <= 0) return {};
   const decorations: ("underline" | "line-through")[] = [];
   if (fontStyle & FONT_UNDERLINE) decorations.push("underline");
   if (fontStyle & FONT_STRIKETHROUGH) decorations.push("line-through");
-  if (decorations.length > 0) {
-    style.textDecorationLine = decorations.join(
-      " ",
-    ) as TextStyle["textDecorationLine"];
-  }
-  return style;
+  return {
+    ...(fontStyle & FONT_BOLD ? { fontWeight: "bold" as const } : {}),
+    ...(fontStyle & FONT_ITALIC ? { fontStyle: "italic" as const } : {}),
+    ...(decorations.length > 0
+      ? {
+          textDecorationLine: decorations.join(
+            " ",
+          ) as TextStyle["textDecorationLine"],
+        }
+      : {}),
+  };
 }
 
 // Shared style code lines as each line is a sibling <Text>.
@@ -144,6 +147,7 @@ function decodeB64(value: string): string {
 
 function stripAnsi(value: string): string {
   // Matches common CSI ANSI escape sequences, though main target is color codes like `\x1b[35m`).
+  // biome-ignore lint/suspicious/noControlCharactersInRegex: intentional ANSI escape sequence stripping
   return value.replace(/\x1b\[[0-9;?]*[A-Za-z]/g, "");
 }
 

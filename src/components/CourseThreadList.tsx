@@ -1,35 +1,34 @@
-import { useState, useCallback, useMemo, useEffect, useRef } from "react";
+import { Ionicons } from "@expo/vector-icons";
+import type { Schema } from "effect";
+import { useRouter } from "expo-router";
 import {
-  View,
-  Text,
+  ChatsIcon,
+  CheckIcon,
+  EyeIcon,
+  HeartIcon,
+  PushPinIcon,
+  StarIcon,
+} from "phosphor-react-native";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  ActivityIndicator,
   FlatList,
   Pressable,
   ScrollView,
-  ActivityIndicator,
+  Text,
   TextInput,
+  View,
 } from "react-native";
-import { useRouter } from "expo-router";
-import {
-  EyeIcon,
-  PushPinIcon,
-  HeartIcon,
-  ChatsIcon,
-  CheckIcon,
-  StarIcon,
-} from "phosphor-react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { Schema } from "effect";
 import { useUniwind } from "uniwind";
-
-import { CourseCategory } from "@/src/lib/schema";
-import { getCachedCourseCategory } from "@/src/lib/storage";
-import { useThreadsDbQuery } from "@/src/hooks/useThreadsDbQuery";
-import { useThreadsSync } from "@/src/hooks/useThreadsSync";
+import type { ThreadUser } from "@/src/db/schema";
 import { useSearchDbQuery } from "@/src/hooks/useSearchDbQuery";
 import { useSearchSync } from "@/src/hooks/useSearchSync";
-import { type ThreadUser } from "@/src/db/schema";
-import { useSearchQuery } from "@/src/providers/modalProvider";
+import { useThreadsDbQuery } from "@/src/hooks/useThreadsDbQuery";
+import { useThreadsSync } from "@/src/hooks/useThreadsSync";
+import type { CourseCategory } from "@/src/lib/schema";
+import { getCachedCourseCategory } from "@/src/lib/storage";
 import { useCourseLayout } from "@/src/providers/courseLayoutProvider";
+import { useSearchQuery } from "@/src/providers/modalProvider";
 
 import "@/global.css";
 
@@ -77,7 +76,7 @@ export default function CourseThreadList({
   const [initialOffset] = useState(
     () => scrollOffsets.current.get(String(courseIdNum)) ?? 0,
   );
-  const searchInput = useRef<TextInput>(null);
+  const searchInput = useRef<React.ComponentRef<typeof TextInput>>(null);
   const previousSearchRequest = useRef(searchRequest);
   useEffect(() => {
     if (sidebar && searchRequest !== previousSearchRequest.current) {

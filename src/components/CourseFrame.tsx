@@ -2,14 +2,14 @@ import { useMemo, useState } from "react";
 import { Platform, View, type ViewStyle } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
+  type SharedValue,
   useAnimatedStyle,
   useSharedValue,
-  type SharedValue,
 } from "react-native-reanimated";
-import { scheduleOnRN } from "react-native-worklets";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useCourseLayout } from "@/src/providers/courseLayoutProvider";
+import { scheduleOnRN } from "react-native-worklets";
 import CourseThreadList from "@/src/components/CourseThreadList";
+import { useCourseLayout } from "@/src/providers/courseLayoutProvider";
 
 function clampSidebarFraction(fraction: number) {
   "worklet";

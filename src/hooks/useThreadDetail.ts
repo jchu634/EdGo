@@ -1,15 +1,15 @@
-import { useEffect, useRef, useState } from "react";
 import { Effect, Fiber } from "effect";
-import {
-  type ThreadDetailData,
-  type ThreadDetail,
-  type UsersMap,
-  readCachedThreadDetailData,
-  loadFreshThreadDetailData,
-} from "@/src/lib/thread-detail";
-import { sendThreadViewed } from "@/src/lib/threads";
+import { useEffect, useRef, useState } from "react";
 import { useThreadRow } from "@/src/hooks/useThreadRow";
 import type { XmlNode } from "@/src/lib/renderXML";
+import {
+  loadFreshThreadDetailData,
+  readCachedThreadDetailData,
+  type ThreadDetail,
+  type ThreadDetailData,
+  type UsersMap,
+} from "@/src/lib/thread-detail";
+import { sendThreadViewed } from "@/src/lib/threads";
 
 const EMPTY_USERS: UsersMap = new Map();
 const EMPTY_XML: Map<string, XmlNode> = new Map();
@@ -88,4 +88,4 @@ export function useThreadDetail(
   };
 }
 
-export type { ThreadDetailData, ThreadDetail };
+export type { ThreadDetail, ThreadDetailData };

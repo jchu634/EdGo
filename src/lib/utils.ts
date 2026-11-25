@@ -1,7 +1,7 @@
 import { Effect, Fiber } from "effect";
 import type { MutableRefObject } from "react";
 
-export { cn } from "cnfast";
+export { cn } from "cn";
 export function absoluteUrl(path: string) {
   return `${process.env.NEXT_PUBLIC_APP_URL}${path}`;
 }

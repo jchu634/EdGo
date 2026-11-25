@@ -1,18 +1,18 @@
-import React from "react";
-import { View, Text, Image, Pressable } from "react-native";
-import { Link } from "expo-router";
-import { Schema } from "effect";
-import { XmlNode, renderXmlNode } from "@/src/lib/renderXML";
-import { settings } from "@/src/lib/storage";
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-  withSequence,
-} from "react-native-reanimated";
+import type { Schema } from "effect";
 import * as Haptics from "expo-haptics";
-import { HeartIcon, CheckCircleIcon } from "phosphor-react-native";
-import { EdComment as CommentSchema } from "@/src/lib/schema";
+import { Link } from "expo-router";
+import { CheckCircleIcon, HeartIcon } from "phosphor-react-native";
+import type React from "react";
+import { Image, Pressable, Text, View } from "react-native";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSequence,
+  withSpring,
+} from "react-native-reanimated";
+import { renderXmlNode, type XmlNode } from "@/src/lib/renderXML";
+import type { EdComment as CommentSchema } from "@/src/lib/schema";
+import { settings } from "@/src/lib/storage";
 
 export type CommentType = Schema.Schema.Type<typeof CommentSchema>;
 

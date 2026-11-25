@@ -1,34 +1,32 @@
+import * as Linking from "expo-linking";
+import { useLocalSearchParams } from "expo-router";
 import {
-  View,
-  Text,
-  ScrollView,
+  ArrowSquareOutIcon,
+  CheckCircleIcon,
+  EyeIcon,
+  HeartIcon,
+  PushPinIcon,
+  StarIcon,
+} from "phosphor-react-native";
+import {
   ActivityIndicator,
   Image,
   Pressable,
+  ScrollView,
+  Text,
+  View,
 } from "react-native";
-import { useLocalSearchParams } from "expo-router";
-import * as Linking from "expo-linking";
-
-import {
-  EyeIcon,
-  HeartIcon,
-  StarIcon,
-  PushPinIcon,
-  CheckCircleIcon,
-  ArrowSquareOutIcon,
-} from "phosphor-react-native";
-
-import { renderXmlNode } from "@/src/lib/renderXML";
-import { settings } from "@/src/lib/storage";
-import { useDb } from "@/src/providers/dbProvider";
-import { useThreadDetail } from "@/src/hooks/useThreadDetail";
-import { useThreadVotes } from "@/src/hooks/useThreadVotes";
-import { useCourseLayout } from "@/src/providers/courseLayoutProvider";
-import ThreadFullscreenButton from "@/src/components/ThreadFullscreenButton";
 import {
   AnimatedToggleIcon,
   renderComment,
 } from "@/src/components/ThreadComments";
+import ThreadFullscreenButton from "@/src/components/ThreadFullscreenButton";
+import { useThreadDetail } from "@/src/hooks/useThreadDetail";
+import { useThreadVotes } from "@/src/hooks/useThreadVotes";
+import { renderXmlNode } from "@/src/lib/renderXML";
+import { settings } from "@/src/lib/storage";
+import { useCourseLayout } from "@/src/providers/courseLayoutProvider";
+import { useDb } from "@/src/providers/dbProvider";
 
 import "@/global.css";
 

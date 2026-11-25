@@ -1,32 +1,30 @@
+import { Duration, Effect, Fiber, Schedule, type Schema } from "effect";
 import {
   FetchHttpClient,
   HttpClient,
   HttpClientRequest,
   HttpClientResponse,
-} from "effect/unstable/http";
-
-import { Effect, Schedule, Schema, Duration, Fiber } from "effect";
-import { useState, useEffect, useMemo, useCallback } from "react";
-import {
-  View,
-  Text,
-  Pressable,
-  FlatList,
-  useWindowDimensions,
-} from "react-native";
-import { EyeIcon, HeartIcon, ChatsIcon } from "phosphor-react-native";
-import { useUniwind } from "uniwind";
-
+} from "effect/http";
 import { useRouter } from "expo-router";
-import { Course, UserResponse, RegionResponse } from "@/src/lib/schema";
-import { getUnreadCounts, UnreadCountEntry } from "@/src/lib/stream";
+import { ChatsIcon, EyeIcon, HeartIcon } from "phosphor-react-native";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  FlatList,
+  Pressable,
+  Text,
+  useWindowDimensions,
+  View,
+} from "react-native";
+import { useUniwind } from "uniwind";
+import { useRecentThreads } from "@/src/hooks/useRecentThreads";
+import { type Course, RegionResponse, UserResponse } from "@/src/lib/schema";
 import {
   cacheCourses,
-  getCachedCourses,
   getApiKey,
+  getCachedCourses,
   settings,
 } from "@/src/lib/storage";
-import { useRecentThreads } from "@/src/hooks/useRecentThreads";
+import { getUnreadCounts, type UnreadCountEntry } from "@/src/lib/stream";
 import { useNetwork } from "@/src/providers/networkProvider";
 
 import "@/global.css";
@@ -62,7 +60,9 @@ export default function Index() {
   const courseMap = useMemo(() => {
     const map = new Map<number, { code: string }>();
     if (!courses) return map;
-    courses.forEach((c) => map.set(c.id, { code: c.code }));
+    for (const c of courses) {
+      map.set(c.id, { code: c.code });
+    }
     return map;
   }, [courses]);
 

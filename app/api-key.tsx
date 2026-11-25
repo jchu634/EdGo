@@ -1,28 +1,26 @@
-import React, { useState } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  Pressable,
-  Alert,
-  TouchableOpacity,
-} from "react-native";
-import { Image } from "expo-image";
-
+import { Effect } from "effect";
 import {
   FetchHttpClient,
   HttpClient,
   HttpClientRequest,
   HttpClientResponse,
-} from "effect/unstable/http";
-import { Effect } from "effect";
+} from "effect/http";
+import { Image } from "expo-image";
+import { EyeClosedIcon, EyeIcon } from "phosphor-react-native";
+import React, { useState } from "react";
+import {
+  Alert,
+  Pressable,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { useUniwind } from "uniwind";
-
-import { useApiKey } from "@/src/providers/keyProvider";
+import LinkText from "@/src/components/LinkText";
 import { RegionResponse, UserResponse } from "@/src/lib/schema";
 import { settings } from "@/src/lib/storage";
-import { EyeClosedIcon, EyeIcon } from "phosphor-react-native";
-import LinkText from "@/src/components/LinkText";
+import { useApiKey } from "@/src/providers/keyProvider";
 
 import "@/global.css";
 

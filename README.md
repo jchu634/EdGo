@@ -1,8 +1,8 @@
 # EdGo
+
 A UNOFFICIAL app for Ed Discussion written in React-Native
 
 <img src="/assets/images/icon.png" alt="EdGo Log" width="100" height="100">
-
 
 <table>
   <tr>
@@ -36,7 +36,9 @@ In the output, you'll find options to open the app in a
 - [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
 
 ## Technical Details:
+
 ### Stack
+
 - Framework: React Native + Expo
 - DB + ORM: Drizzle + Expo-Sqlite
 - Schemas + Data fetching: Effect-ts
