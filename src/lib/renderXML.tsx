@@ -449,6 +449,7 @@ const LIST_BLOCK_TAGS = new Set([
   "web-snippet",
   "spoiler",
   "callout",
+  "blockquote",
 ]);
 
 /**
@@ -787,6 +788,35 @@ export function renderXmlNode(
       case "figure": {
         return <View key={keyPrefix}>{children()}</View>;
       }
+      case "blockquote": {
+        const hasBlockChildren = node.children.some(
+          (child) =>
+            child.type === "element" &&
+            (LIST_BLOCK_TAGS.has(child.tag) || child.tag === "figure"),
+        );
+
+        return (
+          <View
+            key={keyPrefix}
+            className="my-2 rounded-r-lg border-l-4 border-slate-300 bg-slate-50/70 py-2 pr-3 pl-3 dark:border-slate-600 dark:bg-slate-800/50"
+          >
+            {hasBlockChildren ? (
+              renderBlockChildren(node, keyPrefix, context)
+            ) : (
+              <Text
+                className="font-display text-slate-700 dark:text-slate-300"
+                selectable
+              >
+                {renderInlineRuns(
+                  collectInlineRuns(node.children),
+                  keyPrefix,
+                  context,
+                )}
+              </Text>
+            )}
+          </View>
+        );
+      }
       case "callout": {
         let containerClass: string;
         let edgeClass: string;
@@ -825,7 +855,7 @@ export function renderXmlNode(
         return (
           <View
             key={keyPrefix}
-            className={`my-2 rounded-lg border-l-4 p-3 ${containerClass}`}
+            className={`my-2 flex-row overflow-hidden rounded-lg ${containerClass}`}
           >
             <View
               className={`items-center justify-center px-2 py-3 ${edgeClass}`}
