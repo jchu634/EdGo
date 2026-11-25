@@ -5,6 +5,7 @@ import {
   CheckCircleIcon,
   EyeIcon,
   HeartIcon,
+  MedalIcon,
   PushPinIcon,
   StarIcon,
 } from "phosphor-react-native";
@@ -178,6 +179,14 @@ export default function ThreadPage() {
             <View className="flex-row items-center gap-x-1">
               <CheckCircleIcon size={14} color="#22c55e" weight="fill" />
               <Text className="text-sm text-green-600">Answered</Text>
+            </View>
+          )}
+          {t.is_endorsed && (
+            <View className="flex-row items-center gap-x-1 rounded-full border border-blue-500 bg-blue-500/10 px-2 py-0.5">
+              <MedalIcon size={14} color="#3b82f6" weight="fill" />
+              <Text className="text-xs font-semibold text-blue-600 dark:text-blue-400">
+                Endorsed
+              </Text>
             </View>
           )}
         </View>

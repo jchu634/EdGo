@@ -1,7 +1,7 @@
 import type { Schema } from "effect";
 import * as Haptics from "expo-haptics";
 import { Link } from "expo-router";
-import { CheckCircleIcon, HeartIcon } from "phosphor-react-native";
+import { HeartIcon, MedalIcon } from "phosphor-react-native";
 import type React from "react";
 import { Image, Pressable, Text, View } from "react-native";
 import Animated, {
@@ -86,6 +86,7 @@ export function renderComment(
   commentVotes: Map<number, boolean>,
   commentVoteCounts: Map<number, number>,
   onVoteToggle: (commentId: number, currentVoted: boolean) => void,
+  maxThreadNumber?: number,
 ): React.ReactNode {
   const author = usersMap.get(comment.user_id);
   const xmlKey = `comment-${comment.id}`;
@@ -120,19 +121,22 @@ export function renderComment(
             ? "Anonymous"
             : (author?.name ?? "Unknown")}{" "}
         </Text>
-        {comment.type === "answer" && (
-          <View className="rounded-lg bg-blue-100 px-4 py-0.5">
-            <Text className="text-xs text-blue-700">Answer</Text>
-          </View>
-        )}
         {comment.is_endorsed && (
-          <CheckCircleIcon size={14} color="#22c55e" weight="fill" />
+          <View className="flex-row items-center gap-x-1 rounded-full border border-blue-500 bg-blue-500/10 px-2 py-0.5">
+            <MedalIcon size={14} color="#3b82f6" weight="fill" />
+            <Text className="text-xs font-semibold text-blue-600 dark:text-blue-400">
+              Endorsed
+            </Text>
+          </View>
         )}
       </View>
 
       {parsedXml ? (
         <View className="mb-2">
-          {renderXmlNode(parsedXml, `cxml-${comment.id}`)}
+          {renderXmlNode(parsedXml, `cxml-${comment.id}`, 1, {
+            courseId,
+            maxThreadNumber,
+          })}
         </View>
       ) : (
         <Text className="font-display mb-2 text-sm text-gray-700">
@@ -181,6 +185,7 @@ export function renderComment(
             commentVotes,
             commentVoteCounts,
             onVoteToggle,
+            maxThreadNumber,
           ),
         )
       )}
