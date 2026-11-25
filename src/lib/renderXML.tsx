@@ -46,7 +46,7 @@ export type TextSegment =
 
 const THREAD_REF_RE = /(^|[^A-Za-z0-9_/#])#([1-9]\d*)(?![A-Za-z0-9_])/g;
 const EMAIL_RE =
-  /(^|[^A-Za-z0-9._%+-])([A-Za-z0-9](?:[A-Za-z0-9._%+-]*[A-Za-z0-9])?@(?:[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?\.)+[A-Za-z]{2,})(?![A-Za-z0-9_-])/g;
+  /(^|[\s([{<"\u201C,;:])([A-Za-z0-9](?:[A-Za-z0-9._%+-]*[A-Za-z0-9])?@(?:[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?\.)+[A-Za-z]{2,})(?![A-Za-z0-9_-])/g;
 
 export function splitEmails(text: string): TextSegment[] {
   const segments: TextSegment[] = [];

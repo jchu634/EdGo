@@ -539,3 +539,33 @@ test("avoids spurious spaces before closing punctuation and after opening punctu
     'When you spot a minor typo, open the feedback page before noon on Tuesday. Updates post daily.\n\nLabel it "draft" (see: help desk at help@example.edu).',
   );
 });
+
+test("does not partially auto-link emails preceded by non-delimiter characters", () => {
+  const { splitEmails } = loadRenderXml();
+  assert.deepEqual(
+    JSON.parse(
+      JSON.stringify(
+        splitEmails("Contact o'brien@example.edu or ssh://git@github.com"),
+      ),
+    ),
+    [
+      {
+        kind: "text",
+        text: "Contact o'brien@example.edu or ssh://git@github.com",
+      },
+    ],
+  );
+  assert.deepEqual(
+    JSON.parse(
+      JSON.stringify(
+        splitEmails("Email (alice@example.edu) or bob@example.edu"),
+      ),
+    ),
+    [
+      { kind: "text", text: "Email (" },
+      { kind: "email", text: "alice@example.edu", email: "alice@example.edu" },
+      { kind: "text", text: ") or " },
+      { kind: "email", text: "bob@example.edu", email: "bob@example.edu" },
+    ],
+  );
+});
