@@ -364,6 +364,10 @@ export function ModalProvider({ children }: { children: React.ReactNode }) {
     )
       return;
     try {
+      if (trimmed.startsWith("mailto:")) {
+        await Linking.openURL(url);
+        return;
+      }
       const supported = await Linking.canOpenURL(url);
       if (supported) {
         await Linking.openURL(url);
