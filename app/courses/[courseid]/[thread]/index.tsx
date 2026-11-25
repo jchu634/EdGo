@@ -22,6 +22,7 @@ import {
   renderComment,
 } from "@/src/components/ThreadComments";
 import ThreadFullscreenButton from "@/src/components/ThreadFullscreenButton";
+import { useMaxThreadNumber } from "@/src/hooks/useMaxThreadNumber";
 import { useThreadDetail } from "@/src/hooks/useThreadDetail";
 import { useThreadVotes } from "@/src/hooks/useThreadVotes";
 import { renderXmlNode } from "@/src/lib/renderXML";
@@ -38,6 +39,7 @@ export default function ThreadPage() {
   const threadNumber = Number(Array.isArray(thread) ? thread[0] : thread);
 
   const db = useDb();
+  const maxThreadNumber = useMaxThreadNumber(courseIdNum, threadNumber);
   const {
     thread: t,
     usersMap,
@@ -193,7 +195,10 @@ export default function ThreadPage() {
 
         <View className="mb-2 rounded-xl bg-gray-50 p-1 dark:bg-black">
           {mainXml ? (
-            renderXmlNode(mainXml, "thread-body")
+            renderXmlNode(mainXml, "thread-body", 1, {
+              courseId: courseIdNum,
+              maxThreadNumber,
+            })
           ) : (
             <Text className="font-display text-gray-700">{t.content}</Text>
           )}
@@ -215,6 +220,7 @@ export default function ThreadPage() {
                 commentVotes,
                 commentVoteCounts,
                 toggleCommentVote,
+                maxThreadNumber,
               ),
             )}
           </View>
@@ -236,6 +242,7 @@ export default function ThreadPage() {
                 commentVotes,
                 commentVoteCounts,
                 toggleCommentVote,
+                maxThreadNumber,
               ),
             )}
           </View>

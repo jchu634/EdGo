@@ -5,6 +5,7 @@ import {
   renderComment,
 } from "@/src/components/ThreadComments";
 import ThreadFullscreenButton from "@/src/components/ThreadFullscreenButton";
+import { useMaxThreadNumber } from "@/src/hooks/useMaxThreadNumber";
 import { useThreadDetail } from "@/src/hooks/useThreadDetail";
 import { useThreadVotes } from "@/src/hooks/useThreadVotes";
 import { useCourseLayout } from "@/src/providers/courseLayoutProvider";
@@ -21,6 +22,7 @@ export default function CommentThreadPage() {
     Array.isArray(commentid) ? commentid[0] : commentid,
   );
   const db = useDb();
+  const maxThreadNumber = useMaxThreadNumber(courseIdNum, threadNumber);
 
   const {
     thread: t,
@@ -83,6 +85,7 @@ export default function CommentThreadPage() {
           commentVotes,
           commentVoteCounts,
           toggleCommentVote,
+          maxThreadNumber,
         )}
       </View>
     </ScrollView>

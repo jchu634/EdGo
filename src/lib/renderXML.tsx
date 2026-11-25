@@ -1,3 +1,4 @@
+import { useRouter } from "expo-router";
 import { RaTeXView } from "ratex-react-native";
 import React from "react";
 import { Text, View } from "react-native";
@@ -26,6 +27,74 @@ export interface XmlElementNode {
 }
 
 export type XmlNode = XmlTextNode | XmlElementNode;
+
+export interface RenderXmlContext {
+  courseId?: number;
+  maxThreadNumber?: number;
+}
+
+export type TextSegment =
+  | { kind: "text"; text: string }
+  | { kind: "thread-ref"; text: string; threadNumber: number };
+
+const THREAD_REF_RE = /(^|[^A-Za-z0-9_/#])#([1-9]\d*)(?![A-Za-z0-9_])/g;
+
+export function splitThreadRefs(
+  text: string,
+  maxThreadNumber: number,
+): TextSegment[] {
+  const segments: TextSegment[] = [];
+  let lastIndex = 0;
+
+  for (const match of text.matchAll(THREAD_REF_RE)) {
+    const fullIndex = match.index ?? 0;
+    const prefix = match[1];
+    const numStr = match[2];
+    const threadNumber = Number(numStr);
+
+    if (threadNumber < 1 || threadNumber > maxThreadNumber) {
+      continue;
+    }
+
+    const hashIndex = fullIndex + prefix.length;
+    if (hashIndex > lastIndex) {
+      segments.push({ kind: "text", text: text.slice(lastIndex, hashIndex) });
+    }
+
+    const token = `#${numStr}`;
+    segments.push({ kind: "thread-ref", text: token, threadNumber });
+    lastIndex = hashIndex + token.length;
+  }
+
+  if (lastIndex < text.length) {
+    segments.push({ kind: "text", text: text.slice(lastIndex) });
+  }
+
+  return segments.length > 0 ? segments : [{ kind: "text", text }];
+}
+
+function ThreadRefLink({
+  courseId,
+  threadNumber,
+  className,
+  children,
+}: {
+  courseId: number;
+  threadNumber: number;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  const router = useRouter();
+  return (
+    <Text
+      className={`${className ? `${className} ` : ""}text-blue-700 underline dark:text-blue-500`}
+      onPress={() => router.push(`/courses/${courseId}/${threadNumber}`)}
+      selectable={false}
+    >
+      {children}
+    </Text>
+  );
+}
 
 type TextBlockNode = XmlElementNode & { _blockTag?: string };
 
@@ -222,6 +291,7 @@ function collectMergedBlockRuns(blocks: TextBlockNode[]): InlineRun[] {
 function renderBlockChildren(
   node: XmlElementNode,
   keyPrefix: string,
+  context?: RenderXmlContext,
 ): React.ReactNode[] {
   const fragments: React.ReactNode[] = [];
   let blockBuffer: TextBlockNode[] = [];
@@ -236,7 +306,7 @@ function renderBlockChildren(
         className="font-display mb-2 dark:text-slate-100"
         selectable
       >
-        {renderInlineRuns(runs, `${keyPrefix}-pg-${groupIdx}`)}
+        {renderInlineRuns(runs, `${keyPrefix}-pg-${groupIdx}`, context)}
       </Text>,
     );
     blockBuffer = [];
@@ -256,7 +326,7 @@ function renderBlockChildren(
       });
     } else {
       flushBuffer();
-      fragments.push(renderXmlNode(child, `${keyPrefix}-blk-${i}`));
+      fragments.push(renderXmlNode(child, `${keyPrefix}-blk-${i}`, 1, context));
     }
   });
   flushBuffer();
@@ -282,6 +352,7 @@ function headingSizeClass(level: number): string {
 function renderInlineRuns(
   runs: InlineRun[],
   keyPrefix: string,
+  context?: RenderXmlContext,
 ): React.ReactNode[] {
   return runs.map((run, i) => {
     const k = `${keyPrefix}-run-${i}`;
@@ -314,6 +385,39 @@ function renderInlineRuns(
         </LinkText>
       );
     }
+
+    if (
+      !run.marks.code &&
+      context?.courseId !== undefined &&
+      context?.maxThreadNumber !== undefined &&
+      run.text.includes("#")
+    ) {
+      const segments = splitThreadRefs(run.text, context.maxThreadNumber);
+      if (segments.some((s) => s.kind === "thread-ref")) {
+        const courseId = context.courseId;
+        return (
+          <React.Fragment key={k}>
+            {segments.map((seg, segIdx) =>
+              seg.kind === "thread-ref" ? (
+                <ThreadRefLink
+                  key={`${k}-ref-${segIdx}`}
+                  courseId={courseId}
+                  threadNumber={seg.threadNumber}
+                  className={className}
+                >
+                  {seg.text}
+                </ThreadRefLink>
+              ) : (
+                <Text key={`${k}-txt-${segIdx}`} className={className}>
+                  {seg.text}
+                </Text>
+              ),
+            )}
+          </React.Fragment>
+        );
+      }
+    }
+
     return (
       <Text key={k} className={className}>
         {run.text}
@@ -386,6 +490,7 @@ function renderListItem(
   keyPrefix: string,
   marker: string,
   childListDepth: number,
+  context?: RenderXmlContext,
 ): React.ReactNode {
   const fragments: React.ReactNode[] = [];
   let markerPlaced = false;
@@ -399,7 +504,7 @@ function renderListItem(
       <View key={k} className="flex-row">
         <Text className="font-display mr-1 dark:text-white">{marker}</Text>
         <Text className="font-display flex-1 dark:text-slate-100" selectable>
-          {renderInlineRuns(runs, k)}
+          {renderInlineRuns(runs, k, context)}
         </Text>
       </View>,
     );
@@ -438,7 +543,7 @@ function renderListItem(
     // Render any other (block) child below the marker line
     // e.g. a nested <list> or a subsequent
     fragments.push(
-      renderXmlNode(child, `${keyPrefix}-blk-${i}`, childListDepth),
+      renderXmlNode(child, `${keyPrefix}-blk-${i}`, childListDepth, context),
     );
     i++;
   }
@@ -467,6 +572,7 @@ export function renderXmlNode(
   node: XmlNode,
   keyPrefix = "node",
   listDepth = 1,
+  context?: RenderXmlContext,
 ): React.ReactNode {
   if (node.type === "text") {
     return <Text key={keyPrefix}>{node.value} </Text>;
@@ -475,7 +581,12 @@ export function renderXmlNode(
   if (node.type === "element" || node.type === "document") {
     const children = () =>
       node.children.map((child, i) =>
-        renderXmlNode(child, `${keyPrefix}-${node.tag}-${i}`),
+        renderXmlNode(
+          child,
+          `${keyPrefix}-${node.tag}-${i}`,
+          listDepth,
+          context,
+        ),
       );
 
     if (node.selfClosing && node.children.length === 0) {
@@ -520,7 +631,9 @@ export function renderXmlNode(
     switch (node.tag) {
       case "document":
         return (
-          <View key={keyPrefix}>{renderBlockChildren(node, keyPrefix)}</View>
+          <View key={keyPrefix}>
+            {renderBlockChildren(node, keyPrefix, context)}
+          </View>
         );
       case "paragraph":
       case "p": {
@@ -531,7 +644,7 @@ export function renderXmlNode(
             className="font-display mb-2 dark:text-slate-100"
             selectable
           >
-            {renderInlineRuns(runs, keyPrefix)}
+            {renderInlineRuns(runs, keyPrefix, context)}
           </Text>
         );
       }
@@ -590,7 +703,7 @@ export function renderXmlNode(
         // skip it and render the list it wraps at the same depth.
         const wrapper = unwrapWrapperList(node);
         if (wrapper) {
-          return renderXmlNode(wrapper, keyPrefix, listDepth);
+          return renderXmlNode(wrapper, keyPrefix, listDepth, context);
         }
 
         // Depth guard: Have not implemented horizontal scroll, and there is
@@ -623,6 +736,7 @@ export function renderXmlNode(
                   `${keyPrefix}-li-${i}`,
                   marker,
                   listDepth + 1,
+                  context,
                 );
               }
               // Non-item children (unexpected inside a list) render inline.
@@ -630,6 +744,7 @@ export function renderXmlNode(
                 child,
                 `${keyPrefix}-blk-${i}`,
                 listDepth + 1,
+                context,
               );
             })}
           </View>
@@ -659,7 +774,7 @@ export function renderXmlNode(
             className={`font-display-bold mb-1 ${sizeClass}`}
             selectable
           >
-            {renderInlineRuns(runs, keyPrefix)}
+            {renderInlineRuns(runs, keyPrefix, context)}
           </Text>
         );
       }
@@ -706,7 +821,7 @@ export function renderXmlNode(
               </Text>
             </View>
             <Text className={`font-display ${textClass}`} selectable>
-              {renderInlineRuns(runs, keyPrefix)}
+              {renderInlineRuns(runs, keyPrefix, context)}
             </Text>
           </View>
         );
@@ -723,7 +838,7 @@ export function renderXmlNode(
       case "spoiler":
         return (
           <SpoilerText key={keyPrefix}>
-            {renderBlockChildren(node, keyPrefix)}
+            {renderBlockChildren(node, keyPrefix, context)}
           </SpoilerText>
         );
       case "math": {
